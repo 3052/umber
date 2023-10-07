@@ -1,0 +1,31 @@
+{
+   "background": {
+      "scripts": ["background.js"]
+   },
+   "browser_action": {
+      "default_icon": "umber.png"
+   },
+   "browser_specific_settings": {
+      "gecko": {"id": "umber@steven"}
+   },
+   "content_scripts": [
+      {
+         "js": [
+            "backblaze.js",
+            "bandcamp.js",
+            "delay.js",
+            "soundcloud.js",
+            "youtube.js"
+         ],
+         "matches": ["<all_urls>"]
+      }
+   ],
+   "manifest_version": 2,
+   "name": "Umber",
+   "permissions": [
+      "http://bandcamp.com/",
+      "https://api-v2.soundcloud.com/",
+      "https://www.youtube.com/"
+   ],
+   "version": "1.2.6"
+}

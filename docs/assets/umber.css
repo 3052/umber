@@ -1,0 +1,123 @@
+main {
+   --height: 240px;
+}
+figure > a,
+header {
+   align-items: center; /* vertical */
+}
+body {
+   background: radial-gradient(#dee1ec 80%, #becbff);
+}
+h1 > a {
+   color: #0d0cb5;
+}
+footer a {
+   color: #c82121;
+}
+figure > a,
+footer,
+header,
+main {
+   display: flex;
+}
+figure {
+   flex-basis: calc(var(--height) * 16 / 9);
+}
+img {
+   flex-shrink: 0;
+}
+footer,
+header,
+main {
+   flex-wrap: wrap;
+}
+@font-face {
+   font-family: "Miller Display Italic";
+   src: url("/umber/assets/miller-display-italic.woff2");
+}
+@font-face {
+   font-family: "Overpass";
+   src: url("/umber/assets/overpass.woff2");
+}
+h1 {
+   font-family: "Miller Display Italic";
+}
+footer,
+main {
+   font-family: "Overpass";
+}
+h1 {
+   font-size: 3rem;
+}
+footer {
+   font-size: xx-large;
+}
+figure > a {
+   height: var(--height);
+}
+figure > a,
+footer,
+header,
+main {
+   justify-content: center; /* horizontal */
+}
+h1 {
+   margin-bottom: 0;
+}
+figure {
+   margin-bottom: 12px;
+}
+footer,
+header {
+   margin-bottom: 1rem;
+}
+footer a,
+form,
+h1 {
+   margin-left: 6%;
+}
+figure {
+   margin-left: 8px;
+}
+footer a,
+form,
+h1 {
+   margin-right: 6%;
+}
+figure {
+   margin-right: 8px;
+}
+h1 {
+   margin-top: 0;
+}
+figcaption {
+   margin-top: 6px;
+}
+figure {
+   margin-top: 12px;
+}
+figure,
+figure > a {
+   overflow: hidden;
+}
+input {
+   text-align: center;
+}
+th {
+   text-align: start;
+}
+a {
+   text-decoration: none;
+}
+input {
+   vertical-align: middle;
+}
+td.view {
+   width: 28%;
+}
+table {
+   width: 100%;
+}
+img {
+   width: calc(var(--height) * 16 / 9);
+}
