@@ -34,7 +34,9 @@ func (y *youtube_set) parse(arg []string) (*record, error) {
    var rec record
    rec.S = play.Video_Details.Author + " - " + play.Video_Details.Title
    fmt.Println(play.Video_Details.Short_Description)
-   year, _, ok := strings.Cut(play.Publish_Date(), "-")
+   year, _, ok := strings.Cut(
+      play.Microformat.Player_Microformat_Renderer.Publish_Date, "-",
+   )
    if ok {
       val.Set("y", year)
    }
@@ -49,7 +51,7 @@ type youtube_set struct {
 
 func new_youtube() *youtube_set {
    var y youtube_set
-   y.r.Mobile_Web()
+   y.r.Web()
    y.FlagSet = flag.NewFlagSet("youtube", flag.ExitOnError)
    y.StringVar(&y.r.Video_ID, "b", "", "video ID")
    y.Var(&y.r, "a", "address")
