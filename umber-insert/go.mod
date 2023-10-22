@@ -4,4 +4,4 @@ go 1.21.0
 
 require 154.pages.dev/media v1.7.0
 
-require 154.pages.dev/encoding v1.13.4 // indirect
+require 154.pages.dev/encoding v1.14.3 // indirect
