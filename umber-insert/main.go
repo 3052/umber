@@ -4,12 +4,7 @@ import (
    "bytes"
    "embed"
    "encoding/json"
-   "net/url"
    "os"
-   "path"
-   "strconv"
-   "strings"
-   "time"
 )
 
 //go:embed config.json
@@ -90,26 +85,4 @@ func main() {
       new_soundcloud().Usage()
       new_youtube().Usage()
    }
-}
-
-type inserter interface {
-   Date() string
-   ID() string
-   Image() string
-   Title() string
-}
-
-func Insert(i inserter, platform string) (*record, error) {
-   val := make(url.Values)
-   val.Set("a", strconv.FormatInt(time.Now().Unix(), 36))
-   val.Set("b", i.ID())
-   val.Set("c", path.Base(i.Image()))
-   val.Set("p", platform)
-   if year, _, ok := strings.Cut(i.Date(), "-"); ok {
-      val.Set("y", year)
-   }
-   var row record
-   row.Q = val.Encode()
-   row.S = i.Title()
-   return &row, nil
 }
