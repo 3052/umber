@@ -6,7 +6,7 @@
       "default_icon": "umber.png"
    },
    "browser_specific_settings": {
-      "gecko": {"id": "umber@steven"}
+      "gecko": {"id": "umber@3052"}
    },
    "content_scripts": [
       {
