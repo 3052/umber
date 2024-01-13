@@ -1,8 +1,15 @@
 package main
 
-import "net/http"
+import (
+   "flag"
+   "fmt"
+   "net/http"
+)
 
 func main() {
-   println("localhost:8080")
-   http.ListenAndServe(":8080", http.FileServer(http.Dir("")))
+   dir := flag.String("d", "", "dir")
+   port := flag.String("p", ":8080", "port")
+   flag.Parse()
+   fmt.Println("localhost" + *port)
+   http.ListenAndServe(*port, http.FileServer(http.Dir(*dir)))
 }
