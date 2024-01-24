@@ -27,8 +27,8 @@ func (y *youtube_set) parse(arg []string) (*record, error) {
    if base != "" {
       val.Set("c", base)
    }
-   play, err := y.r.Player(nil)
-   if err != nil {
+   var play youtube.Player
+   if err := play.Post(y.r, nil); err != nil {
       return nil, err
    }
    var rec record
@@ -82,19 +82,21 @@ func get_image(video_ID string) (string, error) {
       }
       return def(b) < def(a)
    })
-   req, err := http.NewRequest("HEAD", "", nil)
-   if err != nil {
-      return "", err
-   }
    for index, img := range imgs {
-      req.URL = img.URL(video_ID)
-      fmt.Println("HEAD", req.URL)
-      res, err := new(http.Transport).RoundTrip(req)
-      if err == nil && res.StatusCode == http.StatusOK {
-         if index == 0 {
-            return "", nil
+      img.Video_ID = video_ID
+      address := img.String()
+      fmt.Println(address)
+      res, err := http.Head(address)
+      if err != nil {
+         return "", err
+      }
+      if err == nil {
+         if res.StatusCode == http.StatusOK {
+            if index == 0 {
+               return "", nil
+            }
+            return path.Base(address), nil
          }
-         return path.Base(req.URL.Path), nil
       }
    }
    return "", nil
