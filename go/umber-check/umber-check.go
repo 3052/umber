@@ -29,7 +29,8 @@ func main() {
             var req youtube.Request
             req.Video_ID = query.Get("b")
             req.Android()
-            play, err := req.Player(nil)
+            var play youtube.Player
+            err := play.Post(req, nil)
             if err != nil {
                panic(err)
             }
