@@ -1,9 +1,9 @@
-154.pages.dev/encoding v1.15.8 h1:dHZAqFva8SPWcch7KYBx+AaC69bZixvUge25GGJ17tA=
-154.pages.dev/encoding v1.15.8/go.mod h1:KHWBwxsigaRVpDqFu8UgUcJzvEW3qJveq9YfVV90OiY=
+154.pages.dev/encoding v1.16.0 h1:8XvBkmYBBF0mtxrEFN0CVIJwN17Uvos/S+kWvG5rJ+s=
+154.pages.dev/encoding v1.16.0/go.mod h1:KHWBwxsigaRVpDqFu8UgUcJzvEW3qJveq9YfVV90OiY=
 154.pages.dev/log v1.1.2 h1:iNT2KZSET1LQ6/LCOKrJCuAvUNwNZ8yLYetHK/5HiG0=
 154.pages.dev/log v1.1.2/go.mod h1:nopBF2oieijp+lBbRjqKzUKnMgJgL8JD3tnguQ9bFWg=
-154.pages.dev/media v1.7.5 h1:z6Ygx8jftUniCqIUDKJWkc7nAuSJqiSdOpBaxNsg4C4=
-154.pages.dev/media v1.7.5/go.mod h1:0lOpt9OTovofWy/CxyDVT9Tde1ab2Y575naGj3ExkT0=
+154.pages.dev/media v1.7.6 h1:INP8MjHV4G7gcf8wlK0QKfH0UKuKOK8tKcf2aIK/NvU=
+154.pages.dev/media v1.7.6/go.mod h1:0lOpt9OTovofWy/CxyDVT9Tde1ab2Y575naGj3ExkT0=
 154.pages.dev/protobuf v1.0.4 h1:icKoKmuVMFkhp1+lHP0NVSA8yPt4/Amzn5Qj1gAAsH0=
 154.pages.dev/protobuf v1.0.4/go.mod h1:SxW3gQj5yMXT+QHEd+8+XJ7gTDDSjfu53vkdyJ/9KlQ=
 154.pages.dev/sofia v1.1.1 h1:kE9bK+QIYQxZqLkbDqixJBf5HUyx/+HVRS3TCEOQhvE=
