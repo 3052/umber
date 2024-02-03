@@ -58,7 +58,7 @@ func new_youtube() *youtube_set {
    return &y
 }
 
-func get_image(video_ID string) (string, error) {
+func get_image(video_id string) (string, error) {
    var imgs []youtube.Image
    for _, img := range youtube.Images {
       if img.Height < 720 {
@@ -83,7 +83,7 @@ func get_image(video_ID string) (string, error) {
       return def(b) < def(a)
    })
    for index, img := range imgs {
-      img.Video_ID = video_ID
+      img.Video_ID = video_id
       address := img.String()
       fmt.Println(address)
       res, err := http.Head(address)

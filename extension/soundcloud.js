@@ -1,9 +1,9 @@
 'use strict';
 
-const client_ID = 'iZIs9mchVcX5lhVRyQGGAYlNPVldzAoX';
+const client_id = 'iZIs9mchVcX5lhVRyQGGAYlNPVldzAoX';
 
 async function soundcloud_media(track) {
-   const param = new URLSearchParams({client_id: client_ID});
+   const param = new URLSearchParams({client_id: client_id});
    for (const code of track[0].media.transcodings) {
       if (code.format.protocol != 'progressive') {
          continue;
@@ -17,7 +17,7 @@ async function soundcloud_media(track) {
 }
 
 async function soundcloud_track(id) {
-   const param = new URLSearchParams({client_id: client_ID, ids: id});
+   const param = new URLSearchParams({client_id: client_id, ids: id});
    const track = new URL('https://api-v2.soundcloud.com/tracks');
    track.search = String(param);
    const res = await fetch(track);
