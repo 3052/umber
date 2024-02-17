@@ -19,8 +19,8 @@ func (y *youtube_set) parse(arg []string) (*record, error) {
    now := strconv.FormatInt(time.Now().Unix(), 36)
    val.Set("a", now)
    val.Set("p", "y")
-   val.Set("b", y.r.Video_ID)
-   base, err := get_image(y.r.Video_ID)
+   val.Set("b", y.r.VideoId)
+   base, err := get_image(y.r.VideoId)
    if err != nil {
       return nil, err
    }
@@ -32,10 +32,10 @@ func (y *youtube_set) parse(arg []string) (*record, error) {
       return nil, err
    }
    var rec record
-   rec.S = play.Video_Details.Author + " - " + play.Video_Details.Title
-   fmt.Println(play.Video_Details.Short_Description)
+   rec.S = play.VideoDetails.Author + " - " + play.VideoDetails.Title
+   fmt.Println(play.VideoDetails.ShortDescription)
    year, _, ok := strings.Cut(
-      play.Microformat.Player_Microformat_Renderer.Publish_Date, "-",
+      play.Microformat.PlayerMicroformatRenderer.PublishDate, "-",
    )
    if ok {
       val.Set("y", year)
@@ -53,7 +53,7 @@ func new_youtube() *youtube_set {
    var y youtube_set
    y.r.Web()
    y.FlagSet = flag.NewFlagSet("youtube", flag.ExitOnError)
-   y.StringVar(&y.r.Video_ID, "b", "", "video ID")
+   y.StringVar(&y.r.VideoId, "b", "", "video ID")
    y.Var(&y.r, "a", "address")
    return &y
 }
@@ -83,7 +83,7 @@ func get_image(video_id string) (string, error) {
       return def(b) < def(a)
    })
    for index, img := range imgs {
-      img.Video_ID = video_id
+      img.VideoId = video_id
       address := img.String()
       fmt.Println(address)
       res, err := http.Head(address)

@@ -27,14 +27,14 @@ func main() {
          }
          if query.Get("p") == "y" {
             var req youtube.Request
-            req.Video_ID = query.Get("b")
+            req.VideoId = query.Get("b")
             req.Android()
             var play youtube.Player
             err := play.Post(req, nil)
             if err != nil {
                panic(err)
             }
-            fmt.Println(play.Playability.Status, req.Video_ID, len(songs)-i)
+            fmt.Println(play.PlayabilityStatus.Status, req.VideoId, len(songs)-i)
             time.Sleep(99*time.Millisecond)
          }
       }
