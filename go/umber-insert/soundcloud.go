@@ -1,7 +1,7 @@
 package main
 
 import (
-   "154.pages.dev/media/soundcloud"
+   "154.pages.dev/platform/soundcloud"
    "flag"
    "net/url"
    "path"

@@ -1,7 +1,7 @@
 package main
 
 import (
-   "154.pages.dev/media/bandcamp"
+   "154.pages.dev/platform/bandcamp"
    "flag"
    "net/url"
    "strconv"

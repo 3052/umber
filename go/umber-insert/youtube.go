@@ -1,7 +1,7 @@
 package main
 
 import (
-   "154.pages.dev/media/youtube"
+   "154.pages.dev/platform/youtube"
    "flag"
    "fmt"
    "net/http"
