@@ -4,4 +4,4 @@ go 1.22.0
 
 require 154.pages.dev/platform v1.4.5
 
-require 154.pages.dev/encoding v1.20.9 // indirect
+require 154.pages.dev/encoding v1.21.5 // indirect
