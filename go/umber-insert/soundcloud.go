@@ -24,7 +24,7 @@ func (s *soundcloud_set) parse(arg []string) (*record, error) {
    row.S = track.Title
    val.Set("b", strconv.FormatInt(track.ID, 10))
    val.Set("c", path.Base(track.Artwork()))
-   year, _, ok := strings.Cut(track.Display_Date, "-")
+   year, _, ok := strings.Cut(track.DisplayDate, "-")
    if ok {
       val.Set("y", year)
    }
