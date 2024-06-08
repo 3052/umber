@@ -45,17 +45,16 @@ func get_image(video_id string) (string, error) {
       if err != nil {
          return "", err
       }
-      if err == nil {
-         if res.StatusCode == http.StatusOK {
-            if index == 0 {
-               return "", nil
-            }
-            return path.Base(address), nil
+      if res.StatusCode == http.StatusOK {
+         if index == 0 {
+            return "", nil
          }
+         return path.Base(address), nil
       }
    }
    return "", nil
 }
+
 func (y *youtube_set) parse(arg []string) (*record, error) {
    y.Parse(arg)
    val := make(url.Values)
