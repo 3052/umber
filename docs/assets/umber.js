@@ -83,8 +83,8 @@ function get_low(meds) {
 
 async function main() {
    if (location.search === '') {
-      const res = await fetch('/umber/umber.json');
-      const txt = await res.text();
+      const resp = await fetch('/umber/umber.json');
+      const txt = await resp.text();
       localStorage.setItem('umber', txt);
    }
    const txt = localStorage.getItem('umber');
