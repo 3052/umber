@@ -39,7 +39,7 @@ func main() {
             panic(err)
          }
          fmt.Println(play.PlayabilityStatus.Status, req.VideoId, len(songs)-i)
-         time.Sleep(99*time.Millisecond)
+         time.Sleep(99 * time.Millisecond)
       }
    }
 }
