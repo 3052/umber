@@ -12,7 +12,7 @@ import {
 function figure(row) {
    const sp = new URLSearchParams(row.Q);
    const temp = document.querySelector('template');
-   const aID = sp.get('a');
+   const a_id = sp.get('a');
    const clone = temp.content.cloneNode(true);
    const attr = href_src(sp, row.S);
    const anc = clone.querySelector('a');
@@ -25,7 +25,7 @@ function figure(row) {
    const rel = clone.querySelector('.release');
    rel.textContent = sp.get('y');
    const post = clone.querySelector('.post');
-   post.textContent = date_format(aID);
+   post.textContent = date_format(a_id);
    const td_view = clone.querySelector('td.view');
    const th_view = clone.querySelector('th.view');
    const view = localStorage.getItem(anc.href);
@@ -71,10 +71,10 @@ function get_low(meds) {
    }
    for (const [i, med] of meds.entries()) {
       const param = new URLSearchParams(med.Q);
-      const aID = param.get('a');
+      const a_id = param.get('a');
       // account for deleted entries
-      if (aID <= search.get('a')) {
-         document.title = 'Umber - ' + date_format(aID);
+      if (a_id <= search.get('a')) {
+         document.title = 'Umber - ' + date_format(a_id);
          return i;
       }
    }

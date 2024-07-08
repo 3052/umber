@@ -10,8 +10,8 @@ async function bandcamp() {
       tralbum_type: 't'
    });
    ref.search = String(param);
-   let res = await fetch(ref);
-   let media = await res.json();
+   let resp = await fetch(ref);
+   let media = await resp.json();
    browser.runtime.sendMessage({
       poster: this.querySelector('img').src,
       src: media.tracks[0].streaming_url['mp3-128'],

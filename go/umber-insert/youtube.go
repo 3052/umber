@@ -41,11 +41,11 @@ func get_image(video_id string) (string, error) {
       img.VideoId = video_id
       address := img.String()
       fmt.Println(address)
-      res, err := http.Head(address)
+      resp, err := http.Head(address)
       if err != nil {
          return "", err
       }
-      if res.StatusCode == http.StatusOK {
+      if resp.StatusCode == http.StatusOK {
          if index == 0 {
             return "", nil
          }

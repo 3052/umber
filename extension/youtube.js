@@ -17,8 +17,8 @@ async function youTube() {
       headers: {'User-Agent': 'com.google.android.youtube/18.99.99'},
       method: 'POST'
    };
-   const res = await fetch('https://www.youtube.com/youtubei/v1/player', req);
-   const play = await res.json();
+   const resp = await fetch('https://www.youtube.com/youtubei/v1/player', req);
+   const play = await resp.json();
    const msg = {
       poster: this.querySelector('img').src,
       title: play.videoDetails.author + ' - ' + play.videoDetails.title

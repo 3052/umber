@@ -10,8 +10,8 @@ async function soundcloud_media(track) {
       }
       const media = new URL(code.url);
       media.search = String(param);
-      const res = await fetch(media);
-      return res.json();
+      const resp = await fetch(media);
+      return resp.json();
    }
    return {url: ''};
 }
@@ -20,8 +20,8 @@ async function soundcloud_track(id) {
    const param = new URLSearchParams({client_id: client_id, ids: id});
    const track = new URL('https://api-v2.soundcloud.com/tracks');
    track.search = String(param);
-   const res = await fetch(track);
-   return res.json();
+   const resp = await fetch(track);
+   return resp.json();
 }
 
 async function soundCloud() {
