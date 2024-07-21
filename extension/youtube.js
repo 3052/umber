@@ -14,7 +14,7 @@ async function youTube() {
    };
    const req = {
       body: JSON.stringify(body),
-      headers: {'User-Agent': 'com.google.android.youtube/18.99.99'},
+      headers: {'user-agent': 'com.google.android.youtube/18.99.99'},
       method: 'POST'
    };
    const resp = await fetch('https://www.youtube.com/youtubei/v1/player', req);

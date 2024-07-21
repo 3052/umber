@@ -2,53 +2,33 @@ package main
 
 import (
    "bytes"
-   "embed"
    "encoding/json"
+   "flag"
    "os"
 )
-
-//go:embed config.json
-var fs embed.FS
-
-type config struct {
-   Path string
-}
 
 type record struct {
    Q string
    S string
 }
 
-func (c config) records() ([]*record, error) {
-   text, err := os.ReadFile(c.Path)
+func records(config string) ([]*record, error) {
+   text, err := os.ReadFile(config)
    if err != nil {
       return nil, err
    }
    var recs []*record
-   if err := json.Unmarshal(text, &recs); err != nil {
+   err = json.Unmarshal(text, &recs)
+   if err != nil {
       return nil, err
    }
    return recs, nil
 }
 
-func new_config() (*config, error) {
-   text, err := fs.ReadFile("config.json")
-   if err != nil {
-      return nil, err
-   }
-   con := new(config)
-   if err := json.Unmarshal(text, con); err != nil {
-      return nil, err
-   }
-   return con, nil
-}
-
 func main() {
-   con, err := new_config()
-   if err != nil {
-      panic(err)
-   }
-   recs, err := con.records()
+   config := flag.String("c", "D:/git/umber/docs/umber.json", "config")
+   flag.Parse()
+   recs, err := records(*config)
    if err != nil {
       panic(err)
    }
@@ -73,10 +53,12 @@ func main() {
       enc := json.NewEncoder(&text)
       enc.SetEscapeHTML(false)
       enc.SetIndent("", " ")
-      if err := enc.Encode(recs); err != nil {
+      err := enc.Encode(recs)
+      if err != nil {
          panic(err)
       }
-      if err := os.WriteFile(con.Path, text.Bytes(), 0666); err != nil {
+      err = os.WriteFile(*config, text.Bytes(), 0666)
+      if err != nil {
          panic(err)
       }
    } else {
