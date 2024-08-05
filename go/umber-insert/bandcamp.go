@@ -10,25 +10,25 @@ import (
 
 func (b *bandcamp_set) parse(arg []string) (*record, error) {
    b.Parse(arg)
-   val := make(url.Values)
    now := strconv.FormatInt(time.Now().Unix(), 36)
-   val.Set("a", now)
-   val.Set("p", "bandcamp")
+   value := url.Values{}
+   value.Set("a", now)
+   value.Set("p", "bandcamp")
    var params bandcamp.ReportParams
    err := params.New(b.address)
    if err != nil {
       return nil, err
    }
-   val.Set("b", strconv.Itoa(params.Iid))
+   value.Set("b", strconv.Itoa(params.Iid))
    track, err := params.Tralbum()
    if err != nil {
       return nil, err
    }
-   val.Set("c", strconv.FormatInt(track.ArtId, 10))
+   value.Set("c", strconv.FormatInt(track.ArtId, 10))
    var rec record
    rec.S = track.TralbumArtist + " - " + track.Title
-   val.Set("y", strconv.Itoa(track.Date().Year()))
-   rec.Q = val.Encode()
+   value.Set("y", strconv.Itoa(track.Date().Year()))
+   rec.Q = value.Encode()
    return &rec, nil
 }
 

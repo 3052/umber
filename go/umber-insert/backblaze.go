@@ -26,15 +26,15 @@ func new_backblaze() *backblaze_set {
 
 func (b *backblaze_set) parse(arg []string) (*record, error) {
    b.Parse(arg)
-   val := make(url.Values)
    now := strconv.FormatInt(time.Now().Unix(), 36)
-   val.Set("a", now)
-   val.Set("b", filepath.Ext(b.audio))
-   val.Set("c", filepath.Base(b.image))
-   val.Set("p", "b2")
-   val.Set("y", b.year)
+   value := url.Values{}
+   value.Set("a", now)
+   value.Set("b", filepath.Ext(b.audio))
+   value.Set("c", filepath.Base(b.image))
+   value.Set("p", "b2")
+   value.Set("y", b.year)
    var rec record
-   rec.Q = val.Encode()
+   rec.Q = value.Encode()
    base := filepath.Base(b.audio)
    ext := filepath.Ext(base)
    rec.S = base[:len(base)-len(ext)]

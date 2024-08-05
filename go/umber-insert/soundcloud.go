@@ -12,23 +12,23 @@ import (
 
 func (s *soundcloud_set) parse(arg []string) (*record, error) {
    s.Parse(arg)
-   val := make(url.Values)
    now := strconv.FormatInt(time.Now().Unix(), 36)
-   val.Set("a", now)
-   val.Set("p", "s")
+   value := url.Values{}
+   value.Set("a", now)
+   value.Set("p", "s")
    track, err := soundcloud.Resolve(s.address)
    if err != nil {
       return nil, err
    }
    var row record
    row.S = track.Title
-   val.Set("b", strconv.FormatInt(track.ID, 10))
-   val.Set("c", path.Base(track.Artwork()))
+   value.Set("b", strconv.FormatInt(track.ID, 10))
+   value.Set("c", path.Base(track.Artwork()))
    year, _, ok := strings.Cut(track.DisplayDate, "-")
    if ok {
-      val.Set("y", year)
+      value.Set("y", year)
    }
-   row.Q = val.Encode()
+   row.Q = value.Encode()
    return &row, nil
 }
 
