@@ -57,7 +57,7 @@ func main() {
       if err != nil {
          panic(err)
       }
-      err = os.WriteFile(*config, text.Bytes(), 0666)
+      err = os.WriteFile(*config, text.Bytes(), os.ModePerm)
       if err != nil {
          panic(err)
       }
