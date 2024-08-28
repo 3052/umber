@@ -62,9 +62,9 @@ func main() {
          panic(err)
       }
    } else {
-      new_backblaze().Usage()
-      new_bandcamp().Usage()
-      new_soundcloud().Usage()
-      new_youtube().Usage()
+      new_backblaze().f.Usage()
+      new_bandcamp().f.Usage()
+      new_soundcloud().f.Usage()
+      new_youtube().f.Usage()
    }
 }

@@ -9,7 +9,7 @@ import (
 )
 
 type backblaze_set struct {
-   *flag.FlagSet
+   f *flag.FlagSet
    year string
    audio string
    image string
@@ -17,15 +17,15 @@ type backblaze_set struct {
 
 func new_backblaze() *backblaze_set {
    var set backblaze_set
-   set.FlagSet = flag.NewFlagSet("backblaze", flag.ExitOnError)
-   set.StringVar(&set.audio, "a", "", "audio")
-   set.StringVar(&set.image, "i", "", "image")
-   set.StringVar(&set.year, "y", "", "year")
+   set.f = flag.NewFlagSet("backblaze", flag.ExitOnError)
+   set.f.StringVar(&set.audio, "a", "", "audio")
+   set.f.StringVar(&set.image, "i", "", "image")
+   set.f.StringVar(&set.year, "y", "", "year")
    return &set
 }
 
 func (b *backblaze_set) parse(arg []string) (*record, error) {
-   b.Parse(arg)
+   b.f.Parse(arg)
    now := strconv.FormatInt(time.Now().Unix(), 36)
    value := url.Values{}
    value.Set("a", now)

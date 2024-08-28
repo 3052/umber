@@ -9,7 +9,7 @@ import (
 )
 
 func (b *bandcamp_set) parse(arg []string) (*record, error) {
-   b.Parse(arg)
+   b.f.Parse(arg)
    now := strconv.FormatInt(time.Now().Unix(), 36)
    value := url.Values{}
    value.Set("a", now)
@@ -33,13 +33,13 @@ func (b *bandcamp_set) parse(arg []string) (*record, error) {
 }
 
 type bandcamp_set struct {
-   *flag.FlagSet
+   f *flag.FlagSet
    address string
 }
 
 func new_bandcamp() *bandcamp_set {
    var set bandcamp_set
-   set.FlagSet = flag.NewFlagSet("bandcamp", flag.ExitOnError)
-   set.StringVar(&set.address, "a", "", "address")
+   set.f = flag.NewFlagSet("bandcamp", flag.ExitOnError)
+   set.f.StringVar(&set.address, "a", "", "address")
    return &set
 }

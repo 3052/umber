@@ -30,15 +30,14 @@ func main() {
          panic(err)
       }
       if query.Get("p") == "y" {
-         var req youtube.Request
-         req.VideoId = query.Get("b")
-         req.Android()
-         var play youtube.Player
-         err := play.Post(req, nil)
+         var tube youtube.InnerTube
+         tube.VideoId = query.Get("b")
+         tube.Context.Client.ClientName = "ANDROID"
+         play, err := tube.Player(nil)
          if err != nil {
             panic(err)
          }
-         fmt.Println(play.PlayabilityStatus.Status, req.VideoId, len(songs)-i)
+         fmt.Println(play.PlayabilityStatus.Status, tube.VideoId, len(songs)-i)
          time.Sleep(99 * time.Millisecond)
       }
    }
