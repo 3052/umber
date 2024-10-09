@@ -1,7 +1,7 @@
 package main
 
 import (
-   "154.pages.dev/platform/bandcamp"
+   "41.neocities.org/platform/bandcamp"
    "flag"
    "net/url"
    "strconv"

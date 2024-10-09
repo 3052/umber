@@ -42,8 +42,6 @@ func main() {
          rec, err = new_bandcamp().parse(arg)
       case "soundcloud":
          rec, err = new_soundcloud().parse(arg)
-      case "youtube":
-         rec, err = new_youtube().parse(arg)
       }
       if err != nil {
          panic(err)
@@ -65,6 +63,5 @@ func main() {
       new_backblaze().f.Usage()
       new_bandcamp().f.Usage()
       new_soundcloud().f.Usage()
-      new_youtube().f.Usage()
    }
 }

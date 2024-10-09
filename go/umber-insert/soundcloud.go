@@ -1,7 +1,7 @@
 package main
 
 import (
-   "154.pages.dev/platform/soundcloud"
+   "41.neocities.org/platform/soundcloud"
    "flag"
    "net/url"
    "path"
