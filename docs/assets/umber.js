@@ -84,11 +84,11 @@ function get_low(meds) {
 async function main() {
    if (location.search === '') {
       const resp = await fetch('/umber/umber.json');
-      const txt = await resp.text();
-      localStorage.setItem('umber', txt);
+      const text = await resp.text();
+      localStorage.setItem('umber', text);
    }
-   const txt = localStorage.getItem('umber');
-   let table = JSON.parse(txt);
+   const text = localStorage.getItem('umber');
+   let table = JSON.parse(text);
    // 1. filter
    if (search.has('s')) {
       function filter(row) {
