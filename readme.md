@@ -12,10 +12,6 @@ Album downloads:
 
 https://ulozto.net
 
-File extensions:
-
-https://backblaze.com/b2/docs/content-types.html
-
 New music:
 
 - https://gorillavsbear.net

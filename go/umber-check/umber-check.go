@@ -3,11 +3,7 @@ package main
 import (
    "bytes"
    "encoding/json"
-   "fmt"
    "net/http"
-   "net/url"
-   "os"
-   "time"
 )
 
 type Player struct {

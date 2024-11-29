@@ -1,5 +1,12 @@
 'use strict';
 
+export function new_http(q) {
+   const back = {};
+   back.href = q.get('b');
+   back.src = q.get('c');
+   return back;
+}
+
 export function new_vimeo(param) {
    const vim = {};
    vim.href = 'https://vimeo.com/' + param.get('b');
@@ -19,15 +26,6 @@ export function date_format(id) {
       return time.format(date);
    }
    return date_parts.map(format).join(' ');
-}
-
-export function new_backblaze(q, s) {
-   // Friendly URL does not cache
-   const bucket = 'https://ql8mlh.s3.us-west-002.backblazeb2.com/';
-   const back = {};
-   back.href = bucket + s + q.get('b');
-   back.src = bucket + q.get('c');
-   return back;
 }
 
 export function new_bandcamp(param) {

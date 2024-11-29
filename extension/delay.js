@@ -31,9 +31,6 @@ delay(function() {
       case a.host == 'www.youtube.com':
          a.addEventListener('contextmenu', youTube);
          break;
-      case a.host.endsWith('.backblazeb2.com'):
-         a.addEventListener('contextmenu', backBlaze);
-         break;
       default:
          continue;
       }

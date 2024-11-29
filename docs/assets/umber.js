@@ -2,10 +2,10 @@
 
 import {
    date_format,
-   new_backblaze,
    new_bandcamp,
-   new_vimeo,
+   new_http,
    new_soundcloud,
+   new_vimeo,
    new_youtube
 } from '/umber/assets/platform.js';
 
@@ -14,7 +14,7 @@ function figure(row) {
    const temp = document.querySelector('template');
    const a_id = sp.get('a');
    const clone = temp.content.cloneNode(true);
-   const attr = href_src(sp, row.S);
+   const attr = href_src(sp);
    const anc = clone.querySelector('a');
    anc.target = '_blank';
    anc.href = attr.href;
@@ -50,10 +50,10 @@ function figure(row) {
 
 const per_page = 30;
 
-function href_src(query, title) {
+function href_src(query) {
    switch (query.get('p')) {
    case 'b':
-      return new_backblaze(query, title);
+      return new_http(query);
    case 'bandcamp':
       return new_bandcamp(query);
    case 's':

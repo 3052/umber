@@ -1,19 +1,22 @@
 package main
 
 import (
-   "bytes"
    "encoding/json"
+   "flag"
    "fmt"
-   "net/http"
    "net/url"
    "os"
    "time"
 )
 
-const start = 0
-
 func main() {
-   file, err := os.Open("../../docs/umber.json")
+   start := flag.Int("s", -1, "start")
+   flag.Parse()
+   if *start <= -1 {
+      flag.Usage()
+      return
+   }
+   file, err := os.Open("umber.json")
    if err != nil {
       panic(err)
    }
@@ -26,7 +29,7 @@ func main() {
       panic(err)
    }
    for i, song := range songs {
-      if i < start {
+      if i < *start {
          continue
       }
       query, err := url.ParseQuery(song.Q)
@@ -41,7 +44,7 @@ func main() {
          if err != nil {
             panic(err)
          }
-         fmt.Println(tube.VideoId, len(songs)-i)
+         fmt.Println(tube.VideoId, i, len(songs))
          if play.PlayabilityStatus.Status != "OK" {
             break
          }

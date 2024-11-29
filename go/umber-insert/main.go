@@ -36,8 +36,8 @@ func main() {
       arg := os.Args[2:]
       var rec *record
       switch os.Args[1] {
-      case "backblaze":
-         rec, err = new_backblaze().parse(arg)
+      case "http":
+         rec, err = new_http().parse(arg)
       case "bandcamp":
          rec, err = new_bandcamp().parse(arg)
       case "soundcloud":
@@ -60,7 +60,7 @@ func main() {
          panic(err)
       }
    } else {
-      new_backblaze().f.Usage()
+      new_http().f.Usage()
       new_bandcamp().f.Usage()
       new_soundcloud().f.Usage()
    }
