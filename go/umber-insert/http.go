@@ -3,7 +3,7 @@ package main
 import (
    "flag"
    "net/url"
-   "path/filepath"
+   "path"
    "strconv"
    "time"
 )
@@ -29,14 +29,12 @@ func (h *http_set) parse(arg []string) (*record, error) {
    now := strconv.FormatInt(time.Now().Unix(), 36)
    value := url.Values{}
    value.Set("a", now)
-   value.Set("b", filepath.Ext(h.audio))
-   value.Set("c", filepath.Base(h.image))
-   value.Set("p", "b2")
+   value.Set("p", "h")
    value.Set("y", h.year)
    var rec record
+   value.Set("b", h.audio)
+   value.Set("c", h.image)
    rec.Q = value.Encode()
-   base := filepath.Base(h.audio)
-   ext := filepath.Ext(base)
-   rec.S = base[:len(base)-len(ext)]
+   rec.S = path.Base(h.audio)
    return &rec, nil
 }

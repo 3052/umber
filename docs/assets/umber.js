@@ -5,7 +5,6 @@ import {
    new_bandcamp,
    new_http,
    new_soundcloud,
-   new_vimeo,
    new_youtube
 } from '/umber/assets/platform.js';
 
@@ -53,13 +52,11 @@ const per_page = 30;
 function href_src(query) {
    switch (query.get('p')) {
    case 'b':
-      return new_http(query);
-   case 'bandcamp':
       return new_bandcamp(query);
+   case 'h':
+      return new_http(query);
    case 's':
       return new_soundcloud(query);
-   case 'v':
-      return new_vimeo(query);
    case 'y':
       return new_youtube(query);
    }

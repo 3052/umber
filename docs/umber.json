@@ -1,5 +1,9 @@
 [
  {
+  "Q": "a=snq0t1&b=http%3A%2F%2Fzeldauniverse.s3.amazonaws.com%2Fsoundtracks%2Focarinaoftimeost%2F50+-+Sheiks+Theme.mp3&c=https%3A%2F%2Fzeldauniverse.net%2Fwp-content%2Fuploads%2F2014%2F03%2Fmusic.jpg&p=h&y=1998",
+  "S": "50 - Sheiks Theme.mp3"
+ },
+ {
   "Q": "a=snpvce&b=KxJIJFZToWQ&p=y&y=2016",
   "S": "Nicolas Jaar - Topic - Killing Time"
  },
@@ -24,7 +28,7 @@
   "S": "Oneohtrix Point Never - Topic - Zones Without People"
  },
  {
-  "Q": "a=snpuvl&b=832167746&c=147568395&p=bandcamp&y=2013",
+  "Q": "a=snpuvl&b=832167746&c=147568395&p=b&y=2013",
   "S": "Oneohtrix Point Never - Parallel Minds"
  },
  {
@@ -32,19 +36,19 @@
   "S": "Squarepusher - Topic - Iambic 9 Poetry (Remastered)"
  },
  {
-  "Q": "a=snpur5&b=2646316011&c=321128520&p=bandcamp&y=2013",
+  "Q": "a=snpur5&b=2646316011&c=321128520&p=b&y=2013",
   "S": "Oneohtrix Point Never - Ships Without Meaning"
  },
  {
-  "Q": "a=snpuor&b=1489470313&c=147568395&p=bandcamp&y=2013",
+  "Q": "a=snpuor&b=1489470313&c=147568395&p=b&y=2013",
   "S": "Oneohtrix Point Never - Betrayed In The Octagon"
  },
  {
-  "Q": "a=snpudq&b=3250703674&c=3304191608&p=bandcamp&y=2013",
+  "Q": "a=snpudq&b=3250703674&c=3304191608&p=b&y=2013",
   "S": "Oneohtrix Point Never - Time Decanted"
  },
  {
-  "Q": "a=snpu9n&b=862551883&c=89727775&p=bandcamp&y=2013",
+  "Q": "a=snpu9n&b=862551883&c=89727775&p=b&y=2013",
   "S": "Oneohtrix Point Never - Blue Drive"
  },
  {
@@ -156,7 +160,7 @@
   "S": "Disturbed - Voices"
  },
  {
-  "Q": "a=sjtfxq&b=2867993983&c=3476009993&p=bandcamp&y=2022",
+  "Q": "a=sjtfxq&b=2867993983&c=3476009993&p=b&y=2022",
   "S": "Macroblank - adipose"
  },
  {
@@ -264,7 +268,7 @@
   "S": "Kelly Moran - Butterfly Phase (Official Video)"
  },
  {
-  "Q": "a=siuigj&b=2919196763&c=1476789671&p=bandcamp&y=2023",
+  "Q": "a=siuigj&b=2919196763&c=1476789671&p=b&y=2023",
   "S": "Colin Stetson - When we were that what wept for the sea"
  },
  {
@@ -416,7 +420,7 @@
   "S": "Plaid - Buddy"
  },
  {
-  "Q": "a=si2rcs&b=4091300299&c=923861725&p=bandcamp&y=1991",
+  "Q": "a=si2rcs&b=4091300299&c=923861725&p=b&y=1991",
   "S": "Harold Budd - Boy About 10"
  },
  {
@@ -1868,7 +1872,7 @@
   "S": "Elder Srolls III: Morrowind Soundtrack - 01. Nerevar Rising"
  },
  {
-  "Q": "a=rqo758&b=1192599748&c=3696659165&p=bandcamp&y=2023",
+  "Q": "a=rqo758&b=1192599748&c=3696659165&p=b&y=2023",
   "S": "Nomyn - Let Go"
  },
  {
@@ -2028,7 +2032,7 @@
   "S": "Jewel - Kiss the Flame"
  },
  {
-  "Q": "a=rlitiv&b=3162466594&c=1214079082&p=bandcamp&y=2022",
+  "Q": "a=rlitiv&b=3162466594&c=1214079082&p=b&y=2022",
   "S": "Rhucle - 幻のさざなみ"
  },
  {
@@ -2242,10 +2246,6 @@
  {
   "Q": "a=revzpb&b=LSLgMLA4Eag&p=y&y=2005",
   "S": "The Mars Volta - Cassandra Gemini: Pisacis (Phra-men-ma)"
- },
- {
-  "Q": "a=revvxx&b=KIyLfYZJvq0&p=y&y=1998",
-  "S": "Koji Kondo - Legend of Zelda: Ocarina of Time - Sheik"
  },
  {
   "Q": "a=rermzo&b=U7MuV_qNsa8&p=y&y=2022",
@@ -2516,7 +2516,7 @@
   "S": "Radiohead - Street Spirit (Fade Out)"
  },
  {
-  "Q": "a=r4ojba&b=2853352906&c=3262928180&p=bandcamp&y=2014",
+  "Q": "a=r4ojba&b=2853352906&c=3262928180&p=b&y=2014",
   "S": "Solar Fields - Sol (remix)"
  },
  {
@@ -2560,19 +2560,19 @@
   "S": "Frankie Goes to Hollywood - Welcome to the Pleasuredome"
  },
  {
-  "Q": "a=r2sjwg&b=.weba&c=the-mars-volta-maida-vale-session.jpg&p=b&y=2003",
+  "Q": "a=r2sjwg&b=.weba&c=the-mars-volta-maida-vale-session.jpg&p=h&y=2003",
   "S": "The Mars Volta - Obelisk (part 2 of 2)"
  },
  {
-  "Q": "a=r2sjwa&b=.weba&c=the-mars-volta-maida-vale-session.jpg&p=b&y=2003",
+  "Q": "a=r2sjwa&b=.weba&c=the-mars-volta-maida-vale-session.jpg&p=h&y=2003",
   "S": "The Mars Volta - Maida Vale session - Cicatriz (part 2 of 2)"
  },
  {
-  "Q": "a=r2sjw3&b=.mp3&c=pizzicato-five-sister-freedom-tapes.jpg&p=b&y=1996",
+  "Q": "a=r2sjw3&b=.mp3&c=pizzicato-five-sister-freedom-tapes.jpg&p=h&y=1996",
   "S": "Pizzicato Five - Chicken Curry"
  },
  {
-  "Q": "a=r2sjvi&b=.mp3&c=julia-holter-maria.jpg&p=b&y=2011",
+  "Q": "a=r2sjvi&b=.mp3&c=julia-holter-maria.jpg&p=h&y=2011",
   "S": "Julia Holter - Maria"
  },
  {

@@ -7,13 +7,6 @@ export function new_http(q) {
    return back;
 }
 
-export function new_vimeo(param) {
-   const vim = {};
-   vim.href = 'https://vimeo.com/' + param.get('b');
-   vim.src = 'https://i.vimeocdn.com/video/' + param.get('c');
-   return vim;
-}
-
 const date_parts = [
    {weekday: 'short'}, {month: 'short'}, {day: 'numeric'}, {year: 'numeric'}
 ];
