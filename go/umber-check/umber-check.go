@@ -10,19 +10,27 @@ import (
    "time"
 )
 
+type Player struct {
+   PlayabilityStatus struct {
+      Status string
+      Reason string
+   }
+   VideoDetails struct {
+      Author string
+      LengthSeconds int64 `json:",string"`
+      ShortDescription string
+      Title string
+      VideoId string
+      ViewCount int64 `json:",string"`
+   }
+}
+
 func (i *InnerTube) Player() (*Player, error) {
    i.Context.Client.AndroidSdkVersion = 32
    i.Context.Client.OsVersion = "12"
-   switch i.Context.Client.ClientName {
-   case android:
-      i.ContentCheckOk = true
-      i.Context.Client.ClientVersion = android_version
-      i.RacyCheckOk = true
-   case android_embedded_player:
-      i.Context.Client.ClientVersion = android_version
-   case web:
-      i.Context.Client.ClientVersion = web_version
-   }
+   i.ContentCheckOk = true
+   i.Context.Client.ClientVersion = android_version
+   i.RacyCheckOk = true
    data, err := json.Marshal(i)
    if err != nil {
       return nil, err
@@ -48,21 +56,6 @@ func (i *InnerTube) Player() (*Player, error) {
    return play, nil
 }
 
-type Player struct {
-   PlayabilityStatus struct {
-      Status string
-      Reason string
-   }
-   VideoDetails struct {
-      Author string
-      LengthSeconds int64 `json:",string"`
-      ShortDescription string
-      Title string
-      VideoId string
-      ViewCount int64 `json:",string"`
-   }
-}
-
 const user_agent = "com.google.android.youtube/"
 
 // need `osVersion` this to get the correct:
@@ -84,52 +77,4 @@ type InnerTube struct {
    VideoId string `json:"videoId"`
 }
 
-const (
-   android_version = "19.33.35"
-   web_version = "2.20231219.04.00"
-)
-
-const (
-   android = "ANDROID"
-   android_embedded_player = "ANDROID_EMBEDDED_PLAYER"
-   web = "WEB"
-)
-
-var ClientName = []string{
-   android,
-   android_embedded_player,
-   web,
-}
-const start = 721
-
-func main() {
-   file, err := os.Open("../../docs/umber.json")
-   if err != nil {
-      panic(err)
-   }
-   defer file.Close()
-   var songs []struct {
-      Q string
-   }
-   json.NewDecoder(file).Decode(&songs)
-   for i, song := range songs {
-      if i < start {
-         continue
-      }
-      query, err := url.ParseQuery(song.Q)
-      if err != nil {
-         panic(err)
-      }
-      if query.Get("p") == "y" {
-         var tube InnerTube
-         tube.VideoId = query.Get("b")
-         tube.Context.Client.ClientName = "ANDROID"
-         play, err := tube.Player()
-         if err != nil {
-            panic(err)
-         }
-         fmt.Println(play.PlayabilityStatus.Status, tube.VideoId, len(songs)-i)
-         time.Sleep(99 * time.Millisecond)
-      }
-   }
-}
+const android_version = "19.33.35"
