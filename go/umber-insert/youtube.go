@@ -10,6 +10,7 @@ import (
    "strconv"
    "strings"
    "time"
+   "umber/youtube"
 )
 
 func (y *youtube_set) parse(arg []string) (*record, error) {

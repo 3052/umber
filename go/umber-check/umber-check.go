@@ -3,31 +3,20 @@ package main
 import (
    "bytes"
    "encoding/json"
+   "errors"
    "net/http"
 )
 
-type Player struct {
-   PlayabilityStatus struct {
-      Status string
-      Reason string
-   }
-   VideoDetails struct {
-      Author string
-      LengthSeconds int64 `json:",string"`
-      ShortDescription string
-      Title string
-      VideoId string
-      ViewCount int64 `json:",string"`
-   }
-}
-
 func (i *InnerTube) Player() (*Player, error) {
-   i.Context.Client.AndroidSdkVersion = 32
-   i.Context.Client.OsVersion = "12"
    i.ContentCheckOk = true
-   i.Context.Client.ClientVersion = android_version
    i.RacyCheckOk = true
-   data, err := json.Marshal(i)
+   //i.Context.Client.AndroidSdkVersion = 32
+   //i.Context.Client.OsVersion = "12"
+   //i.Context.Client.ClientName = "ANDROID"
+   //i.Context.Client.ClientVersion = android_version
+   i.Context.Client.ClientName = "IOS"
+   i.Context.Client.ClientVersion = "19.45.4"
+   data, err := json.MarshalIndent(i, "", " ")
    if err != nil {
       return nil, err
    }
@@ -44,12 +33,30 @@ func (i *InnerTube) Player() (*Player, error) {
       return nil, err
    }
    defer resp.Body.Close()
+   if resp.StatusCode != http.StatusOK {
+      return nil, errors.New(resp.Status)
+   }
    play := &Player{}
    err = json.NewDecoder(resp.Body).Decode(play)
    if err != nil {
       return nil, err
    }
    return play, nil
+}
+
+type Player struct {
+   PlayabilityStatus struct {
+      Status string
+      Reason string
+   }
+   VideoDetails struct {
+      Author string
+      LengthSeconds int64 `json:",string"`
+      ShortDescription string
+      Title string
+      VideoId string
+      ViewCount int64 `json:",string"`
+   }
 }
 
 const user_agent = "com.google.android.youtube/"

@@ -1,8 +1,8 @@
 # WebExtension
 
 Once you start the extension, it will open an empty playlist in new tab. After
-that, you can go to other tabs, and if you right click on any YouTube links,
-they will be added to the playlist. If you hit play in the playlist tab, once
+that, you can go to other tabs, and if you right click on any media links, they
+will be added to the playlist. If you hit play in the playlist tab, once
 the first video is ended, it will automatically start the next video. Visit
 this page for testing:
 

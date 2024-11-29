@@ -23,6 +23,7 @@ func main() {
    defer file.Close()
    var songs []struct {
       Q string
+      S string
    }
    err = json.NewDecoder(file).Decode(&songs)
    if err != nil {
@@ -39,13 +40,13 @@ func main() {
       if query.Get("p") == "y" {
          var tube InnerTube
          tube.VideoId = query.Get("b")
-         tube.Context.Client.ClientName = "ANDROID"
          play, err := tube.Player()
          if err != nil {
             panic(err)
          }
-         fmt.Println(tube.VideoId, i, len(songs))
+         fmt.Println(i, len(songs), tube.VideoId, song.S)
          if play.PlayabilityStatus.Status != "OK" {
+            fmt.Println(play.PlayabilityStatus.Status)
             break
          }
          time.Sleep(99 * time.Millisecond)
