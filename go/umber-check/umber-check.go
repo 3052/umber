@@ -10,10 +10,6 @@ import (
 func (i *InnerTube) Player() (*Player, error) {
    i.ContentCheckOk = true
    i.RacyCheckOk = true
-   //i.Context.Client.AndroidSdkVersion = 32
-   //i.Context.Client.OsVersion = "12"
-   //i.Context.Client.ClientName = "ANDROID"
-   //i.Context.Client.ClientVersion = android_version
    i.Context.Client.ClientName = "IOS"
    i.Context.Client.ClientVersion = "19.45.4"
    data, err := json.MarshalIndent(i, "", " ")
@@ -79,5 +75,3 @@ type InnerTube struct {
    RacyCheckOk bool `json:"racyCheckOk,omitempty"`
    VideoId string `json:"videoId"`
 }
-
-const android_version = "19.33.35"
