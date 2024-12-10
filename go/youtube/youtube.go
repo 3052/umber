@@ -4,8 +4,6 @@ import (
    "errors"
    "fmt"
    "mime"
-   "net/url"
-   "path"
    "strings"
 )
 
@@ -41,25 +39,6 @@ func (a *AdaptiveFormat) Ranges() []string {
       pos += bytes
    }
    return byte_ranges
-}
-
-type VideoId string
-
-func (v *VideoId) Set(text string) error {
-   address, err := url.Parse(text)
-   if err != nil {
-      return err
-   }
-   id := address.Query().Get("v")
-   if id == "" {
-      id = path.Base(address.Path)
-   }
-   *v = VideoId(id)
-   return nil
-}
-
-func (v VideoId) String() string {
-   return string(v)
 }
 
 type YtImg struct {
