@@ -49,6 +49,7 @@ func (i *InnerTube) Player(token *AuthToken) (*Player, error) {
    }
    return play, nil
 }
+
 type Player struct {
    Microformat struct {
       PlayerMicroformatRenderer struct {
