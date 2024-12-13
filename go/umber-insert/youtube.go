@@ -27,7 +27,7 @@ func (y *youtube_set) parse(arg []string) (*record, error) {
    if base != "" {
       value.Set("c", base)
    }
-   play, err := y.tube.Player(nil)
+   play, err := y.tube.Player()
    if err != nil {
       return nil, err
    }
@@ -35,7 +35,7 @@ func (y *youtube_set) parse(arg []string) (*record, error) {
    rec.S = play.VideoDetails.Author + " - " + play.VideoDetails.Title
    fmt.Println(play.VideoDetails.ShortDescription)
    value.Set("y", strconv.Itoa(
-      play.Microformat.PlayerMicroformatRenderer.PublishDate.Time.Year(),
+      play.Microformat.PlayerMicroformatRenderer.PublishDate().Year(),
    ))
    rec.Q = value.Encode()
    return &rec, nil

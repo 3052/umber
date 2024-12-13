@@ -7,12 +7,12 @@ import (
    "fmt"
    "mime"
    "net/http"
-   "net/url"
+   //"net/url"
    "strings"
    "time"
 )
 
-func (i *InnerTube) Player(token *AuthToken) (*Player, error) {
+func (i *InnerTube) Player() (*Player, error) {
    i.Context.Client.AndroidSdkVersion = 32
    i.Context.Client.OsVersion = "12"
    switch i.Context.Client.ClientName {
@@ -37,9 +37,6 @@ func (i *InnerTube) Player(token *AuthToken) (*Player, error) {
       return nil, err
    }
    req.Header.Set("user-agent", user_agent + i.Context.Client.ClientVersion)
-   if token != nil {
-      req.Header.Set("authorization", "Bearer " + token.AccessToken)
-   }
    resp, err := http.DefaultClient.Do(req)
    if err != nil {
       return nil, err
@@ -53,78 +50,8 @@ func (i *InnerTube) Player(token *AuthToken) (*Player, error) {
    return play, nil
 }
 
-type Player struct {
-   Microformat struct {
-      PlayerMicroformatRenderer struct {
-         PublishDate Date
-      }
-   }
-   PlayabilityStatus struct {
-      Status string
-      Reason string
-   }
-   StreamingData struct {
-      AdaptiveFormats []AdaptiveFormat
-   }
-   VideoDetails struct {
-      Author string
-      LengthSeconds int64 `json:",string"`
-      ShortDescription string
-      Title string
-      VideoId string
-      ViewCount int64 `json:",string"`
-   }
-}
-
 const user_agent = "com.google.android.youtube/"
 
-type Date struct {
-   Time time.Time
-}
-
-func (d *Date) UnmarshalText(text []byte) error {
-   var err error
-   d.Time, err = time.Parse(time.RFC3339, string(text))
-   if err != nil {
-      return err
-   }
-   return nil
-}
-
-// YouTube on TV
-const (
-   client_id = "861556708454-d6dlm3lh05idd8npek18k6be8ba3oc68.apps.googleusercontent.com"
-   client_secret = "SboVhoG9s0rNafixCSGGKXAT"
-)
-
-func (a *AuthToken) Refresh() error {
-   resp, err := http.PostForm(
-      "https://oauth2.googleapis.com/token", url.Values{
-         "client_id": {client_id},
-         "client_secret": {client_secret},
-         "grant_type": {"refresh_token"},
-         "refresh_token": {a.RefreshToken},
-      },
-   )
-   if err != nil {
-      return err
-   }
-   defer resp.Body.Close()
-   return json.NewDecoder(resp.Body).Decode(a)
-}
-
-func (a *AuthToken) Marshal() ([]byte, error) {
-   return json.Marshal(a)
-}
-
-type AuthToken struct {
-   AccessToken string `json:"access_token"`
-   RefreshToken string `json:"refresh_token"`
-}
-
-func (a *AuthToken) Unmarshal(text []byte) error {
-   return json.Unmarshal(text, a)
-}
 // need `osVersion` this to get the correct:
 // This video requires payment to watch
 // instead of the invalid:
@@ -273,4 +200,40 @@ type AdaptiveFormat struct {
    MimeType string
    QualityLabel string
    Url string
+}
+
+type Player struct {
+   Microformat struct {
+      PlayerMicroformatRenderer struct {
+         PublishDate Date
+      }
+   }
+   PlayabilityStatus struct {
+      Status string
+      Reason string
+   }
+   StreamingData struct {
+      AdaptiveFormats []AdaptiveFormat
+   }
+   VideoDetails struct {
+      Author string
+      LengthSeconds int64 `json:",string"`
+      ShortDescription string
+      Title string
+      VideoId string
+      ViewCount int64 `json:",string"`
+   }
+}
+
+type Date func() time.Time
+
+func (d *Date) UnmarshalText(data []byte) error {
+   value, err := time.Parse(time.RFC3339, string(data))
+   if err != nil {
+      return err
+   }
+   *d = func() time.Time {
+      return value
+   }
+   return nil
 }
