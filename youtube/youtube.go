@@ -225,15 +225,15 @@ type Player struct {
    }
 }
 
-type Date func() time.Time
+type Date struct {
+   Time time.Time
+}
 
 func (d *Date) UnmarshalText(data []byte) error {
-   value, err := time.Parse(time.RFC3339, string(data))
+   var err error
+   d.Time, err = time.Parse(time.RFC3339, string(data))
    if err != nil {
       return err
-   }
-   *d = func() time.Time {
-      return value
    }
    return nil
 }
