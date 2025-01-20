@@ -6,7 +6,7 @@
       "default_icon": "umber.png"
    },
    "browser_specific_settings": {
-      "gecko": {"id": "umber@3052"}
+      "gecko": {"id": "41@neocities.org"}
    },
    "content_scripts": [
       {
