@@ -10,35 +10,9 @@ import (
    "time"
 )
 
-func (s *soundcloud_set) parse(arg []string) (*record, error) {
-   s.f.Parse(arg)
-   now := strconv.FormatInt(time.Now().Unix(), 36)
-   value := url.Values{}
-   value.Set("a", now)
-   value.Set("p", "s")
-   var row record
-   //////////////////////////////////////////////////////////////////////////////
-   var track soundcloud.ClientTrack
-   err := track.Resolve(s.address)
-   if err != nil {
-      return nil, err
-   }
-   value.Set("c", path.Base(
-      strings.Replace(track.Artwork(), "large", "t500x500", 1),
-   ))
-   //////////////////////////////////////////////////////////////////////////////
-   value.Set("y", strconv.Itoa(
-      track.DisplayDate.Year(),
-   ))
-   value.Set("b", strconv.FormatInt(track.Id, 10))
-   row.S = track.Title
-   row.Q = value.Encode()
-   return &row, nil
-}
-
 type soundcloud_set struct {
-   f *flag.FlagSet
    address string
+   f       *flag.FlagSet
 }
 
 func new_soundcloud() *soundcloud_set {
@@ -46,4 +20,27 @@ func new_soundcloud() *soundcloud_set {
    set.f = flag.NewFlagSet("soundcloud", flag.ExitOnError)
    set.f.StringVar(&set.address, "a", "", "address")
    return &set
+}
+
+func (s *soundcloud_set) parse(args []string) (*song, error) {
+   s.f.Parse(args)
+   var resolve soundcloud.Resolve
+   err := resolve.New(s.address)
+   if err != nil {
+      return nil, err
+   }
+   var song0 song
+   song0.S = resolve.Title
+   song0.Q = url.Values{
+      "a": {strconv.FormatInt(time.Now().Unix(), 36)},
+      "b": {strconv.FormatInt(resolve.Id, 10)},
+      "c": {
+         path.Base(strings.Replace(resolve.Artwork(), "large", "t500x500", 1)),
+      },
+      "p": {"s"},
+      "y": {
+         strconv.Itoa(resolve.DisplayDate.Year()),
+      },
+   }.Encode()
+   return &song0, nil
 }

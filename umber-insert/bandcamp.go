@@ -2,39 +2,16 @@ package main
 
 import (
    "41.neocities.org/platform/bandcamp"
+   "errors"
    "flag"
    "net/url"
    "strconv"
    "time"
 )
 
-func (b *bandcamp_set) parse(arg []string) (*record, error) {
-   b.f.Parse(arg)
-   now := strconv.FormatInt(time.Now().Unix(), 36)
-   value := url.Values{}
-   value.Set("a", now)
-   value.Set("p", "bandcamp")
-   var rec record
-   var params bandcamp.ReportParams
-   err := params.New(b.address)
-   if err != nil {
-      return nil, err
-   }
-   track, err := params.Tralbum()
-   if err != nil {
-      return nil, err
-   }
-   value.Set("y", strconv.Itoa(track.Date().Year()))
-   rec.S = track.TralbumArtist + " - " + track.Title
-   value.Set("c", strconv.FormatInt(track.ArtId, 10))
-   value.Set("b", strconv.Itoa(params.Iid))
-   rec.Q = value.Encode()
-   return &rec, nil
-}
-
 type bandcamp_set struct {
-   f *flag.FlagSet
    address string
+   f       *flag.FlagSet
 }
 
 func new_bandcamp() *bandcamp_set {
@@ -42,4 +19,33 @@ func new_bandcamp() *bandcamp_set {
    set.f = flag.NewFlagSet("bandcamp", flag.ExitOnError)
    set.f.StringVar(&set.address, "a", "", "address")
    return &set
+}
+
+func (b *bandcamp_set) parse(args []string) (*song, error) {
+   b.f.Parse(args)
+   var params bandcamp.ReportParams
+   err := params.New(b.address)
+   if err != nil {
+      return nil, err
+   }
+   tralbum, ok := params.Tralbum()
+   if !ok {
+      return nil, errors.New("Tralbum")
+   }
+   detail, err := tralbum.Tralbum()
+   if err != nil {
+      return nil, err
+   }
+   var song0 song
+   song0.S = detail.TralbumArtist + " - " + detail.Title
+   song0.Q = url.Values{
+      "a": {strconv.FormatInt(time.Now().Unix(), 36)},
+      "b": {strconv.Itoa(params.Iid)},
+      "c": {strconv.FormatInt(detail.ArtId, 10)},
+      "p": {"bandcamp"},
+      "y": {
+         strconv.Itoa(detail.Time().Year()),
+      },
+   }.Encode()
+   return &song0, nil
 }

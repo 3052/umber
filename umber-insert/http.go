@@ -9,8 +9,8 @@ import (
 )
 
 type http_set struct {
-   f *flag.FlagSet
-   year string
+   f     *flag.FlagSet
+   year  string
    audio string
    image string
 }
@@ -24,17 +24,17 @@ func new_http() *http_set {
    return &set
 }
 
-func (h *http_set) parse(arg []string) (*record, error) {
-   h.f.Parse(arg)
+func (h *http_set) parse(args []string) (*song, error) {
+   h.f.Parse(args)
    now := strconv.FormatInt(time.Now().Unix(), 36)
    value := url.Values{}
    value.Set("a", now)
    value.Set("p", "h")
    value.Set("y", h.year)
-   var rec record
+   var song0 song
    value.Set("b", h.audio)
    value.Set("c", h.image)
-   rec.Q = value.Encode()
-   rec.S = path.Base(h.audio)
-   return &rec, nil
+   song0.Q = value.Encode()
+   song0.S = path.Base(h.audio)
+   return &song0, nil
 }

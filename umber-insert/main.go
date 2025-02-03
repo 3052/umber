@@ -7,43 +7,56 @@ import (
    "os"
 )
 
-type record struct {
+type song struct {
    Q string
    S string
 }
 
+func read_songs(name string) ([]*song, error) {
+   data, err := os.ReadFile(name)
+   if err != nil {
+      return nil, err
+   }
+   var songs []*song
+   err = json.Unmarshal(data, &songs)
+   if err != nil {
+      return nil, err
+   }
+   return songs, nil
+}
+
 func main() {
    flag.Parse()
-   recs, err := records("umber.json")
+   songs, err := read_songs("umber.json")
    if err != nil {
       panic(err)
    }
    if len(os.Args) >= 3 {
-      arg := os.Args[2:]
-      var rec *record
+      args := os.Args[2:]
+      var song0 *song
       switch os.Args[1] {
       case "http":
-         rec, err = new_http().parse(arg)
+         song0, err = new_http().parse(args)
       case "bandcamp":
-         rec, err = new_bandcamp().parse(arg)
+         song0, err = new_bandcamp().parse(args)
       case "soundcloud":
-         rec, err = new_soundcloud().parse(arg)
+         song0, err = new_soundcloud().parse(args)
       case "youtube":
-         rec, err = new_youtube().parse(arg)
+         song0, err = new_youtube().parse(args)
       }
       if err != nil {
          panic(err)
       }
-      recs = append([]*record{rec}, recs...)
-      var text bytes.Buffer
-      enc := json.NewEncoder(&text)
+      songs = append([]*song{song0}, songs...)
+      var buf bytes.Buffer
+      enc := json.NewEncoder(&buf)
       enc.SetEscapeHTML(false)
       enc.SetIndent("", " ")
-      err := enc.Encode(recs)
+      err := enc.Encode(songs)
       if err != nil {
          panic(err)
       }
-      err = os.WriteFile("umber.json", text.Bytes(), os.ModePerm)
+      err = os.WriteFile("umber.json", buf.Bytes(), os.ModePerm)
       if err != nil {
          panic(err)
       }
@@ -53,17 +66,4 @@ func main() {
       new_soundcloud().f.Usage()
       new_youtube().f.Usage()
    }
-}
-
-func records(config string) ([]*record, error) {
-   text, err := os.ReadFile(config)
-   if err != nil {
-      return nil, err
-   }
-   var recs []*record
-   err = json.Unmarshal(text, &recs)
-   if err != nil {
-      return nil, err
-   }
-   return recs, nil
 }
