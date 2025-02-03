@@ -16,20 +16,22 @@ func (s *soundcloud_set) parse(arg []string) (*record, error) {
    value := url.Values{}
    value.Set("a", now)
    value.Set("p", "s")
+   var row record
+   //////////////////////////////////////////////////////////////////////////////
    var track soundcloud.ClientTrack
    err := track.Resolve(s.address)
    if err != nil {
       return nil, err
    }
-   var row record
-   row.S = track.Title
-   value.Set("b", strconv.FormatInt(track.Id, 10))
-   value.Set("y", strconv.Itoa(
-      track.DisplayDate.Year(),
-   ))
    value.Set("c", path.Base(
       strings.Replace(track.Artwork(), "large", "t500x500", 1),
    ))
+   //////////////////////////////////////////////////////////////////////////////
+   value.Set("y", strconv.Itoa(
+      track.DisplayDate.Year(),
+   ))
+   value.Set("b", strconv.FormatInt(track.Id, 10))
+   row.S = track.Title
    row.Q = value.Encode()
    return &row, nil
 }
