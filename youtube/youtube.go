@@ -3,11 +3,7 @@ package youtube
 import (
    "bytes"
    "encoding/json"
-   "errors"
-   "fmt"
-   "mime"
    "net/http"
-   //"net/url"
    "strings"
    "time"
 )
@@ -71,21 +67,6 @@ type InnerTube struct {
    VideoId string `json:"videoId"`
 }
 
-// we need the length for progress meter, so cannot use a channel
-func (a *AdaptiveFormat) Ranges() []string {
-   const bytes = 10_000_000
-   var (
-      byte_ranges []string
-      pos int64
-   )
-   for pos < a.ContentLength {
-      byte_range := fmt.Sprintf("&range=%v-%v", pos, pos+bytes-1)
-      byte_ranges = append(byte_ranges, byte_range)
-      pos += bytes
-   }
-   return byte_ranges
-}
-
 type YtImg struct {
    Height int
    Name string
@@ -141,16 +122,16 @@ var YtImgs = []YtImg{
 }
 
 func (y *YtImg) String() string {
-   var b strings.Builder
-   b.WriteString("http://i.ytimg.com/vi")
+   var data strings.Builder
+   data.WriteString("http://i.ytimg.com/vi")
    if strings.HasSuffix(y.Name, ".webp") {
-      b.WriteString("_webp")
+      data.WriteString("_webp")
    }
-   b.WriteByte('/')
-   b.WriteString(y.VideoId)
-   b.WriteByte('/')
-   b.WriteString(y.Name)
-   return b.String()
+   data.WriteByte('/')
+   data.WriteString(y.VideoId)
+   data.WriteByte('/')
+   data.WriteString(y.Name)
+   return data.String()
 }
 
 const (
@@ -168,28 +149,6 @@ var ClientName = []string{
    android,
    android_embedded_player,
    web,
-}
-
-func (a *AdaptiveFormat) Ext() (string, error) {
-   media, _, err := mime.ParseMediaType(a.MimeType)
-   if err != nil {
-      return "", err
-   }
-   switch media {
-   case "audio/mp4":
-      return ".m4a", nil
-   case "audio/webm":
-      return ".weba", nil
-   case "video/mp4":
-      return ".m4v", nil
-   case "video/webm":
-      return ".webm", nil
-   }
-   return "", errors.New(a.MimeType)
-}
-
-func (a AdaptiveFormat) CompareBitrate(b AdaptiveFormat) int {
-   return a.Bitrate - b.Bitrate
 }
 
 type AdaptiveFormat struct {
