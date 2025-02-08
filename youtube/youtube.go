@@ -151,15 +151,7 @@ var ClientName = []string{
    web,
 }
 
-type AdaptiveFormat struct {
-   AudioQuality string
-   Bitrate int
-   ContentLength int64 `json:",string"`
-   Itag int
-   MimeType string
-   QualityLabel string
-   Url string
-}
+///
 
 type Player struct {
    Microformat struct {
@@ -170,9 +162,6 @@ type Player struct {
    PlayabilityStatus struct {
       Status string
       Reason string
-   }
-   StreamingData struct {
-      AdaptiveFormats []AdaptiveFormat
    }
    VideoDetails struct {
       Author string
