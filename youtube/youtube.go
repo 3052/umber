@@ -151,8 +151,6 @@ var ClientName = []string{
    web,
 }
 
-///
-
 type Player struct {
    Microformat struct {
       PlayerMicroformatRenderer struct {
@@ -173,13 +171,11 @@ type Player struct {
    }
 }
 
-type Date struct {
-   Time time.Time
-}
+type Date [1]time.Time
 
 func (d *Date) UnmarshalText(data []byte) error {
    var err error
-   d.Time, err = time.Parse(time.RFC3339, string(data))
+   (*d)[0], err = time.Parse(time.RFC3339, string(data))
    if err != nil {
       return err
    }

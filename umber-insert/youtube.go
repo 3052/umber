@@ -13,6 +13,34 @@ import (
    "umber/youtube"
 )
 
+func (y *youtube_set) parse(args []string) (*song, error) {
+   y.f.Parse(args)
+   now := strconv.FormatInt(time.Now().Unix(), 36)
+   value := url.Values{}
+   value.Set("a", now)
+   value.Set("p", "y")
+   value.Set("b", y.tube.VideoId)
+   base, err := get_image(y.tube.VideoId)
+   if err != nil {
+      return nil, err
+   }
+   if base != "" {
+      value.Set("c", base)
+   }
+   play, err := y.tube.Player()
+   if err != nil {
+      return nil, err
+   }
+   var song0 song
+   song0.S = play.VideoDetails.Author + " - " + play.VideoDetails.Title
+   fmt.Println(play.VideoDetails.ShortDescription)
+   value.Set("y", strconv.Itoa(
+      play.Microformat.PlayerMicroformatRenderer.PublishDate[0].Year(),
+   ))
+   song0.Q = value.Encode()
+   return &song0, nil
+}
+
 type youtube_set struct {
    f    *flag.FlagSet
    tube youtube.InnerTube
@@ -67,32 +95,3 @@ func get_image(video_id string) (string, error) {
    }
    return "", nil
 }
-
-func (y *youtube_set) parse(args []string) (*song, error) {
-   y.f.Parse(args)
-   now := strconv.FormatInt(time.Now().Unix(), 36)
-   value := url.Values{}
-   value.Set("a", now)
-   value.Set("p", "y")
-   value.Set("b", y.tube.VideoId)
-   base, err := get_image(y.tube.VideoId)
-   if err != nil {
-      return nil, err
-   }
-   if base != "" {
-      value.Set("c", base)
-   }
-   play, err := y.tube.Player()
-   if err != nil {
-      return nil, err
-   }
-   var song0 song
-   song0.S = play.VideoDetails.Author + " - " + play.VideoDetails.Title
-   fmt.Println(play.VideoDetails.ShortDescription)
-   value.Set("y", strconv.Itoa(
-      play.Microformat.PlayerMicroformatRenderer.PublishDate.Time.Year(),
-   ))
-   song0.Q = value.Encode()
-   return &song0, nil
-}
-
