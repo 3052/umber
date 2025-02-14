@@ -36,9 +36,9 @@ func (b *bandcamp_set) parse(args []string) (*song, error) {
    if err != nil {
       return nil, err
    }
-   var song0 song
-   song0.S = detail.TralbumArtist + " - " + detail.Title
-   song0.Q = url.Values{
+   var song1 song
+   song1.S = detail.TralbumArtist + " - " + detail.Title
+   song1.Q = url.Values{
       "a": {strconv.FormatInt(time.Now().Unix(), 36)},
       "b": {strconv.Itoa(params.Iid)},
       "c": {strconv.FormatInt(detail.ArtId, 10)},
@@ -47,5 +47,5 @@ func (b *bandcamp_set) parse(args []string) (*song, error) {
          strconv.Itoa(detail.Time().Year()),
       },
    }.Encode()
-   return &song0, nil
+   return &song1, nil
 }

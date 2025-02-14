@@ -31,14 +31,14 @@ func (y *youtube_set) parse(args []string) (*song, error) {
    if err != nil {
       return nil, err
    }
-   var song0 song
-   song0.S = play.VideoDetails.Author + " - " + play.VideoDetails.Title
+   var song1 song
+   song1.S = play.VideoDetails.Author + " - " + play.VideoDetails.Title
    fmt.Println(play.VideoDetails.ShortDescription)
    value.Set("y", strconv.Itoa(
       play.Microformat.PlayerMicroformatRenderer.PublishDate[0].Year(),
    ))
-   song0.Q = value.Encode()
-   return &song0, nil
+   song1.Q = value.Encode()
+   return &song1, nil
 }
 
 type youtube_set struct {

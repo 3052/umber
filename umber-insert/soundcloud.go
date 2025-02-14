@@ -29,9 +29,9 @@ func (s *soundcloud_set) parse(args []string) (*song, error) {
    if err != nil {
       return nil, err
    }
-   var song0 song
-   song0.S = resolve.Title
-   song0.Q = url.Values{
+   var song1 song
+   song1.S = resolve.Title
+   song1.Q = url.Values{
       "a": {strconv.FormatInt(time.Now().Unix(), 36)},
       "b": {strconv.FormatInt(resolve.Id, 10)},
       "c": {
@@ -42,5 +42,5 @@ func (s *soundcloud_set) parse(args []string) (*song, error) {
          strconv.Itoa(resolve.DisplayDate.Year()),
       },
    }.Encode()
-   return &song0, nil
+   return &song1, nil
 }

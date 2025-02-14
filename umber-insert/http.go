@@ -31,10 +31,10 @@ func (h *http_set) parse(args []string) (*song, error) {
    value.Set("a", now)
    value.Set("p", "h")
    value.Set("y", h.year)
-   var song0 song
+   var song1 song
    value.Set("b", h.audio)
    value.Set("c", h.image)
-   song0.Q = value.Encode()
-   song0.S = path.Base(h.audio)
-   return &song0, nil
+   song1.Q = value.Encode()
+   song1.S = path.Base(h.audio)
+   return &song1, nil
 }

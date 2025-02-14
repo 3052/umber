@@ -33,21 +33,21 @@ func main() {
    }
    if len(os.Args) >= 3 {
       args := os.Args[2:]
-      var song0 *song
+      var song1 *song
       switch os.Args[1] {
       case "http":
-         song0, err = new_http().parse(args)
+         song1, err = new_http().parse(args)
       case "bandcamp":
-         song0, err = new_bandcamp().parse(args)
+         song1, err = new_bandcamp().parse(args)
       case "soundcloud":
-         song0, err = new_soundcloud().parse(args)
+         song1, err = new_soundcloud().parse(args)
       case "youtube":
-         song0, err = new_youtube().parse(args)
+         song1, err = new_youtube().parse(args)
       }
       if err != nil {
          panic(err)
       }
-      songs = append([]*song{song0}, songs...)
+      songs = append([]*song{song1}, songs...)
       var buf bytes.Buffer
       enc := json.NewEncoder(&buf)
       enc.SetEscapeHTML(false)
