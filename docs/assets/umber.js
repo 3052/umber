@@ -9,11 +9,11 @@ import {
 } from '/umber/assets/platform.js';
 
 function figure(row) {
-   const sp = new URLSearchParams(row.Q);
+   const param = new URLSearchParams(row.Q);
    const temp = document.querySelector('template');
-   const a_id = sp.get('a');
+   const a_id = param.get('a');
    const clone = temp.content.cloneNode(true);
-   const attr = href_src(sp);
+   const attr = href_src(param);
    const anc = clone.querySelector('a');
    anc.target = '_blank';
    anc.href = attr.href;
@@ -22,7 +22,7 @@ function figure(row) {
    const thead = clone.querySelector('thead td');
    thead.textContent = row.S;
    const rel = clone.querySelector('.release');
-   rel.textContent = sp.get('y');
+   rel.textContent = param.get('y');
    const post = clone.querySelector('.post');
    post.textContent = date_format(a_id);
    const td_view = clone.querySelector('td.view');
@@ -102,8 +102,8 @@ async function main() {
    const older = document.getElementById('older');
    const old_index = begin + per_page;
    if (old_index < table.length) {
-      const sp = new URLSearchParams(table[old_index].Q);
-      search.set('a', sp.get('a'));
+      const param = new URLSearchParams(table[old_index].Q);
+      search.set('a', param.get('a'));
       older.href = '?' + search.toString();
    } else {
       older.remove();
@@ -111,8 +111,8 @@ async function main() {
    const newer = document.getElementById('newer');
    const new_index = begin - per_page;
    if (new_index >= 0) {
-      const sp = new URLSearchParams(table[new_index].Q);
-      search.set('a', sp.get('a'));
+      const param = new URLSearchParams(table[new_index].Q);
+      search.set('a', param.get('a'));
       newer.href = '?' + search.toString();
    } else {
       newer.remove();

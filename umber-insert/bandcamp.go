@@ -42,7 +42,7 @@ func (b *bandcamp_set) parse(args []string) (*song, error) {
       "a": {strconv.FormatInt(time.Now().Unix(), 36)},
       "b": {strconv.Itoa(params.Iid)},
       "c": {strconv.FormatInt(detail.ArtId, 10)},
-      "p": {"bandcamp"},
+      "p": {"b"},
       "y": {
          strconv.Itoa(detail.Time().Year()),
       },
