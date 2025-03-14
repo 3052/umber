@@ -9,13 +9,13 @@ async function youTube() {
    body.context.client = {};
    req.headers = {};
    //////////////////////////////////////////////////////////////////////////////
-   //body.context.client.androidSdkVersion = 99;
-   //body.context.client.clientName = 'ANDROID';
    body.context.client.clientName = 'IOS';
-   //body.context.client.clientVersion = '18.19.99';
    body.context.client.clientVersion = '20.03.02';
-   //req.headers['user-agent'] = 'com.google.android.youtube/18.99.99';
-   req.headers['user-agent'] = 'com.google.ios.youtube/20.03.02 (iPhone16,2; U; CPU iOS 18_2_1 like Mac OS X;)';
+   // data := base64.RawStdEncoding.EncodeToString([]byte("########"))
+   // var message protobuf.Message
+   // message.AddBytes(1, []byte(data))
+   // return base64.RawStdEncoding.EncodeToString(message.Marshal())
+   req.headers['X-Goog-Visitor-Id'] = 'CgtJeU1qSXlNakl5TQ';
    //////////////////////////////////////////////////////////////////////////////
    req.body = JSON.stringify(body);
    req.method = 'POST';
