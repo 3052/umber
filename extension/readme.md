@@ -10,11 +10,13 @@ this page for testing:
 about:debugging#runtime/this-firefox
 ~~~
 
-Change this setting to allow installation:
-
-~~~
-xpinstall.signatures.required
-~~~
+1. chrome://geckoview/content/config.xhtml
+2. extensions.update.enabled = false
+3. settings
+4. about Firefox
+5. tap logo five times
+6. navigate up
+7. install extension from file
 
 - <https://developer.mozilla.org/docs/Mozilla/Add-ons/WebExtensions/user_interface>
 - https://extensionworkshop.com/documentation/develop/test-permission-requests
