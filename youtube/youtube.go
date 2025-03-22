@@ -8,6 +8,8 @@ import (
    "time"
 )
 
+const user_agent = "com.google.android.youtube/"
+
 func (i *InnerTube) Player() (*Player, error) {
    i.Context.Client.AndroidSdkVersion = 32
    i.Context.Client.OsVersion = "12"
@@ -46,7 +48,7 @@ func (i *InnerTube) Player() (*Player, error) {
    return play, nil
 }
 
-const user_agent = "com.google.android.youtube/"
+///
 
 // need `osVersion` this to get the correct:
 // This video requires payment to watch
