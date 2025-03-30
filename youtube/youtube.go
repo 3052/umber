@@ -8,6 +8,17 @@ import (
    "time"
 )
 
+func (d *Date) UnmarshalText(data []byte) error {
+   var err error
+   (*d)[0], err = time.Parse(time.RFC3339, string(data))
+   if err != nil {
+      return err
+   }
+   return nil
+}
+
+type Date [1]time.Time
+
 const user_agent = "com.google.android.youtube/"
 
 func (i *InnerTube) Player() (*Player, error) {
@@ -171,15 +182,4 @@ type Player struct {
       VideoId string
       ViewCount int64 `json:",string"`
    }
-}
-
-type Date [1]time.Time
-
-func (d *Date) UnmarshalText(data []byte) error {
-   var err error
-   (*d)[0], err = time.Parse(time.RFC3339, string(data))
-   if err != nil {
-      return err
-   }
-   return nil
 }
