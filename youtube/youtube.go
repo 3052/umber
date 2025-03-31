@@ -10,7 +10,7 @@ import (
 
 func (d *Date) UnmarshalText(data []byte) error {
    var err error
-   (*d)[0], err = time.Parse(time.RFC3339, string(data))
+   d[0], err = time.Parse(time.RFC3339, string(data))
    if err != nil {
       return err
    }
