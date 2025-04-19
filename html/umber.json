@@ -1,5 +1,45 @@
 [
  {
+  "Q": "a=snq0t1&b=http%3A%2F%2Fzeldauniverse.s3.amazonaws.com%2Fsoundtracks%2Focarinaoftimeost%2F50+-+Sheiks+Theme.mp3&c=https%3A%2F%2Fzeldauniverse.net%2Fwp-content%2Fuploads%2F2014%2F03%2Fmusic.jpg&p=h&y=1998",
+  "S": "50 - Sheiks Theme.mp3"
+ },
+ {
+  "Q": "a=r2sjw3&b=.mp3&c=pizzicato-five-sister-freedom-tapes.jpg&p=h&y=1996",
+  "S": "Pizzicato Five - Chicken Curry"
+ },
+ {
+  "Q": "a=r2sjvi&b=.mp3&c=julia-holter-maria.jpg&p=h&y=2011",
+  "S": "Julia Holter - Maria"
+ },
+ {
+  "Q": "a=qv4i25&b=JsjrIa9E9A8&p=y&y=1998",
+  "S": "Koji Kondo - Ocarina of Time - Temple of Time"
+ },
+ {
+  "Q": "a=suzmq1&b=90DKXLbzLto&p=y&y=2025",
+  "S": "Lord Huron - Topic - The Night We Met"
+ },
+ {
+  "Q": "a=suzmll&b=8XlflJesDhs&p=y&y=2024",
+  "S": "Kelly Moran - Topic - Sodalis (II)"
+ },
+ {
+  "Q": "a=suzmf2&b=RUy12XUbzOM&p=y&y=1998",
+  "S": "music_zelda - Potion Shop   The Legend of Zelda  Ocarina of Time"
+ },
+ {
+  "Q": "a=suzmdc&b=V5RqyZ8NKrg&p=y&y=1998",
+  "S": "music_zelda - Kokiri Forest - The Legend of Zelda: Ocarina of Time"
+ },
+ {
+  "Q": "a=suzm5t&b=CSRjh0_Zcvg&p=y&y=2000",
+  "S": "Cremia's Carriage - The Legend of Zelda: Majora's Mask OST | Remastered"
+ },
+ {
+  "Q": "a=suzlwv&b=LzPSYtKPCf0&p=y&y=1998",
+  "S": "music_zelda - Lon Lon Ranch - The Legend of Zelda: Ocarina of Time"
+ },
+ {
   "Q": "a=suzhdp&b=s3YA4-mDkPk&p=y&y=1998",
   "S": "music_zelda - Hyrule Field - The Legend of Zelda: Ocarina of Time"
  },
@@ -280,10 +320,6 @@
   "S": "Super Mario 64 Remastered - Staff Roll (2022 Update)"
  },
  {
-  "Q": "a=snq0t1&b=http%3A%2F%2Fzeldauniverse.s3.amazonaws.com%2Fsoundtracks%2Focarinaoftimeost%2F50+-+Sheiks+Theme.mp3&c=https%3A%2F%2Fzeldauniverse.net%2Fwp-content%2Fuploads%2F2014%2F03%2Fmusic.jpg&p=h&y=1998",
-  "S": "50 - Sheiks Theme.mp3"
- },
- {
   "Q": "a=snpvce&b=KxJIJFZToWQ&p=y&y=2016",
   "S": "Nicolas Jaar - Topic - Killing Time"
  },
@@ -370,10 +406,6 @@
  {
   "Q": "a=slzjjk&b=RAgq5HfCenA&c=sd1.webp&p=y&y=1983",
   "S": "Risky Business | Director's Cut | Final Scene - Alternate Ending"
- },
- {
-  "Q": "a=sly08r&b=m-Ni7q6qOrs&p=y&y=1998",
-  "S": "scrapper9000 - Lon Lon Ranch (w/ Malon) - Ocarina of Time Ultra High Quality"
  },
  {
   "Q": "a=slu5ye&b=MSb_31SUEXE&p=y&y=2019",
@@ -512,32 +544,12 @@
   "S": "The Police - Walking On The Moon"
  },
  {
-  "Q": "a=sj7a21&b=xbRkhXFHGCU&p=y&y=2000",
-  "S": "Legend of Zelda: Majora's Mask - Cremia's Carriage"
- },
- {
-  "Q": "a=sj79yz&b=HvzXDsPykqM&p=y&y=2000",
-  "S": "Legend of Zelda: Majora's Mask - House"
- },
- {
-  "Q": "a=sj73mk&b=b20lqacXdbs&p=y&y=1998",
-  "S": "Legend of Zelda: Ocarina of Time - Kokiri Forest"
- },
- {
-  "Q": "a=sj72o6&b=-pYjQpSOOBk&p=y&y=1998",
-  "S": "Legend of Zelda: Ocarina of Time - Potion Shop / Marine Lab"
- },
- {
   "Q": "a=sj6sr7&b=eLo1pQ45XYs&p=y&y=2020",
   "S": "Grimes - So Heavy I Fell Through the Earth"
  },
  {
   "Q": "a=sj3hgz&b=wH4kzAb4l0E&p=y&y=2017",
   "S": "Logic - Take It Back (Official Video)"
- },
- {
-  "Q": "a=siujn2&b=luZ7uoa7bpI&p=y&y=2024",
-  "S": "Kelly Moran - Sodalis (live)"
  },
  {
   "Q": "a=siuivl&b=Juj9d5_YK0o&p=y&y=2024",
@@ -1010,10 +1022,6 @@
  {
   "Q": "a=si28zv&b=ShEZA9mxrMI&p=y&y=2010",
   "S": "Autechre - r ess"
- },
- {
-  "Q": "a=si28yp&b=puJoT9AIsn8&p=y&y=2009",
-  "S": "Tiësto - Ten Seconds Before Sunrise"
  },
  {
   "Q": "a=si28xj&b=4RhMavTAtLU&p=y&y=2013",
@@ -1516,10 +1524,6 @@
   "S": "The Who - Who Are You (Promo Video)"
  },
  {
-  "Q": "a=s8ycqt&b=nG0HrAVIw_c&p=y&y=2015",
-  "S": "Lord Huron - The Night We Met"
- },
- {
   "Q": "a=s8vl2z&b=BZTlDbkB_Ao&p=y&y=2014",
   "S": "Moe Turk - Intro (Original Mix)"
  },
@@ -1918,10 +1922,6 @@
  {
   "Q": "a=rtukzt&b=3QtklTXbKUQ&p=y&y=2019",
   "S": "Imogen Heap: NPR Music Tiny Desk Concert"
- },
- {
-  "Q": "a=rtl58v&b=UmbxJ88IL2g&p=y&y=1995",
-  "S": "lip service - Pizzicato Five"
  },
  {
   "Q": "a=rtimoc&b=vjlaEHMSqB4&p=y&y=2000",
@@ -2828,14 +2828,6 @@
   "S": "The Mars Volta - Maida Vale session - Cicatriz (part 2 of 2)"
  },
  {
-  "Q": "a=r2sjw3&b=.mp3&c=pizzicato-five-sister-freedom-tapes.jpg&p=h&y=1996",
-  "S": "Pizzicato Five - Chicken Curry"
- },
- {
-  "Q": "a=r2sjvi&b=.mp3&c=julia-holter-maria.jpg&p=h&y=2011",
-  "S": "Julia Holter - Maria"
- },
- {
   "Q": "a=r1hlk7&b=f0zQkGmSbJk&p=y&y=2018",
   "S": "Timecop1983 - It was only a Dream"
  },
@@ -3218,10 +3210,6 @@
  {
   "Q": "a=qv7q0b&b=k0W_ybghFzg&p=y&y=1988",
   "S": "U2 - All I Want Is You"
- },
- {
-  "Q": "a=qv4i25&b=JsjrIa9E9A8&p=y&y=1998",
-  "S": "Koji Kondo - Ocarina of Time - Temple of Time"
  },
  {
   "Q": "a=qt9iyk&b=cQS4TzB0EvU&p=y&y=1985",

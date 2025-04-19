@@ -16,12 +16,12 @@ type song struct {
    S string
 }
 
-func read_songs(name string) ([]*song, error) {
+func read_songs(name string) ([]song, error) {
    data, err := os.ReadFile(name)
    if err != nil {
       return nil, err
    }
-   var songs []*song
+   var songs []song
    err = json.Unmarshal(data, &songs)
    if err != nil {
       return nil, err
@@ -29,75 +29,62 @@ func read_songs(name string) ([]*song, error) {
    return songs, nil
 }
 
+func write_file(name string, data []byte) error {
+   log.Println("WriteFile", name)
+   return os.WriteFile(name, data, os.ModePerm)
+}
+
 func main() {
+   log.SetFlags(log.Ltime)
+   var f flags
+   flag.StringVar(&f.audio, "a", "", "audio")
+   flag.StringVar(&f.image, "i", "", "image")
+   flag.StringVar(&f.name, "n", "umber.json", "name")
+   flag.StringVar(&f.year, "y", "", "year")
    flag.Parse()
-   songs, err := read_songs("umber.json")
-   if err != nil {
-      panic(err)
-   }
-   if len(os.Args) >= 3 {
-      args := os.Args[2:]
-      var song1 *song
-      switch os.Args[1] {
-      case "http":
-         song1, err = new_http().parse(args)
-      case "bandcamp":
-         song1, err = new_bandcamp().parse(args)
-      case "soundcloud":
-         song1, err = new_soundcloud().parse(args)
-      case "youtube":
-         song1, err = new_youtube().parse(args)
-      }
-      if err != nil {
-         panic(err)
-      }
-      songs = append([]*song{song1}, songs...)
-      var buf bytes.Buffer
-      enc := json.NewEncoder(&buf)
-      enc.SetEscapeHTML(false)
-      enc.SetIndent("", " ")
-      err := enc.Encode(songs)
-      if err != nil {
-         panic(err)
-      }
-      err = os.WriteFile("umber.json", buf.Bytes(), os.ModePerm)
+   if f.audio != "" {
+      err := f.do_http()
       if err != nil {
          panic(err)
       }
    } else {
-      new_http().f.Usage()
-      new_bandcamp().f.Usage()
-      new_soundcloud().f.Usage()
-      new_youtube().f.Usage()
+      flag.Usage()
    }
 }
-type http_set struct {
-   f     *flag.FlagSet
-   year  string
+
+type flags struct {
    audio string
    image string
+   name  string
+   year  string
 }
 
-func new_http() *http_set {
-   var set http_set
-   set.f = flag.NewFlagSet("http", flag.ExitOnError)
-   set.f.StringVar(&set.audio, "a", "", "audio")
-   set.f.StringVar(&set.image, "i", "", "image")
-   set.f.StringVar(&set.year, "y", "", "year")
-   return &set
-}
-
-func (h *http_set) parse(args []string) (*song, error) {
-   h.f.Parse(args)
+func (f *flags) do_http() error {
+   // 1 values
    now := strconv.FormatInt(time.Now().Unix(), 36)
-   value := url.Values{}
-   value.Set("a", now)
-   value.Set("p", "h")
-   value.Set("y", h.year)
+   values := url.Values{}
+   values.Set("a", now)
+   values.Set("b", f.audio)
+   values.Set("c", f.image)
+   values.Set("p", "h")
+   values.Set("y", f.year)
+   // 2 song
    var song1 song
-   value.Set("b", h.audio)
-   value.Set("c", h.image)
-   song1.Q = value.Encode()
-   song1.S = path.Base(h.audio)
-   return &song1, nil
+   song1.Q = values.Encode()
+   song1.S = path.Base(f.audio)
+   // 3 songs
+   songs, err := read_songs(f.name)
+   if err != nil {
+      return err
+   }
+   songs = slices.Insert(songs, 0, song1)
+   var buf bytes.Buffer
+   enc := json.NewEncoder(&buf)
+   enc.SetEscapeHTML(false)
+   enc.SetIndent("", " ")
+   err := enc.Encode(songs)
+   if err != nil {
+      return err
+   }
+   return write_file("umber.json", buf.Bytes())
 }

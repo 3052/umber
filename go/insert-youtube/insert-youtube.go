@@ -18,70 +18,71 @@ import (
    "time"
 )
 
-func (f *flags) do_youtube() error {
-   // 1 player
-   var play player
-   err := play.New(f.video_id)
-   if err != nil {
-      return err
-   }
-   fmt.Println(play.VideoDetails.ShortDescription)
-   // 2 image
-   image, err := get_image(f.video_id)
-   if err != nil {
-      return err
-   }
-   // 3 values
-   now := strconv.FormatInt(time.Now().Unix(), 36)
-   values := url.Values{}
-   values.Set("a", now)
-   values.Set("b", f.video_id)
-   if image != "" {
-      values.Set("c", image)
-   }
-   values.Set("p", "y")
-   values.Set("y", strconv.Itoa(
-      play.Microformat.PlayerMicroformatRenderer.PublishDate[0].Year(),
-   ))
-   // 4 song
-   var song1 song
-   song1.Q = values.Encode()
-   song1.S = play.VideoDetails.Author + " - " + play.VideoDetails.Title
-   // 5 songs
-   songs, err := read_songs(f.name)
-   if err != nil {
-      return err
-   }
-   songs = slices.Insert(songs, 0, song1)
-   var buf bytes.Buffer
-   enc := json.NewEncoder(&buf)
-   enc.SetEscapeHTML(false)
-   enc.SetIndent("", " ")
-   err = enc.Encode(songs)
-   if err != nil {
-      return err
-   }
-   return write_file(f.name, buf.Bytes())
+type yt_img struct {
+   Height  int
+   Name    string
+   VideoId string
+   Width   int
 }
 
-type flags struct {
-   name     string
-   video_id string
+var yt_imgs = []yt_img{
+   {Width: 120, Height: 90, Name: "default.jpg"},
+   {Width: 120, Height: 90, Name: "1.jpg"},
+   {Width: 120, Height: 90, Name: "2.jpg"},
+   {Width: 120, Height: 90, Name: "3.jpg"},
+   {Width: 120, Height: 90, Name: "default.webp"},
+   {Width: 120, Height: 90, Name: "1.webp"},
+   {Width: 120, Height: 90, Name: "2.webp"},
+   {Width: 120, Height: 90, Name: "3.webp"},
+   {Width: 320, Height: 180, Name: "mq1.jpg"},
+   {Width: 320, Height: 180, Name: "mq2.jpg"},
+   {Width: 320, Height: 180, Name: "mq3.jpg"},
+   {Width: 320, Height: 180, Name: "mqdefault.jpg"},
+   {Width: 320, Height: 180, Name: "mq1.webp"},
+   {Width: 320, Height: 180, Name: "mq2.webp"},
+   {Width: 320, Height: 180, Name: "mq3.webp"},
+   {Width: 320, Height: 180, Name: "mqdefault.webp"},
+   {Width: 480, Height: 360, Name: "0.jpg"},
+   {Width: 480, Height: 360, Name: "hqdefault.jpg"},
+   {Width: 480, Height: 360, Name: "hq1.jpg"},
+   {Width: 480, Height: 360, Name: "hq2.jpg"},
+   {Width: 480, Height: 360, Name: "hq3.jpg"},
+   {Width: 480, Height: 360, Name: "0.webp"},
+   {Width: 480, Height: 360, Name: "hqdefault.webp"},
+   {Width: 480, Height: 360, Name: "hq1.webp"},
+   {Width: 480, Height: 360, Name: "hq2.webp"},
+   {Width: 480, Height: 360, Name: "hq3.webp"},
+   {Width: 640, Height: 480, Name: "sddefault.jpg"},
+   {Width: 640, Height: 480, Name: "sd1.jpg"},
+   {Width: 640, Height: 480, Name: "sd2.jpg"},
+   {Width: 640, Height: 480, Name: "sd3.jpg"},
+   {Width: 640, Height: 480, Name: "sddefault.webp"},
+   {Width: 640, Height: 480, Name: "sd1.webp"},
+   {Width: 640, Height: 480, Name: "sd2.webp"},
+   {Width: 640, Height: 480, Name: "sd3.webp"},
+   {Width: 1280, Height: 720, Name: "hq720.jpg"},
+   {Width: 1280, Height: 720, Name: "maxresdefault.jpg"},
+   {Width: 1280, Height: 720, Name: "maxres1.jpg"},
+   {Width: 1280, Height: 720, Name: "maxres2.jpg"},
+   {Width: 1280, Height: 720, Name: "maxres3.jpg"},
+   {Width: 1280, Height: 720, Name: "hq720.webp"},
+   {Width: 1280, Height: 720, Name: "maxresdefault.webp"},
+   {Width: 1280, Height: 720, Name: "maxres1.webp"},
+   {Width: 1280, Height: 720, Name: "maxres2.webp"},
+   {Width: 1280, Height: 720, Name: "maxres3.webp"},
 }
 
-func main() {
-   var f flags
-   flag.StringVar(&f.name, "n", "umber.json", "name")
-   flag.StringVar(&f.video_id, "v", "", "video ID")
-   flag.Parse()
-   if f.video_id != "" {
-      err := f.do_youtube()
-      if err != nil {
-         panic(err)
-      }
-   } else {
-      flag.Usage()
+func (y *yt_img) String() string {
+   var b strings.Builder
+   b.WriteString("http://i.ytimg.com/vi")
+   if strings.HasSuffix(y.Name, ".webp") {
+      b.WriteString("_webp")
    }
+   b.WriteByte('/')
+   b.WriteString(y.VideoId)
+   b.WriteByte('/')
+   b.WriteString(y.Name)
+   return b.String()
 }
 
 func (d *date) UnmarshalText(data []byte) error {
@@ -95,9 +96,22 @@ func (d *date) UnmarshalText(data []byte) error {
 
 type date [1]time.Time
 
-func write_file(name string, data []byte) error {
-   log.Println("WriteFile", name)
-   return os.WriteFile(name, data, os.ModePerm)
+type song struct {
+   Q string
+   S string
+}
+
+func read_songs(name string) ([]song, error) {
+   data, err := os.ReadFile(name)
+   if err != nil {
+      return nil, err
+   }
+   var songs []song
+   err = json.Unmarshal(data, &songs)
+   if err != nil {
+      return nil, err
+   }
+   return songs, nil
 }
 
 type player struct {
@@ -201,86 +215,74 @@ func get_image(video_id string) (string, error) {
    return "", nil
 }
 
-type yt_img struct {
-   Height  int
-   Name    string
-   VideoId string
-   Width   int
+func write_file(name string, data []byte) error {
+   log.Println("WriteFile", name)
+   return os.WriteFile(name, data, os.ModePerm)
 }
 
-var yt_imgs = []yt_img{
-   {Width: 120, Height: 90, Name: "default.jpg"},
-   {Width: 120, Height: 90, Name: "1.jpg"},
-   {Width: 120, Height: 90, Name: "2.jpg"},
-   {Width: 120, Height: 90, Name: "3.jpg"},
-   {Width: 120, Height: 90, Name: "default.webp"},
-   {Width: 120, Height: 90, Name: "1.webp"},
-   {Width: 120, Height: 90, Name: "2.webp"},
-   {Width: 120, Height: 90, Name: "3.webp"},
-   {Width: 320, Height: 180, Name: "mq1.jpg"},
-   {Width: 320, Height: 180, Name: "mq2.jpg"},
-   {Width: 320, Height: 180, Name: "mq3.jpg"},
-   {Width: 320, Height: 180, Name: "mqdefault.jpg"},
-   {Width: 320, Height: 180, Name: "mq1.webp"},
-   {Width: 320, Height: 180, Name: "mq2.webp"},
-   {Width: 320, Height: 180, Name: "mq3.webp"},
-   {Width: 320, Height: 180, Name: "mqdefault.webp"},
-   {Width: 480, Height: 360, Name: "0.jpg"},
-   {Width: 480, Height: 360, Name: "hqdefault.jpg"},
-   {Width: 480, Height: 360, Name: "hq1.jpg"},
-   {Width: 480, Height: 360, Name: "hq2.jpg"},
-   {Width: 480, Height: 360, Name: "hq3.jpg"},
-   {Width: 480, Height: 360, Name: "0.webp"},
-   {Width: 480, Height: 360, Name: "hqdefault.webp"},
-   {Width: 480, Height: 360, Name: "hq1.webp"},
-   {Width: 480, Height: 360, Name: "hq2.webp"},
-   {Width: 480, Height: 360, Name: "hq3.webp"},
-   {Width: 640, Height: 480, Name: "sddefault.jpg"},
-   {Width: 640, Height: 480, Name: "sd1.jpg"},
-   {Width: 640, Height: 480, Name: "sd2.jpg"},
-   {Width: 640, Height: 480, Name: "sd3.jpg"},
-   {Width: 640, Height: 480, Name: "sddefault.webp"},
-   {Width: 640, Height: 480, Name: "sd1.webp"},
-   {Width: 640, Height: 480, Name: "sd2.webp"},
-   {Width: 640, Height: 480, Name: "sd3.webp"},
-   {Width: 1280, Height: 720, Name: "hq720.jpg"},
-   {Width: 1280, Height: 720, Name: "maxresdefault.jpg"},
-   {Width: 1280, Height: 720, Name: "maxres1.jpg"},
-   {Width: 1280, Height: 720, Name: "maxres2.jpg"},
-   {Width: 1280, Height: 720, Name: "maxres3.jpg"},
-   {Width: 1280, Height: 720, Name: "hq720.webp"},
-   {Width: 1280, Height: 720, Name: "maxresdefault.webp"},
-   {Width: 1280, Height: 720, Name: "maxres1.webp"},
-   {Width: 1280, Height: 720, Name: "maxres2.webp"},
-   {Width: 1280, Height: 720, Name: "maxres3.webp"},
+type flags struct {
+   name     string
+   video_id string
 }
 
-func (y *yt_img) String() string {
-   var b strings.Builder
-   b.WriteString("http://i.ytimg.com/vi")
-   if strings.HasSuffix(y.Name, ".webp") {
-      b.WriteString("_webp")
+func main() {
+   log.SetFlags(log.Ltime)
+   var f flags
+   flag.StringVar(&f.name, "n", "umber.json", "name")
+   flag.StringVar(&f.video_id, "v", "", "video ID")
+   flag.Parse()
+   if f.video_id != "" {
+      err := f.do_youtube()
+      if err != nil {
+         panic(err)
+      }
+   } else {
+      flag.Usage()
    }
-   b.WriteByte('/')
-   b.WriteString(y.VideoId)
-   b.WriteByte('/')
-   b.WriteString(y.Name)
-   return b.String()
-}
-type song struct {
-   Q string
-   S string
 }
 
-func read_songs(name string) ([]song, error) {
-   data, err := os.ReadFile(name)
+func (f *flags) do_youtube() error {
+   // 1 player
+   var play player
+   err := play.New(f.video_id)
    if err != nil {
-      return nil, err
+      return err
    }
-   var songs []song
-   err = json.Unmarshal(data, &songs)
+   fmt.Println(play.VideoDetails.ShortDescription)
+   // 2 image
+   image, err := get_image(f.video_id)
    if err != nil {
-      return nil, err
+      return err
    }
-   return songs, nil
+   // 3 values
+   now := strconv.FormatInt(time.Now().Unix(), 36)
+   values := url.Values{}
+   values.Set("a", now)
+   values.Set("b", f.video_id)
+   if image != "" {
+      values.Set("c", image)
+   }
+   values.Set("p", "y")
+   values.Set("y", strconv.Itoa(
+      play.Microformat.PlayerMicroformatRenderer.PublishDate[0].Year(),
+   ))
+   // 4 song
+   var song1 song
+   song1.Q = values.Encode()
+   song1.S = play.VideoDetails.Author + " - " + play.VideoDetails.Title
+   // 5 songs
+   songs, err := read_songs(f.name)
+   if err != nil {
+      return err
+   }
+   songs = slices.Insert(songs, 0, song1)
+   var buf bytes.Buffer
+   enc := json.NewEncoder(&buf)
+   enc.SetEscapeHTML(false)
+   enc.SetIndent("", " ")
+   err = enc.Encode(songs)
+   if err != nil {
+      return err
+   }
+   return write_file(f.name, buf.Bytes())
 }
