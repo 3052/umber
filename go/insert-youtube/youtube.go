@@ -3,10 +3,49 @@ package youtube
 import (
    "bytes"
    "encoding/json"
+   "flag"
+   "fmt"
    "net/http"
+   "net/url"
+   "os"
+   "path"
+   "sort"
+   "strconv"
    "strings"
    "time"
+   "umber/youtube"
 )
+
+type Player struct {
+   Microformat struct {
+      PlayerMicroformatRenderer struct {
+         PublishDate Date
+      }
+   }
+   PlayabilityStatus struct {
+      Status string
+      Reason string
+   }
+   VideoDetails struct {
+      Author           string
+      LengthSeconds    int64 `json:",string"`
+      ShortDescription string
+      Title            string
+      VideoId          string
+      ViewCount        int64 `json:",string"`
+   }
+}
+
+func (d *Date) UnmarshalText(data []byte) error {
+   var err error
+   d[0], err = time.Parse(time.RFC3339, string(data))
+   if err != nil {
+      return err
+   }
+   return nil
+}
+
+type Date [1]time.Time
 
 type song struct {
    Q string
@@ -24,6 +63,42 @@ func read_songs(name string) ([]*song, error) {
       return nil, err
    }
    return songs, nil
+}
+
+///
+
+func main() {
+   flag.Parse()
+   songs, err := read_songs("umber.json")
+   if err != nil {
+      panic(err)
+   }
+   if len(os.Args) >= 3 {
+      args := os.Args[2:]
+      var song1 *song
+      song1, err = new_youtube().parse(args)
+      if err != nil {
+         panic(err)
+      }
+      songs = append([]*song{song1}, songs...)
+      var buf bytes.Buffer
+      enc := json.NewEncoder(&buf)
+      enc.SetEscapeHTML(false)
+      enc.SetIndent("", " ")
+      err := enc.Encode(songs)
+      if err != nil {
+         panic(err)
+      }
+      err = os.WriteFile("umber.json", buf.Bytes(), os.ModePerm)
+      if err != nil {
+         panic(err)
+      }
+   } else {
+      new_http().f.Usage()
+      new_bandcamp().f.Usage()
+      new_soundcloud().f.Usage()
+      new_youtube().f.Usage()
+   }
 }
 
 func (y *youtube_set) parse(args []string) (*song, error) {
@@ -54,14 +129,7 @@ func (y *youtube_set) parse(args []string) (*song, error) {
    return &song1, nil
 }
 
-type youtube_set struct {
-   f    *flag.FlagSet
-   tube youtube.InnerTube
-}
-
 func new_youtube() *youtube_set {
-   var set youtube_set
-   set.f = flag.NewFlagSet("youtube", flag.ExitOnError)
    set.f.StringVar(&set.tube.VideoId, "b", "", "video ID")
    set.tube.Context.Client.ClientName = "WEB"
    return &set
@@ -108,18 +176,6 @@ func get_image(video_id string) (string, error) {
    }
    return "", nil
 }
-func (d *Date) UnmarshalText(data []byte) error {
-   var err error
-   d[0], err = time.Parse(time.RFC3339, string(data))
-   if err != nil {
-      return err
-   }
-   return nil
-}
-
-type Date [1]time.Time
-
-const user_agent = "com.google.android.youtube/"
 
 func (i *InnerTube) Player() (*Player, error) {
    i.Context.Client.AndroidSdkVersion = 32
@@ -145,7 +201,7 @@ func (i *InnerTube) Player() (*Player, error) {
    if err != nil {
       return nil, err
    }
-   req.Header.Set("user-agent", user_agent + i.Context.Client.ClientVersion)
+   req.Header.Set("user-agent", user_agent+i.Context.Client.ClientVersion)
    resp, err := http.DefaultClient.Do(req)
    if err != nil {
       return nil, err
@@ -166,70 +222,70 @@ func (i *InnerTube) Player() (*Player, error) {
 // supported devices.
 type InnerTube struct {
    ContentCheckOk bool `json:"contentCheckOk,omitempty"`
-   Context struct {
+   Context        struct {
       Client struct {
-         AndroidSdkVersion int `json:"androidSdkVersion"`
-         ClientName string `json:"clientName"`
-         ClientVersion string `json:"clientVersion"`
-         OsVersion string `json:"osVersion"`
+         AndroidSdkVersion int    `json:"androidSdkVersion"`
+         ClientName        string `json:"clientName"`
+         ClientVersion     string `json:"clientVersion"`
+         OsVersion         string `json:"osVersion"`
       } `json:"client"`
    } `json:"context"`
-   RacyCheckOk bool `json:"racyCheckOk,omitempty"`
-   VideoId string `json:"videoId"`
+   RacyCheckOk bool   `json:"racyCheckOk,omitempty"`
+   VideoId     string `json:"videoId"`
 }
 
 type YtImg struct {
-   Height int
-   Name string
+   Height  int
+   Name    string
    VideoId string
-   Width int
+   Width   int
 }
 
 var YtImgs = []YtImg{
-   {Width:120, Height:90, Name:"default.jpg"},
-   {Width:120, Height:90, Name:"1.jpg"},
-   {Width:120, Height:90, Name:"2.jpg"},
-   {Width:120, Height:90, Name:"3.jpg"},
-   {Width:120, Height:90, Name:"default.webp"},
-   {Width:120, Height:90, Name:"1.webp"},
-   {Width:120, Height:90, Name:"2.webp"},
-   {Width:120, Height:90, Name:"3.webp"},
-   {Width:320, Height:180, Name:"mq1.jpg"},
-   {Width:320, Height:180, Name:"mq2.jpg"},
-   {Width:320, Height:180, Name:"mq3.jpg"},
-   {Width:320, Height:180, Name:"mqdefault.jpg"},
-   {Width:320, Height:180, Name:"mq1.webp"},
-   {Width:320, Height:180, Name:"mq2.webp"},
-   {Width:320, Height:180, Name:"mq3.webp"},
-   {Width:320, Height:180, Name:"mqdefault.webp"},
-   {Width:480, Height:360, Name:"0.jpg"},
-   {Width:480, Height:360, Name:"hqdefault.jpg"},
-   {Width:480, Height:360, Name:"hq1.jpg"},
-   {Width:480, Height:360, Name:"hq2.jpg"},
-   {Width:480, Height:360, Name:"hq3.jpg"},
-   {Width:480, Height:360, Name:"0.webp"},
-   {Width:480, Height:360, Name:"hqdefault.webp"},
-   {Width:480, Height:360, Name:"hq1.webp"},
-   {Width:480, Height:360, Name:"hq2.webp"},
-   {Width:480, Height:360, Name:"hq3.webp"},
-   {Width:640, Height:480, Name:"sddefault.jpg"},
-   {Width:640, Height:480, Name:"sd1.jpg"},
-   {Width:640, Height:480, Name:"sd2.jpg"},
-   {Width:640, Height:480, Name:"sd3.jpg"},
-   {Width:640, Height:480, Name:"sddefault.webp"},
-   {Width:640, Height:480, Name:"sd1.webp"},
-   {Width:640, Height:480, Name:"sd2.webp"},
-   {Width:640, Height:480, Name:"sd3.webp"},
-   {Width:1280, Height:720, Name:"hq720.jpg"},
-   {Width:1280, Height:720, Name:"maxresdefault.jpg"},
-   {Width:1280, Height:720, Name:"maxres1.jpg"},
-   {Width:1280, Height:720, Name:"maxres2.jpg"},
-   {Width:1280, Height:720, Name:"maxres3.jpg"},
-   {Width:1280, Height:720, Name:"hq720.webp"},
-   {Width:1280, Height:720, Name:"maxresdefault.webp"},
-   {Width:1280, Height:720, Name:"maxres1.webp"},
-   {Width:1280, Height:720, Name:"maxres2.webp"},
-   {Width:1280, Height:720, Name:"maxres3.webp"},
+   {Width: 120, Height: 90, Name: "default.jpg"},
+   {Width: 120, Height: 90, Name: "1.jpg"},
+   {Width: 120, Height: 90, Name: "2.jpg"},
+   {Width: 120, Height: 90, Name: "3.jpg"},
+   {Width: 120, Height: 90, Name: "default.webp"},
+   {Width: 120, Height: 90, Name: "1.webp"},
+   {Width: 120, Height: 90, Name: "2.webp"},
+   {Width: 120, Height: 90, Name: "3.webp"},
+   {Width: 320, Height: 180, Name: "mq1.jpg"},
+   {Width: 320, Height: 180, Name: "mq2.jpg"},
+   {Width: 320, Height: 180, Name: "mq3.jpg"},
+   {Width: 320, Height: 180, Name: "mqdefault.jpg"},
+   {Width: 320, Height: 180, Name: "mq1.webp"},
+   {Width: 320, Height: 180, Name: "mq2.webp"},
+   {Width: 320, Height: 180, Name: "mq3.webp"},
+   {Width: 320, Height: 180, Name: "mqdefault.webp"},
+   {Width: 480, Height: 360, Name: "0.jpg"},
+   {Width: 480, Height: 360, Name: "hqdefault.jpg"},
+   {Width: 480, Height: 360, Name: "hq1.jpg"},
+   {Width: 480, Height: 360, Name: "hq2.jpg"},
+   {Width: 480, Height: 360, Name: "hq3.jpg"},
+   {Width: 480, Height: 360, Name: "0.webp"},
+   {Width: 480, Height: 360, Name: "hqdefault.webp"},
+   {Width: 480, Height: 360, Name: "hq1.webp"},
+   {Width: 480, Height: 360, Name: "hq2.webp"},
+   {Width: 480, Height: 360, Name: "hq3.webp"},
+   {Width: 640, Height: 480, Name: "sddefault.jpg"},
+   {Width: 640, Height: 480, Name: "sd1.jpg"},
+   {Width: 640, Height: 480, Name: "sd2.jpg"},
+   {Width: 640, Height: 480, Name: "sd3.jpg"},
+   {Width: 640, Height: 480, Name: "sddefault.webp"},
+   {Width: 640, Height: 480, Name: "sd1.webp"},
+   {Width: 640, Height: 480, Name: "sd2.webp"},
+   {Width: 640, Height: 480, Name: "sd3.webp"},
+   {Width: 1280, Height: 720, Name: "hq720.jpg"},
+   {Width: 1280, Height: 720, Name: "maxresdefault.jpg"},
+   {Width: 1280, Height: 720, Name: "maxres1.jpg"},
+   {Width: 1280, Height: 720, Name: "maxres2.jpg"},
+   {Width: 1280, Height: 720, Name: "maxres3.jpg"},
+   {Width: 1280, Height: 720, Name: "hq720.webp"},
+   {Width: 1280, Height: 720, Name: "maxresdefault.webp"},
+   {Width: 1280, Height: 720, Name: "maxres1.webp"},
+   {Width: 1280, Height: 720, Name: "maxres2.webp"},
+   {Width: 1280, Height: 720, Name: "maxres3.webp"},
 }
 
 func (y *YtImg) String() string {
@@ -247,37 +303,11 @@ func (y *YtImg) String() string {
 
 const (
    android_version = "19.33.35"
-   web_version = "2.20231219.04.00"
+   web_version     = "2.20231219.04.00"
 )
 
 const (
-   android = "ANDROID"
+   android                 = "ANDROID"
    android_embedded_player = "ANDROID_EMBEDDED_PLAYER"
-   web = "WEB"
+   web                     = "WEB"
 )
-
-var ClientName = []string{
-   android,
-   android_embedded_player,
-   web,
-}
-
-type Player struct {
-   Microformat struct {
-      PlayerMicroformatRenderer struct {
-         PublishDate Date
-      }
-   }
-   PlayabilityStatus struct {
-      Status string
-      Reason string
-   }
-   VideoDetails struct {
-      Author string
-      LengthSeconds int64 `json:",string"`
-      ShortDescription string
-      Title string
-      VideoId string
-      ViewCount int64 `json:",string"`
-   }
-}
