@@ -13,13 +13,14 @@ import (
 )
 
 func main() {
+   name := flag.String("n", "umber.json", "name")
    start := flag.Int("s", -1, "start")
    flag.Parse()
    if *start <= -1 {
       flag.Usage()
       return
    }
-   file, err := os.Open("umber.json")
+   file, err := os.Open(*name)
    if err != nil {
       panic(err)
    }
