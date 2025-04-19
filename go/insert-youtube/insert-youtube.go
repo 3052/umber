@@ -1,8 +1,9 @@
-package youtube
+package main
 
 import (
    "bytes"
    "encoding/json"
+   "errors"
    "flag"
    "fmt"
    "log"
@@ -10,13 +11,116 @@ import (
    "net/url"
    "os"
    "path"
+   "slices"
    "sort"
    "strconv"
    "strings"
    "time"
 )
 
-func (p *Player) New(video_id string) error {
+func (f *flags) do_youtube() error {
+   // 1 player
+   var play player
+   err := play.New(f.video_id)
+   if err != nil {
+      return err
+   }
+   fmt.Println(play.VideoDetails.ShortDescription)
+   // 2 image
+   image, err := get_image(f.video_id)
+   if err != nil {
+      return err
+   }
+   // 3 values
+   now := strconv.FormatInt(time.Now().Unix(), 36)
+   values := url.Values{}
+   values.Set("a", now)
+   values.Set("b", f.video_id)
+   if image != "" {
+      values.Set("c", image)
+   }
+   values.Set("p", "y")
+   values.Set("y", strconv.Itoa(
+      play.Microformat.PlayerMicroformatRenderer.PublishDate[0].Year(),
+   ))
+   // 4 song
+   var song1 song
+   song1.Q = values.Encode()
+   song1.S = play.VideoDetails.Author + " - " + play.VideoDetails.Title
+   // 5 songs
+   songs, err := read_songs(f.name)
+   if err != nil {
+      return err
+   }
+   songs = slices.Insert(songs, 0, song1)
+   var buf bytes.Buffer
+   enc := json.NewEncoder(&buf)
+   enc.SetEscapeHTML(false)
+   enc.SetIndent("", " ")
+   err = enc.Encode(songs)
+   if err != nil {
+      return err
+   }
+   return write_file(f.name, buf.Bytes())
+}
+
+type flags struct {
+   name     string
+   video_id string
+}
+
+func main() {
+   var f flags
+   flag.StringVar(&f.name, "n", "umber.json", "name")
+   flag.StringVar(&f.video_id, "v", "", "video ID")
+   flag.Parse()
+   if f.video_id != "" {
+      err := f.do_youtube()
+      if err != nil {
+         panic(err)
+      }
+   } else {
+      flag.Usage()
+   }
+}
+
+func (d *date) UnmarshalText(data []byte) error {
+   var err error
+   d[0], err = time.Parse(time.RFC3339, string(data))
+   if err != nil {
+      return err
+   }
+   return nil
+}
+
+type date [1]time.Time
+
+func write_file(name string, data []byte) error {
+   log.Println("WriteFile", name)
+   return os.WriteFile(name, data, os.ModePerm)
+}
+
+type player struct {
+   Microformat struct {
+      PlayerMicroformatRenderer struct {
+         PublishDate date
+      }
+   }
+   PlayabilityStatus struct {
+      Status string
+      Reason string
+   }
+   VideoDetails struct {
+      Author           string
+      LengthSeconds    int64 `json:",string"`
+      ShortDescription string
+      Title            string
+      VideoId          string
+      ViewCount        int64 `json:",string"`
+   }
+}
+
+func (p *player) New(video_id string) error {
    value := map[string]any{
       "contentCheckOk": true,
       "context": map[string]any{
@@ -56,8 +160,8 @@ func (p *Player) New(video_id string) error {
 }
 
 func get_image(video_id string) (string, error) {
-   var imgs []youtube.YtImg
-   for _, img := range youtube.YtImgs {
+   var imgs []yt_img
+   for _, img := range yt_imgs {
       if img.Height < 720 {
          imgs = append(imgs, img)
       }
@@ -97,27 +201,14 @@ func get_image(video_id string) (string, error) {
    return "", nil
 }
 
-func (y *YtImg) String() string {
-   var b strings.Builder
-   b.WriteString("http://i.ytimg.com/vi")
-   if strings.HasSuffix(y.Name, ".webp") {
-      b.WriteString("_webp")
-   }
-   b.WriteByte('/')
-   b.WriteString(y.VideoId)
-   b.WriteByte('/')
-   b.WriteString(y.Name)
-   return b.String()
-}
-
-type YtImg struct {
+type yt_img struct {
    Height  int
    Name    string
    VideoId string
    Width   int
 }
 
-var YtImgs = []YtImg{
+var yt_imgs = []yt_img{
    {Width: 120, Height: 90, Name: "default.jpg"},
    {Width: 120, Height: 90, Name: "1.jpg"},
    {Width: 120, Height: 90, Name: "2.jpg"},
@@ -164,76 +255,32 @@ var YtImgs = []YtImg{
    {Width: 1280, Height: 720, Name: "maxres3.webp"},
 }
 
-type Player struct {
-   Microformat struct {
-      PlayerMicroformatRenderer struct {
-         PublishDate Date
-      }
+func (y *yt_img) String() string {
+   var b strings.Builder
+   b.WriteString("http://i.ytimg.com/vi")
+   if strings.HasSuffix(y.Name, ".webp") {
+      b.WriteString("_webp")
    }
-   PlayabilityStatus struct {
-      Status string
-      Reason string
-   }
-   VideoDetails struct {
-      Author           string
-      LengthSeconds    int64 `json:",string"`
-      ShortDescription string
-      Title            string
-      VideoId          string
-      ViewCount        int64 `json:",string"`
-   }
+   b.WriteByte('/')
+   b.WriteString(y.VideoId)
+   b.WriteByte('/')
+   b.WriteString(y.Name)
+   return b.String()
 }
-
-func (d *Date) UnmarshalText(data []byte) error {
-   var err error
-   d[0], err = time.Parse(time.RFC3339, string(data))
-   if err != nil {
-      return err
-   }
-   return nil
-}
-
-type Date [1]time.Time
-
 type song struct {
    Q string
    S string
 }
 
-func read_songs(name string) ([]*song, error) {
+func read_songs(name string) ([]song, error) {
    data, err := os.ReadFile(name)
    if err != nil {
       return nil, err
    }
-   var songs []*song
+   var songs []song
    err = json.Unmarshal(data, &songs)
    if err != nil {
       return nil, err
    }
    return songs, nil
-}
-
-func main() {
-   var f flags
-   flag.StringVar(&f.name, "n", "umber.json", "name")
-   flag.StringVar(&f.video_id, "v", "", "video ID")
-   flag.Parse()
-   if f.video_id != "" {
-      err := f.do_youtube()
-      if err != nil {
-         panic(err)
-      }
-   } else {
-      flag.Usage()
-   }
-}
-
-func write_file(name string, data []byte) error {
-   log.Println("WriteFile", name)
-   return os.WriteFile(name, data, os.ModePerm)
-}
-
-type flags struct {
-   name     string
-   video_id string
 }
