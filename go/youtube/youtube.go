@@ -59,8 +59,6 @@ func (i *InnerTube) Player() (*Player, error) {
    return play, nil
 }
 
-///
-
 // need `osVersion` this to get the correct:
 // This video requires payment to watch
 // instead of the invalid:
