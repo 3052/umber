@@ -72,12 +72,12 @@ type Player struct {
       Reason string
    }
    VideoDetails struct {
-      Author string
-      LengthSeconds int64 `json:",string"`
+      Author           string
+      LengthSeconds    int64 `json:",string"`
       ShortDescription string
-      Title string
-      VideoId string
-      ViewCount int64 `json:",string"`
+      Title            string
+      VideoId          string
+      ViewCount        int64 `json:",string"`
    }
 }
 
@@ -86,12 +86,12 @@ func (p *Player) New(video_id string) error {
       "contentCheckOk": true,
       "context": map[string]any{
          "client": map[string]string{
-            "clientName": "IOS",
+            "clientName":    "IOS",
             "clientVersion": "20.03.02",
          },
       },
       "racyCheckOk": true,
-      "videoId": video_id,
+      "videoId":     video_id,
    }
    data, err := json.MarshalIndent(value, "", " ")
    if err != nil {
