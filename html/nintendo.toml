@@ -1,85 +1,60 @@
 [[game]]
-name = 'Donkey Kong Country 2'
-url = [
-   'discogs.com/release/12927228-David-Wise-Donkey-Kong-Country-2-Diddys-Kong-Quest',
-   'drive.google.com/drive/folders/1jUTvy4Bf81cFl8KxzBV0u2qz9WbL83Tm',
-   'wikipedia.org/wiki/Donkey_Kong_Country_2',
-   'youtube.com/playlist?list=PLKNuUcvZGX23N53oLt93q4CZRj8m-Il_-'
-]
-
-[[game.track]]
-number = 15
-name = 'mining melancholy'
-url = [
-   'youtube.com/watch?v=cBK2YIrY62I',
-   'youtube.com/watch?v=qpJbv1JEA4I'
-]
-
-[[game.track]]
-number = 19
-name = 'stickerbush symphony'
-url = [
-   'youtube.com/watch?v=TxP2nqBIC44',
-   'youtube.com/watch?v=qIk6YFTzckc'
-]
-
-[[game.track]]
-number = 23
-name = 'forest interlude'
-url = [
-   'youtube.com/watch?v=AZOZXoDwCzI',
-   'youtube.com/watch?v=wxAZfLenfa0'
-]
-
-[[game]]
-name = 'Mega Man X (video game)'
-url = [
-   'wikipedia.org/wiki/Mega_Man_X_(video_game)',
-   'youtube.com/playlist?list=PLLVedurB7ZPbdTRgvL53QN_0o8bWO9vL3'
-]
-
-[[game.track]]
-number = 12
-name = 'Chill Penguin (Snow Mountain Stage)'
-url = [
-   'youtube.com/watch?v=etuuQyKuel4',
-   'youtube.com/watch?v=fcOjHuAD6SI'
-]
-
-[[game]]
 name = 'Pilotwings 64'
-url = [
-   'wikipedia.org/wiki/Pilotwings_64',
-   'youtube.com/playlist?list=PLWsnao9n727MUC1DSLXttRIASGxLmTRQb',
-   'youtube.com/playlist?list=PLWsnao9n727NrHIiqnZEtD180s9qxL4zl',
-   'youtube.com/playlist?list=PLWsnao9n727OfUwLfkm1bJjnkwxLNcSNH'
-]
+
+[[game.link]]
+url = 'wikipedia.org/wiki/Pilotwings_64'
+
+[[game.link]]
+url = 'youtube.com/playlist?list=PLWsnao9n727OfUwLfkm1bJjnkwxLNcSNH'
+text = 'Pilotwings 64 HD'
+
+[[game.link]]
+url = 'youtube.com/playlist?list=PLWsnao9n727MUC1DSLXttRIASGxLmTRQb'
+text = 'Pilotwings 64 HD Ultra'
+
+[[game.link]]
+url = 'youtube.com/playlist?list=PLWsnao9n727NrHIiqnZEtD180s9qxL4zl'
+text = 'Pilotwings 64 Retro HD+'
 
 [[game.track]]
 number = 5
-name = 'hang glider'
-url = [
-   'youtube.com/watch?v=h8-OfKFPnjw', # Hang Glider 
-   'youtube.com/watch?v=nv69iNJbqKo', # Hang Glider HD 
-   'youtube.com/watch?v=aaInC-vCjt0' # Hang Glider Retro HD+
-]
+
+[[game.track.link]]
+url = 'youtube.com/watch?v=h8-OfKFPnjw'
+text = 'Hang Glider'
+
+[[game.track.link]]
+url = 'youtube.com/watch?v=nv69iNJbqKo'
+text = 'Hang Glider HD'
+
+[[game.track.link]]
+url = 'youtube.com/watch?v=aaInC-vCjt0'
+text = 'Hang Glider Retro HD+'
 
 [[game.track]]
 number = 9
-name = 'rocket belt'
-url = [
-   'youtube.com/watch?v=1QI0zjNZJtU',
-   'youtube.com/watch?v=R9u06H6j8a0',
-   'youtube.com/watch?v=sAtiUoPB7d4'
-]
+
+[[game.track.link]]
+url = 'youtube.com/watch?v=sAtiUoPB7d4'
+text = 'Rocket Belt'
+
+[[game.track.link]]
+url = 'youtube.com/watch?v=1QI0zjNZJtU'
+text = 'Rocket Belt HD'
+
+[[game.track.link]]
+url = 'youtube.com/watch?v=R9u06H6j8a0'
+text = 'Rocket Belt Retro HD+'
+
+###
 
 [[game.track]]
 number = 20
 name = 'sky diving'
 url = [
-   'youtube.com/watch?v=NDlyfygPZDs',
-   'youtube.com/watch?v=cbb0ubUAJqc',
-   'youtube.com/watch?v=uARj6X14qE8'
+   'youtube.com/watch?v=NDlyfygPZDs', # Sky Diving 
+   'youtube.com/watch?v=uARj6X14qE8', # Sky Diving HD 
+   'youtube.com/watch?v=cbb0ubUAJqc' # Sky Diving Retro HD+ 
 ]
 
 [[game.track]]
@@ -165,11 +140,27 @@ url = [ 'youtube.com/watch?v=zcV7RptHqro' ]
 
 [[game]]
 name = 'Super Mario World'
-url = [ 'wikipedia.org/wiki/Super_Mario_World' ]
+url = [
+   'wikipedia.org/wiki/Super_Mario_World',
+   'youtube.com/playlist?list=PLu0fouVDrRZNXc8DkkZR2Sx9N5wuotyrO'
+]
+
+[[game.track]]
+number = 3
+name = 'donut plains'
+url = [ 'youtube.com/watch?v=sMqzn_bqK1Q' ]
 
 [[game]]
 name = "The Legend of Zelda: Majora's Mask"
-url = [ "wikipedia.org/wiki/The_Legend_of_Zelda:_Majora's_Mask" ]
+url = [
+   "wikipedia.org/wiki/The_Legend_of_Zelda:_Majora's_Mask",
+   "zeldauniverse.net/media/music/majoras-mask-original-soundtrack"
+]
+
+[[game.track]]
+number = 19
+name = "Cremia's Carriage"
+url = [ 'zeldauniverse.s3.amazonaws.com/soundtracks/majorasmaskost/cd2/2-19+Cremias+Carriage.mp3' ]
 
 [[game]]
 name = 'The Legend of Zelda: Ocarina of Time'
@@ -306,4 +297,51 @@ name = 'dragon roost island'
 url = [
    'youtube.com/watch?v=02pp7Pb7Bls',
    'zeldauniverse.s3.amazonaws.com/soundtracks/thewindwakerost/cd1/The_Legend_of_Zelda_-_The_Wind_Waker_-_38_-_Dragon_Island.mp3'
+]
+[[game]]
+name = 'Donkey Kong Country 2'
+url = [
+   'discogs.com/release/12927228-David-Wise-Donkey-Kong-Country-2-Diddys-Kong-Quest',
+   'drive.google.com/drive/folders/1jUTvy4Bf81cFl8KxzBV0u2qz9WbL83Tm',
+   'wikipedia.org/wiki/Donkey_Kong_Country_2',
+   'youtube.com/playlist?list=PLKNuUcvZGX23N53oLt93q4CZRj8m-Il_-'
+]
+
+[[game.track]]
+number = 15
+name = 'mining melancholy'
+url = [
+   'youtube.com/watch?v=cBK2YIrY62I',
+   'youtube.com/watch?v=qpJbv1JEA4I'
+]
+
+[[game.track]]
+number = 19
+name = 'stickerbush symphony'
+url = [
+   'youtube.com/watch?v=TxP2nqBIC44',
+   'youtube.com/watch?v=qIk6YFTzckc'
+]
+
+[[game.track]]
+number = 23
+name = 'forest interlude'
+url = [
+   'youtube.com/watch?v=AZOZXoDwCzI',
+   'youtube.com/watch?v=wxAZfLenfa0'
+]
+
+[[game]]
+name = 'Mega Man X (video game)'
+url = [
+   'wikipedia.org/wiki/Mega_Man_X_(video_game)',
+   'youtube.com/playlist?list=PLLVedurB7ZPbdTRgvL53QN_0o8bWO9vL3'
+]
+
+[[game.track]]
+number = 12
+name = 'Chill Penguin (Snow Mountain Stage)'
+url = [
+   'youtube.com/watch?v=etuuQyKuel4',
+   'youtube.com/watch?v=fcOjHuAD6SI'
 ]
