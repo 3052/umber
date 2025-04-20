@@ -1,8 +1,6 @@
 package main
 
 import (
-   "41.neocities.org/protobuf"
-   "encoding/base64"
    "encoding/json"
    "fmt"
    "io"
@@ -47,14 +45,5 @@ func main() {
    if err != nil {
       panic(err)
    }
-   data, err = base64.StdEncoding.DecodeString(visitor)
-   if err != nil {
-      panic(err)
-   }
-   var message protobuf.Message
-   err = message.Unmarshal(data)
-   if err != nil {
-      panic(err)
-   }
-   fmt.Printf("%#v\n", message)
+   fmt.Println(visitor)
 }
