@@ -46,112 +46,161 @@ text = 'Rocket Belt HD'
 url = 'youtube.com/watch?v=R9u06H6j8a0'
 text = 'Rocket Belt Retro HD+'
 
-###
-
 [[game.track]]
 number = 20
-name = 'sky diving'
-url = [
-   'youtube.com/watch?v=NDlyfygPZDs', # Sky Diving 
-   'youtube.com/watch?v=uARj6X14qE8', # Sky Diving HD 
-   'youtube.com/watch?v=cbb0ubUAJqc' # Sky Diving Retro HD+ 
-]
+
+[[game.track.link]]
+url = 'youtube.com/watch?v=NDlyfygPZDs'
+text = 'Sky Diving'
+
+[[game.track.link]]
+url = 'youtube.com/watch?v=uARj6X14qE8'
+text = 'Sky Diving HD'
+
+[[game.track.link]]
+url = 'youtube.com/watch?v=cbb0ubUAJqc'
+text = 'Sky Diving Retro HD+'
 
 [[game.track]]
 number = 26
-name = 'birdman'
-url = [
-   'youtube.com/watch?v=DROiSgvFsRY',
-   'youtube.com/watch?v=ar8oGTSg5Lk',
-   'youtube.com/watch?v=bsUNUqk-JHg'
-]
+
+[[game.track.link]]
+url = 'youtube.com/watch?v=bsUNUqk-JHg'
+text = 'Pilotwings 64: Birdman HD'
+
+[[game.track.link]]
+url = 'youtube.com/watch?v=ar8oGTSg5Lk'
+text = 'Pilotwings 64: Birdman Retro HD+'
+
+[[game.track.link]]
+url = 'youtube.com/watch?v=DROiSgvFsRY'
+text = 'Pilotwings 64: Birdman'
 
 [[game.track]]
 number = 31
-name = 'Bravissimo!'
-url = [
-   'youtube.com/watch?v=mdHjSThrRYc',
-   'youtube.com/watch?v=mziDsd_SE0M',
-   'youtube.com/watch?v=qzT0yKHN1f8'
-]
+
+[[game.track.link]]
+url = 'youtube.com/watch?v=mziDsd_SE0M'
+text = 'Pilotwings 64: Bravissimo!'
+
+[[game.track.link]]
+url = 'youtube.com/watch?v=mdHjSThrRYc'
+text = 'Pilotwings 64: Bravissimo! HD'
+
+[[game.track.link]]
+url = 'youtube.com/watch?v=qzT0yKHN1f8'
+text = 'Pilotwings 64: Bravissimo! Retro HD+'
 
 [[game]]
 name = 'Star Fox 64'
-url = [
-   'archive.org/details/starfox-64-soundtrack-cd',
-   'wikipedia.org/wiki/Star_Fox_64'
-]
+
+[[game.link]]
+url = 'archive.org/details/starfox-64-soundtrack-cd'
+
+[[game.link]]
+url = 'wikipedia.org/wiki/Star_Fox_64'
 
 [[game.track]]
 number = 1
-name = 'opening theme'
-url = [ 'archive.org/details/starfox-64-soundtrack-cd/01+-+Opening+Theme.flac' ]
+
+[[game.track.link]]
+url = 'archive.org/details/starfox-64-soundtrack-cd/01+-+Opening+Theme.flac'
+text = 'opening theme'
 
 [[game.track]]
 number = 2
-name = 'title theme'
-url = [ 'archive.org/details/starfox-64-soundtrack-cd/02+-+Title+Theme.flac' ]
+
+[[game.track.link]]
+url = 'archive.org/details/starfox-64-soundtrack-cd/02+-+Title+Theme.flac'
+text = 'title theme'
 
 [[game.track]]
 number = 3
-name = 'select theme'
-url = [ 'archive.org/details/starfox-64-soundtrack-cd/03+-+Select+Theme.flac' ]
+
+[[game.track.link]]
+url = 'archive.org/details/starfox-64-soundtrack-cd/03+-+Select+Theme.flac'
+text = 'select theme'
 
 [[game]]
 name = 'Super Mario 64'
-url = [
-   'google.com/search?q=Koji+Kondo+Super+Mario+64',
-   'wikipedia.org/wiki/Super_Mario_64',
-   'youtube.com/playlist?list=PLB4DC2508C4D0076D',
-   'youtube.com/playlist?list=PLD-vbw8JmuygRfq1Oy3rL-YcFefw0M-Oh',
-   'youtube.com/playlist?list=PLu0fouVDrRZM1j1U4lTBgNnLbEX4R4Nld'
-]
+
+[[game.link]]
+url = 'google.com/search?q=Koji+Kondo+Super+Mario+64'
+
+[[game.link]]
+url = 'wikipedia.org/wiki/Super_Mario_64'
+
+[[game.link]]
+text = 'RadiatorRampardos'
+url = 'youtube.com/playlist?list=PLB4DC2508C4D0076D'
+
+[[game.link]]
+text = 'SilvaGunner'
+url = 'youtube.com/playlist?list=PLu0fouVDrRZM1j1U4lTBgNnLbEX4R4Nld'
 
 [[game.track]]
 number = 9
-name = 'dire, dire docks'
-url = [
-   'youtube.com/watch?v=-K8OiFZO0Os',
-   'youtube.com/watch?v=N6G7uFlUyn4',
-   'youtube.com/watch?v=Zqa2mgjbOIM'
-]
+name = 'Dire, Dire Docks'
+
+[[game.track.link]]
+url = 'youtube.com/watch?v=Zqa2mgjbOIM'
+text = 'RadiatorRampardos'
+
+[[game.track.link]]
+url = 'youtube.com/watch?v=N6G7uFlUyn4'
+text = 'SilvaGunner'
 
 [[game.track]]
 number = 35
 name = 'staff roll'
-url = [
-   'youtube.com/watch?v=4dhtKsTmdjI',
-   'youtube.com/watch?v=CkrF61J2Jw0',
-   'youtube.com/watch?v=_UmksF3MFXg',
-   'youtube.com/watch?v=o-xRxXYpavU'
-]
+
+[[game.track.link]]
+url = 'youtube.com/watch?v=o-xRxXYpavU'
+text = 'RadiatorRampardos'
+
+[[game.track.link]]
+url = 'youtube.com/watch?v=_UmksF3MFXg'
+text = 'SilvaGunner'
 
 [[game]]
 name = 'Super Mario Galaxy 2'
-url = [
-   'wikipedia.org/wiki/Super_Mario_Galaxy_2',
-   'youtube.com/playlist?list=PLC583980D7806298E'
-]
+
+[[game.link]]
+url = 'wikipedia.org/wiki/Super_Mario_Galaxy_2'
+
+[[game.link]]
+url = 'youtube.com/playlist?list=PLC583980D7806298E'
+text = 'RadiatorRampardos'
 
 [[game.track]]
 number = 27
 name = 'Cosmic Cove Galaxy'
-url = [ 'youtube.com/watch?v=zcV7RptHqro' ]
+
+[[game.track.link]]
+url = 'youtube.com/watch?v=zcV7RptHqro'
 
 [[game]]
 name = 'Super Mario World'
-url = [
-   'wikipedia.org/wiki/Super_Mario_World',
-   'youtube.com/playlist?list=PLu0fouVDrRZNXc8DkkZR2Sx9N5wuotyrO'
-]
+
+[[game.link]]
+url = 'wikipedia.org/wiki/Super_Mario_World'
+
+[[game.link]]
+url = 'youtube.com/playlist?list=PLu0fouVDrRZNXc8DkkZR2Sx9N5wuotyrO'
+text = 'SilvaGunner'
 
 [[game.track]]
 number = 3
 name = 'donut plains'
-url = [ 'youtube.com/watch?v=sMqzn_bqK1Q' ]
+
+[[game.track.link]]
+url = 'youtube.com/watch?v=sMqzn_bqK1Q'
 
 [[game]]
 name = "The Legend of Zelda: Majora's Mask"
+
+###
+
 url = [
    "wikipedia.org/wiki/The_Legend_of_Zelda:_Majora's_Mask",
    "zeldauniverse.net/media/music/majoras-mask-original-soundtrack"
