@@ -1,5 +1,37 @@
 [
  {
+  "Q": "a=suznx1&b=http%3A%2F%2Fzeldauniverse.s3.amazonaws.com%2Fsoundtracks%2Focarinaoftimeost%2F44%2520-%2520Temple%2520Of%2520Time.mp3&c=https%3A%2F%2Fzeldauniverse.net%2Fwp-content%2Fuploads%2F2014%2F03%2Fmusic.jpg&p=h&y=1998",
+  "S": "Koji Kondo - Ocarina of Time - Temple of Time"
+ },
+ {
+  "Q": "a=sv004q&b=https%3A%2F%2Ff002.backblazeb2.com%2Ffile%2Fminerals%2Fmusic%2FJulia%2BHolter%2B-%2BMaria.mp3&c=https%3A%2F%2Ff002.backblazeb2.com%2Ffile%2Fminerals%2Fmusic%2Fjulia-holter-maria.jpg&p=h&y=2011",
+  "S": "Julia+Holter+-+Maria.mp3"
+ },
+ {
+  "Q": "a=sv003h&b=https%3A%2F%2Ff002.backblazeb2.com%2Ffile%2Fminerals%2Fmusic%2FPizzicato%2BFive%2B-%2BChicken%2BCurry.mp3&c=https%3A%2F%2Ff002.backblazeb2.com%2Ffile%2Fminerals%2Fmusic%2Fpizzicato-five-sister-freedom-tapes.jpg&p=h&y=1996",
+  "S": "Pizzicato+Five+-+Chicken+Curry.mp3"
+ },
+ {
+  "Q": "a=suzzr2&b=Bl4fvg-577M&p=y&y=1986",
+  "S": "Steve Roach - Topic - A Few More Moments"
+ },
+ {
+  "Q": "a=suzzop&b=hlrkevx7QpY&p=y&y=2009",
+  "S": "Imogen Heap - Topic - 2-1"
+ },
+ {
+  "Q": "a=suzzne&b=DieY9lKuCs0&p=y&y=2014",
+  "S": "Secret Sun - Topic - Cold Coast"
+ },
+ {
+  "Q": "a=suzzle&b=xypRPAUXLyM&p=y&y=2009",
+  "S": "Imogen Heap - Topic - Canvas"
+ },
+ {
+  "Q": "a=suzzhm&b=1uK-QfE3eO0&p=y&y=2009",
+  "S": "Solar Fields - Topic - Times Are Good (Sometimes Remix / 2014 Remaster)"
+ },
+ {
   "Q": "a=suzy0k&b=-SXmqX7aWvM&p=y&y=2005",
   "S": "Imogen Heap - Topic - Closing In"
  },
@@ -76,24 +108,12 @@
   "S": "The Legend of Zelda: Ocarina of Time | Title Theme | 近藤浩治 [Koji Kondo]"
  },
  {
-  "Q": "a=suznx1&b=http%3A%2F%2Fzeldauniverse.s3.amazonaws.com%2Fsoundtracks%2Focarinaoftimeost%2F44%2520-%2520Temple%2520Of%2520Time.mp3&c=https%3A%2F%2Fzeldauniverse.net%2Fwp-content%2Fuploads%2F2014%2F03%2Fmusic.jpg&p=h&y=1998",
-  "S": "Koji Kondo - Ocarina of Time - Temple of Time"
- },
- {
   "Q": "a=snq0t1&b=http%3A%2F%2Fzeldauniverse.s3.amazonaws.com%2Fsoundtracks%2Focarinaoftimeost%2F50+-+Sheiks+Theme.mp3&c=https%3A%2F%2Fzeldauniverse.net%2Fwp-content%2Fuploads%2F2014%2F03%2Fmusic.jpg&p=h&y=1998",
   "S": "Koji Kondo - Ocarina of Time - Sheiks Theme"
  },
  {
   "Q": "a=suzmf2&b=RUy12XUbzOM&p=y&y=1998",
   "S": "music_zelda - Potion Shop   The Legend of Zelda  Ocarina of Time"
- },
- {
-  "Q": "a=r2sjw3&b=.mp3&c=pizzicato-five-sister-freedom-tapes.jpg&p=h&y=1996",
-  "S": "Pizzicato Five - Chicken Curry"
- },
- {
-  "Q": "a=r2sjvi&b=.mp3&c=julia-holter-maria.jpg&p=h&y=2011",
-  "S": "Julia Holter - Maria"
  },
  {
   "Q": "a=suzmq1&b=90DKXLbzLto&p=y&y=2025",
@@ -4924,10 +4944,6 @@
   "S": "Tosca - Busenfreund"
  },
  {
-  "Q": "a=q635u0&b=ptgQqC8m4xE&p=y&y=2009",
-  "S": "Solar Fields - Times are Good (Sometimes remix)"
- },
- {
   "Q": "a=q633ko&b=Dt59j0AfPQY&p=y&y=2008",
   "S": "Emilíana Torrini - Me and Armini"
  },
@@ -6132,10 +6148,6 @@
   "S": "Aphex Twin, Gavin Bryars - Raising the Titanic (big drum mix)"
  },
  {
-  "Q": "a=pah1gc&b=XbvEiqwo8aA&p=y&y=1993",
-  "S": "Pizzicato Five - Sweet Soul Revue"
- },
- {
   "Q": "a=pafos3&b=FFMyMwjWqXs&p=y&y=1999",
   "S": "Rage Against The Machine - Guerrilla Radio"
  },
@@ -6158,10 +6170,6 @@
  {
   "Q": "a=pab9gv&b=Af7wzVp12uc&p=y&y=2017",
   "S": "Goldfrapp - Tigerman"
- },
- {
-  "Q": "a=paaocz&b=NutURoj8hPA&p=y&y=2009",
-  "S": "Imogen Heap - Canvas"
  },
  {
   "Q": "a=paan8f&b=K-QIE0zgquw&p=y&y=2004",
@@ -6320,10 +6328,6 @@
   "S": "New Order - True Faith"
  },
  {
-  "Q": "a=p9eog5&b=WefZvvCu-tw&p=y&y=2014",
-  "S": "Secret Sun - Cold Coast"
- },
- {
   "Q": "a=p9ecul&b=7mciS2U_MwY&p=y&y=2003",
   "S": "M83 - Unrecorded"
  },
@@ -6354,10 +6358,6 @@
  {
   "Q": "a=p9cq1l&b=TmgGCG5WT5U&p=y&y=2004",
   "S": "Emilíana Torrini - Lifesaver"
- },
- {
-  "Q": "a=p9chpo&b=MgdeoE7wJAM&p=y&y=2009",
-  "S": "Imogen Heap - 2-1"
  },
  {
   "Q": "a=p9cduc&b=Ei-bWdmEYj0&p=y&y=2007",
@@ -6590,10 +6590,6 @@
  {
   "Q": "a=p6xkk4&b=G3ENZV50Dhk&p=y&y=1993",
   "S": "Aphex Twin - On (Reload mix)"
- },
- {
-  "Q": "a=p6n37r&b=uQBxXu_ra5M&p=y&y=1986",
-  "S": "Steve Roach - A Few More Moments"
  },
  {
   "Q": "a=p6bscx&b=jgyShFzdB_Q&p=y&y=2010",

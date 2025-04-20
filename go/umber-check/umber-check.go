@@ -12,7 +12,7 @@ import (
    "time"
 )
 
-const visitor_id = "CgtDRlVTdFR0NUZqVSjZw5HABjIKCgJVUxIEGgAgbA=="
+const visitor_id = "CgtveHIwVmJ4Z3pySSjF3JHABjIKCgJVUxIEGgAgKw=="
 
 func main() {
    name := flag.String("n", "umber.json", "name")
