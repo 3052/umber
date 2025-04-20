@@ -11,11 +11,7 @@ async function youTube() {
    //////////////////////////////////////////////////////////////////////////////
    body.context.client.clientName = 'IOS';
    body.context.client.clientVersion = '20.03.02';
-   // data := base64.RawStdEncoding.EncodeToString([]byte("########"))
-   // var message protobuf.Message
-   // message.AddBytes(1, []byte(data))
-   // return base64.RawStdEncoding.EncodeToString(message.Marshal())
-   req.headers['X-Goog-Visitor-Id'] = 'CgtJeU1qSXlNakl5TQ';
+   req.headers['X-Goog-Visitor-Id'] = 'CgtNbzlJR19GY24tNCjl_pDABjIKCgJVUxIEGgAgDA==';
    //////////////////////////////////////////////////////////////////////////////
    req.body = JSON.stringify(body);
    req.method = 'POST';

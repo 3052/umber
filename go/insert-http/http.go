@@ -4,12 +4,44 @@ import (
    "bytes"
    "encoding/json"
    "flag"
+   "log"
    "net/url"
    "os"
    "path"
+   "slices"
    "strconv"
    "time"
 )
+
+func (f *flags) do_http() error {
+   // 1 values
+   now := strconv.FormatInt(time.Now().Unix(), 36)
+   values := url.Values{}
+   values.Set("a", now)
+   values.Set("b", f.audio)
+   values.Set("c", f.image)
+   values.Set("p", "h")
+   values.Set("y", f.year)
+   // 2 song
+   var song1 song
+   song1.Q = values.Encode()
+   song1.S = path.Base(f.audio)
+   // 3 songs
+   songs, err := read_songs(f.name)
+   if err != nil {
+      return err
+   }
+   songs = slices.Insert(songs, 0, song1)
+   var buf bytes.Buffer
+   enc := json.NewEncoder(&buf)
+   enc.SetEscapeHTML(false)
+   enc.SetIndent("", " ")
+   err = enc.Encode(songs)
+   if err != nil {
+      return err
+   }
+   return write_file("umber.json", buf.Bytes())
+}
 
 type song struct {
    Q string
@@ -57,34 +89,4 @@ type flags struct {
    image string
    name  string
    year  string
-}
-
-func (f *flags) do_http() error {
-   // 1 values
-   now := strconv.FormatInt(time.Now().Unix(), 36)
-   values := url.Values{}
-   values.Set("a", now)
-   values.Set("b", f.audio)
-   values.Set("c", f.image)
-   values.Set("p", "h")
-   values.Set("y", f.year)
-   // 2 song
-   var song1 song
-   song1.Q = values.Encode()
-   song1.S = path.Base(f.audio)
-   // 3 songs
-   songs, err := read_songs(f.name)
-   if err != nil {
-      return err
-   }
-   songs = slices.Insert(songs, 0, song1)
-   var buf bytes.Buffer
-   enc := json.NewEncoder(&buf)
-   enc.SetEscapeHTML(false)
-   enc.SetIndent("", " ")
-   err := enc.Encode(songs)
-   if err != nil {
-      return err
-   }
-   return write_file("umber.json", buf.Bytes())
 }

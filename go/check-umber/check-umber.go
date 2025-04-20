@@ -12,6 +12,14 @@ import (
    "time"
 )
 
+// data := base64.RawStdEncoding.EncodeToString([]byte("########"))
+// var message protobuf.Message
+// message.AddBytes(1, []byte(data))
+// return base64.RawStdEncoding.EncodeToString(message.Marshal())
+func visitor_id(head http.Header) {
+   head.Set("x-goog-visitor-id", "CgtJeU1qSXlNakl5TQ")
+}
+
 func main() {
    name := flag.String("n", "umber.json", "name")
    start := flag.Int("s", -1, "start")
@@ -96,11 +104,7 @@ func (p *Player) New(video_id string) error {
    if err != nil {
       return err
    }
-   // data := base64.RawStdEncoding.EncodeToString([]byte("########"))
-   // var message protobuf.Message
-   // message.AddBytes(1, []byte(data))
-   // return base64.RawStdEncoding.EncodeToString(message.Marshal())
-   req.Header.Set("x-goog-visitor-id", "CgtJeU1qSXlNakl5TQ")
+   visitor_id(req.Header)
    resp, err := http.DefaultClient.Do(req)
    if err != nil {
       return err
