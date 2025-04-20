@@ -1,4 +1,177 @@
 [[game]]
+name = 'Donkey Kong Country 2'
+url = [
+   'discogs.com/release/12927228-David-Wise-Donkey-Kong-Country-2-Diddys-Kong-Quest',
+   'drive.google.com/drive/folders/1jUTvy4Bf81cFl8KxzBV0u2qz9WbL83Tm',
+   'wikipedia.org/wiki/Donkey_Kong_Country_2',
+   'youtube.com/playlist?list=PLKNuUcvZGX23N53oLt93q4CZRj8m-Il_-'
+]
+
+[[game.track]]
+number = 15
+name = 'mining melancholy'
+url = [
+   'youtube.com/watch?v=cBK2YIrY62I',
+   'youtube.com/watch?v=qpJbv1JEA4I'
+]
+
+[[game.track]]
+number = 19
+name = 'stickerbush symphony'
+url = [
+   'youtube.com/watch?v=TxP2nqBIC44',
+   'youtube.com/watch?v=qIk6YFTzckc'
+]
+
+[[game.track]]
+number = 23
+name = 'forest interlude'
+url = [
+   'youtube.com/watch?v=AZOZXoDwCzI',
+   'youtube.com/watch?v=wxAZfLenfa0'
+]
+
+[[game]]
+name = 'Mega Man X (video game)'
+url = [
+   'wikipedia.org/wiki/Mega_Man_X_(video_game)',
+   'youtube.com/playlist?list=PLLVedurB7ZPbdTRgvL53QN_0o8bWO9vL3'
+]
+
+[[game.track]]
+number = 12
+name = 'Chill Penguin (Snow Mountain Stage)'
+url = [
+   'youtube.com/watch?v=etuuQyKuel4',
+   'youtube.com/watch?v=fcOjHuAD6SI'
+]
+
+[[game]]
+name = 'Pilotwings 64'
+url = [
+   'wikipedia.org/wiki/Pilotwings_64',
+   'youtube.com/playlist?list=PLWsnao9n727MUC1DSLXttRIASGxLmTRQb',
+   'youtube.com/playlist?list=PLWsnao9n727NrHIiqnZEtD180s9qxL4zl',
+   'youtube.com/playlist?list=PLWsnao9n727OfUwLfkm1bJjnkwxLNcSNH'
+]
+
+[[game.track]]
+number = 5
+name = 'hang glider'
+url = [
+   'youtube.com/watch?v=h8-OfKFPnjw', # Hang Glider 
+   'youtube.com/watch?v=nv69iNJbqKo', # Hang Glider HD 
+   'youtube.com/watch?v=aaInC-vCjt0' # Hang Glider Retro HD+
+]
+
+[[game.track]]
+number = 9
+name = 'rocket belt'
+url = [
+   'youtube.com/watch?v=1QI0zjNZJtU',
+   'youtube.com/watch?v=R9u06H6j8a0',
+   'youtube.com/watch?v=sAtiUoPB7d4'
+]
+
+[[game.track]]
+number = 20
+name = 'sky diving'
+url = [
+   'youtube.com/watch?v=NDlyfygPZDs',
+   'youtube.com/watch?v=cbb0ubUAJqc',
+   'youtube.com/watch?v=uARj6X14qE8'
+]
+
+[[game.track]]
+number = 26
+name = 'birdman'
+url = [
+   'youtube.com/watch?v=DROiSgvFsRY',
+   'youtube.com/watch?v=ar8oGTSg5Lk',
+   'youtube.com/watch?v=bsUNUqk-JHg'
+]
+
+[[game.track]]
+number = 31
+name = 'Bravissimo!'
+url = [
+   'youtube.com/watch?v=mdHjSThrRYc',
+   'youtube.com/watch?v=mziDsd_SE0M',
+   'youtube.com/watch?v=qzT0yKHN1f8'
+]
+
+[[game]]
+name = 'Star Fox 64'
+url = [
+   'archive.org/details/starfox-64-soundtrack-cd',
+   'wikipedia.org/wiki/Star_Fox_64'
+]
+
+[[game.track]]
+number = 1
+name = 'opening theme'
+url = [ 'archive.org/details/starfox-64-soundtrack-cd/01+-+Opening+Theme.flac' ]
+
+[[game.track]]
+number = 2
+name = 'title theme'
+url = [ 'archive.org/details/starfox-64-soundtrack-cd/02+-+Title+Theme.flac' ]
+
+[[game.track]]
+number = 3
+name = 'select theme'
+url = [ 'archive.org/details/starfox-64-soundtrack-cd/03+-+Select+Theme.flac' ]
+
+[[game]]
+name = 'Super Mario 64'
+url = [
+   'google.com/search?q=Koji+Kondo+Super+Mario+64',
+   'wikipedia.org/wiki/Super_Mario_64',
+   'youtube.com/playlist?list=PLB4DC2508C4D0076D',
+   'youtube.com/playlist?list=PLD-vbw8JmuygRfq1Oy3rL-YcFefw0M-Oh',
+   'youtube.com/playlist?list=PLu0fouVDrRZM1j1U4lTBgNnLbEX4R4Nld'
+]
+
+[[game.track]]
+number = 9
+name = 'dire, dire docks'
+url = [
+   'youtube.com/watch?v=-K8OiFZO0Os',
+   'youtube.com/watch?v=N6G7uFlUyn4',
+   'youtube.com/watch?v=Zqa2mgjbOIM'
+]
+
+[[game.track]]
+number = 35
+name = 'staff roll'
+url = [
+   'youtube.com/watch?v=4dhtKsTmdjI',
+   'youtube.com/watch?v=CkrF61J2Jw0',
+   'youtube.com/watch?v=_UmksF3MFXg',
+   'youtube.com/watch?v=o-xRxXYpavU'
+]
+
+[[game]]
+name = 'Super Mario Galaxy 2'
+url = [
+   'wikipedia.org/wiki/Super_Mario_Galaxy_2',
+   'youtube.com/playlist?list=PLC583980D7806298E'
+]
+
+[[game.track]]
+number = 27
+name = 'Cosmic Cove Galaxy'
+url = [ 'youtube.com/watch?v=zcV7RptHqro' ]
+
+[[game]]
+name = 'Super Mario World'
+url = [ 'wikipedia.org/wiki/Super_Mario_World' ]
+
+[[game]]
+name = "The Legend of Zelda: Majora's Mask"
+url = [ "wikipedia.org/wiki/The_Legend_of_Zelda:_Majora's_Mask" ]
+
+[[game]]
 name = 'The Legend of Zelda: Ocarina of Time'
 url = [
   'google.com/search?q=Koji+Kondo+The+Legend+of+Zelda:+Ocarina+of+Time',
@@ -134,171 +307,3 @@ url = [
    'youtube.com/watch?v=02pp7Pb7Bls',
    'zeldauniverse.s3.amazonaws.com/soundtracks/thewindwakerost/cd1/The_Legend_of_Zelda_-_The_Wind_Waker_-_38_-_Dragon_Island.mp3'
 ]
-
-[[game]]
-name = 'Donkey Kong Country 2'
-url = [
-   'discogs.com/release/12927228-David-Wise-Donkey-Kong-Country-2-Diddys-Kong-Quest',
-   'drive.google.com/drive/folders/1jUTvy4Bf81cFl8KxzBV0u2qz9WbL83Tm',
-   'wikipedia.org/wiki/Donkey_Kong_Country_2',
-   'youtube.com/playlist?list=PLKNuUcvZGX23N53oLt93q4CZRj8m-Il_-'
-]
-
-[[game.track]]
-number = 15
-name = 'mining melancholy'
-url = [
-   'youtube.com/watch?v=cBK2YIrY62I',
-   'youtube.com/watch?v=qpJbv1JEA4I'
-]
-
-[[game.track]]
-number = 19
-name = 'stickerbush symphony'
-url = [
-   'youtube.com/watch?v=TxP2nqBIC44',
-   'youtube.com/watch?v=qIk6YFTzckc'
-]
-
-[[game.track]]
-number = 23
-name = 'forest interlude'
-url = [
-   'youtube.com/watch?v=AZOZXoDwCzI',
-   'youtube.com/watch?v=wxAZfLenfa0'
-]
-
-[[game]]
-name = 'Mega Man X (video game)'
-url = [ 'wikipedia.org/wiki/Mega_Man_X_(video_game)' ]
-
-[[game.track]]
-name = 'Chill Penguin Stage (Jazz Remix)'
-url = [ 'youtube.com/watch?v=etuuQyKuel4' ]
-
-[[game]]
-name = 'Pilotwings 64'
-url = [
-   'wikipedia.org/wiki/Pilotwings_64',
-   'youtube.com/playlist?list=PLWsnao9n727MUC1DSLXttRIASGxLmTRQb',
-   'youtube.com/playlist?list=PLWsnao9n727NrHIiqnZEtD180s9qxL4zl',
-   'youtube.com/playlist?list=PLWsnao9n727OfUwLfkm1bJjnkwxLNcSNH'
-]
-
-[[game.track]]
-number = 5
-name = 'hang glider'
-url = [
-   'youtube.com/watch?v=h8-OfKFPnjw', # Hang Glider 
-   'youtube.com/watch?v=nv69iNJbqKo', # Hang Glider HD 
-   'youtube.com/watch?v=aaInC-vCjt0' # Hang Glider Retro HD+
-]
-
-[[game.track]]
-number = 9
-name = 'rocket belt'
-url = [
-   'youtube.com/watch?v=1QI0zjNZJtU',
-   'youtube.com/watch?v=R9u06H6j8a0',
-   'youtube.com/watch?v=sAtiUoPB7d4'
-]
-
-[[game.track]]
-number = 20
-name = 'sky diving'
-url = [
-   'youtube.com/watch?v=NDlyfygPZDs',
-   'youtube.com/watch?v=cbb0ubUAJqc',
-   'youtube.com/watch?v=uARj6X14qE8'
-]
-
-[[game.track]]
-number = 26
-name = 'birdman'
-url = [
-   'youtube.com/watch?v=DROiSgvFsRY',
-   'youtube.com/watch?v=ar8oGTSg5Lk',
-   'youtube.com/watch?v=bsUNUqk-JHg'
-]
-
-[[game.track]]
-number = 31
-name = 'Bravissimo!'
-url = [
-   'youtube.com/watch?v=mdHjSThrRYc',
-   'youtube.com/watch?v=mziDsd_SE0M',
-   'youtube.com/watch?v=qzT0yKHN1f8'
-]
-
-[[game]]
-name = 'Star Fox 64'
-url = [
-   'archive.org/details/starfox-64-soundtrack-cd',
-   'wikipedia.org/wiki/Star_Fox_64'
-]
-
-[[game.track]]
-number = 1
-name = 'opening theme'
-url = [ 'archive.org/details/starfox-64-soundtrack-cd/01+-+Opening+Theme.flac' ]
-
-[[game.track]]
-number = 2
-name = 'title theme'
-url = [ 'archive.org/details/starfox-64-soundtrack-cd/02+-+Title+Theme.flac' ]
-
-[[game.track]]
-number = 3
-name = 'select theme'
-url = [ 'archive.org/details/starfox-64-soundtrack-cd/03+-+Select+Theme.flac' ]
-
-[[game]]
-name = 'Super Mario 64'
-url = [
-   'google.com/search?q=Koji+Kondo+Super+Mario+64',
-   'wikipedia.org/wiki/Super_Mario_64',
-   'youtube.com/playlist?list=PLB4DC2508C4D0076D',
-   'youtube.com/playlist?list=PLD-vbw8JmuygRfq1Oy3rL-YcFefw0M-Oh',
-   'youtube.com/playlist?list=PLu0fouVDrRZM1j1U4lTBgNnLbEX4R4Nld'
-]
-
-[[game.track]]
-number = 9
-name = 'dire, dire docks'
-url = [
-   'youtube.com/watch?v=-K8OiFZO0Os',
-   'youtube.com/watch?v=N6G7uFlUyn4',
-   'youtube.com/watch?v=Zqa2mgjbOIM'
-]
-
-[[game.track]]
-number = 35
-name = 'staff roll'
-url = [
-   'youtube.com/watch?v=4dhtKsTmdjI',
-   'youtube.com/watch?v=CkrF61J2Jw0',
-   'youtube.com/watch?v=_UmksF3MFXg',
-   'youtube.com/watch?v=o-xRxXYpavU'
-]
-
-[[game]]
-name = 'Super Mario Galaxy 2'
-url = [
-   'wikipedia.org/wiki/Super_Mario_Galaxy_2',
-   'youtube.com/playlist?list=PLC583980D7806298E'
-]
-
-[[game.track]]
-number = 27
-name = 'Cosmic Cove Galaxy'
-url = [ 'youtube.com/watch?v=zcV7RptHqro' ]
-
-###
-
-[[game]]
-name = 'Super Mario World'
-url = [ 'wikipedia.org/wiki/Super_Mario_World' ]
-
-[[game]]
-name = "The Legend of Zelda: Majora's Mask"
-url = [ "wikipedia.org/wiki/The_Legend_of_Zelda:_Majora's_Mask" ]
