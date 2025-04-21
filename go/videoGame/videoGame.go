@@ -1,6 +1,49 @@
-package nintendo
+package videoGame
+
+type link struct {
+   text string
+   url  string
+}
+
+type track struct {
+   number int
+   name   string
+   link   []link
+}
+
+type game struct {
+   name  string
+   link  []link
+   track []track
+}
 
 var Games = []game{
+   {
+      name: "portal",
+      link: []link{
+         {url: "wikipedia.org/wiki/Portal_(video_game)"},
+         {
+            text: "Rabbit OST",
+            url: "youtube.com/playlist?list=PLH834K1pkcjKfeTgaAhrEPQxaLPBHayJ9",
+         },
+      },
+      track: []track{
+         {
+            number: 3,
+            name: "self esteem fund",
+            link: []link{
+               {
+                  text: "rabbit ost",
+                  url: "youtube.com/watch?v=9oQYVui9EaU",
+               },
+               {
+                  text: "thyzzie",
+                  url: "youtube.com/watch?v=pT7pVK5q8tk",
+               },
+            },
+         },
+      },
+   },
    {
       name: "Donkey Kong Country 2",
       link: []link{
@@ -192,36 +235,6 @@ var Games = []game{
       },
    },
    {
-      name: "Star Fox 64",
-      link: []link{
-         {url: "archive.org/details/starfox-64-soundtrack-cd"},
-         {url: "wikipedia.org/wiki/Star_Fox_64"},
-      },
-      track: []track{
-         {
-            number: 1,
-            name:   "opening theme",
-            link: []link{
-               {url: "archive.org/details/starfox-64-soundtrack-cd/01+-+Opening+Theme.flac"},
-            },
-         },
-         {
-            number: 2,
-            name:   "title theme",
-            link: []link{
-               {url: "archive.org/details/starfox-64-soundtrack-cd/02+-+Title+Theme.flac"},
-            },
-         },
-         {
-            number: 3,
-            name:   "select theme",
-            link: []link{
-               {url: "archive.org/details/starfox-64-soundtrack-cd/03+-+Select+Theme.flac"},
-            },
-         },
-      },
-   },
-   {
       name: "Super Mario 64",
       link: []link{
          {url: "google.com/search?q=Koji+Kondo+Super+Mario+64"},
@@ -309,25 +322,8 @@ var Games = []game{
       },
    },
    {
-      name: "The Legend of Zelda: Majora's Mask",
-      link: []link{
-         {url: "wikipedia.org/wiki/The_Legend_of_Zelda:_Majora's_Mask"},
-         {url: "zeldauniverse.net/media/music/majoras-mask-original-soundtrack"},
-      },
-      track: []track{
-         {
-            number: 19,
-            name:   "cremia's carriage",
-            link: []link{
-               {url: "zeldauniverse.s3.amazonaws.com/soundtracks/majorasmaskost/cd2/2-19+Cremias+Carriage.mp3"},
-            },
-         },
-      },
-   },
-   {
       name: "The Legend of Zelda: Ocarina of Time",
       link: []link{
-         {url: "google.com/search?q=Koji+Kondo+The+Legend+of+Zelda:+Ocarina+of+Time"},
          {url: "wikipedia.org/wiki/The_Legend_of_Zelda:_Ocarina_of_Time"},
          {url: "zeldauniverse.net/media/music/ocarina-of-time-original-soundtrack"},
          {
@@ -471,21 +467,62 @@ var Games = []game{
          },
       },
    },
-}
-
-type game struct {
-   name  string
-   link  []link
-   track []track
-}
-
-type track struct {
-   number int
-   name   string
-   link   []link
-}
-
-type link struct {
-   text string
-   url  string
+   {
+      name: "The Legend of Zelda: Majora's Mask",
+      link: []link{
+         {url: "wikipedia.org/wiki/The_Legend_of_Zelda:_Majora's_Mask"},
+         {url: "zeldauniverse.net/media/music/majoras-mask-original-soundtrack"},
+         {
+            text: "Cha Chingo Christiano",
+            url: "youtube.com/playlist?list=PLESFnlO3kNnojaXTldE2ThGR0NpMuA595",
+         },
+      },
+      track: []track{
+         {
+            number: 19,
+            name:   "cremia's carriage",
+            link: []link{
+               {url: "youtube.com/watch?v=OkWTYpGF_20"},
+               {url: "zeldauniverse.s3.amazonaws.com/soundtracks/majorasmaskost/cd2/2-19+Cremias+Carriage.mp3"},
+            },
+         },
+      },
+   },
+   {
+      name: "Star Fox 64",
+      link: []link{
+         {url: "archive.org/details/starfox-64-soundtrack-cd"},
+         {url: "wikipedia.org/wiki/Star_Fox_64"},
+         {
+            text: "LadyKitsune1116",
+            url: "youtube.com/playlist?list=PLTcAyMjIQ7rJaUcAy1yVaeMQbHnwmzMWy",
+         },
+      },
+      track: []track{
+         {
+            number: 1,
+            name:   "opening theme",
+            link: []link{
+               {url: "archive.org/details/starfox-64-soundtrack-cd/01+-+Opening+Theme.flac"},
+               {url: "youtube.com/watch?v=EC1GyQ2SyUw"},
+            },
+         },
+         {
+            number: 2,
+            name:   "title theme",
+            link: []link{
+               {url: "archive.org/details/starfox-64-soundtrack-cd/02+-+Title+Theme.flac"},
+               {url: "youtube.com/watch?v=C6EZWbrBVRk"},
+            },
+         },
+         {
+            number: 3,
+            name:   "select theme",
+            link: []link{
+               {url: "archive.org/details/starfox-64-soundtrack-cd/03+-+Select+Theme.flac"},
+               {url: "youtube.com/watch?v=_l4CmiCPrq0"},
+            },
+         },
+      },
+   },
 }
