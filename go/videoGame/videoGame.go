@@ -17,11 +17,11 @@ var Games = []game{
             link: []link{
                {
                   text: "Aquatic Ambience [Restored]",
-                  url: "youtube.com/watch?v=-5rAjOjTGtc",
+                  url:  "youtube.com/watch?v=-5rAjOjTGtc",
                },
                {
                   text: "Aquatic Ambience [Restored] [2023 Mix]",
-                  url: "youtube.com/watch?v=39hGqV42CkM",
+                  url:  "youtube.com/watch?v=39hGqV42CkM",
                },
             },
          },
@@ -95,7 +95,7 @@ var Games = []game{
             number: 0,
             name:   "by the wall",
             link: []link{
-               { url:  "youtube.com/watch?v=jex5rtwx94k" },
+               {url: "youtube.com/watch?v=jex5rtwx94k"},
             },
          },
       },
@@ -396,64 +396,161 @@ var Games = []game{
          {url: "wikipedia.org/wiki/The_Elder_Scrolls_III:_Morrowind"},
          {
             text: "ETSLord",
-            url: "youtube.com/playlist?list=PL47A1A80CE45D22ED",
+            url:  "youtube.com/playlist?list=PL47A1A80CE45D22ED",
          },
       },
       track: []track{
          {
             number: 1,
-            name: "Nerevar Rising",
+            name:   "Nerevar Rising",
             link: []link{
                {url: "youtube.com/watch?v=OHyY8BFPJZw"},
             },
          },
          {
             number: 2,
-            name: "Peaceful Waters",
+            name:   "Peaceful Waters",
             link: []link{
                {url: "youtube.com/watch?v=PIlh-wEDYTQ"},
             },
          },
          {
             number: 4,
-            name: "over the next hill",
+            name:   "over the next hill",
             link: []link{
                {url: "youtube.com/watch?v=llINJR3X31A"},
             },
          },
          {
             number: 6,
-            name: "the road most travelled",
+            name:   "the road most travelled",
             link: []link{
                {url: "youtube.com/watch?v=HR432XFDUQQ"},
             },
          },
          {
             number: 8,
-            name: "blessing of vivec",
+            name:   "blessing of vivec",
             link: []link{
                {url: "youtube.com/watch?v=FzZP3IWmTv0"},
             },
          },
          {
             number: 10,
-            name: "silt sunrise",
+            name:   "silt sunrise",
             link: []link{
                {url: "youtube.com/watch?v=83nQz4JCk1s"},
             },
          },
          {
             number: 12,
-            name: "shed your travails",
+            name:   "shed your travails",
             link: []link{
                {url: "youtube.com/watch?v=_ETl-hlOCBk"},
             },
          },
          {
             number: 14,
-            name: "caprice",
+            name:   "caprice",
             link: []link{
                {url: "youtube.com/watch?v=qCLYm55Vtus"},
+            },
+         },
+      },
+   },
+   {
+      name: "the elder scrolls iv: oblivion",
+      link: []link{
+         {url: "google.com/search?q=Jeremy+Soule+The+Elder+Scrolls+IV:+Oblivion"},
+         {url: "wikipedia.org/wiki/The_Elder_Scrolls_IV:_Oblivion"},
+         {
+            text: "Jeremy Soule • Album",
+            url:  "youtube.com/playlist?list=OLAK5uy_kXo_Oow229N2xQzU8yMffiTbSMEn0kWmI",
+         },
+      },
+      track: []track{
+         {
+            number: 2,
+            name:   "through the valleys",
+            link: []link{
+               {url: "youtube.com/watch?v=mNIGXJbpjaQ"},
+            },
+         },
+         {
+            number: 4,
+            name:   "harvest dawn",
+            link: []link{
+               {url: "youtube.com/watch?v=s9L9sNtv1-g"},
+            },
+         },
+         {
+            number: 6,
+            name:   "king and country",
+            link: []link{
+               {url: "youtube.com/watch?v=owsS1TcoJbo"},
+            },
+         },
+         {
+            number: 8,
+            name:   "wings of kynareth",
+            link: []link{
+               {url: "youtube.com/watch?v=jkypBTH8hQQ"},
+            },
+         },
+         {
+            number: 9,
+            name:   "all's well",
+            link: []link{
+               {url: "youtube.com/watch?v=4IeUydwnrpQ"},
+            },
+         },
+         {
+            number: 12,
+            name:   "watchman's ease",
+            link: []link{
+               {url: "youtube.com/watch?v=FLYWMEWC7as"},
+            },
+         },
+         {
+            number: 13,
+            name:   "glory of cyrodiil",
+            link: []link{
+               {url: "youtube.com/watch?v=2bDEVFfbnXE"},
+            },
+         },
+         {
+            number: 16,
+            name:   "minstel's lament",
+            link: []link{
+               {url: "youtube.com/watch?v=iGzlx2YJMm8"},
+            },
+         },
+         {
+            number: 18,
+            name:   "auriel's ascension",
+            link: []link{
+               {url: "youtube.com/watch?v=fHxQ4Nk9tpo"},
+            },
+         },
+         {
+            number: 22,
+            name:   "sunrise of flutes",
+            link: []link{
+               {url: "youtube.com/watch?v=8v17z_nIidA"},
+            },
+         },
+         {
+            number: 25,
+            name:   "dusk at the market",
+            link: []link{
+               {url: "youtube.com/watch?v=Cwj0vHJ4fiE"},
+            },
+         },
+         {
+            number: 26,
+            name:   "peace of akatosh",
+            link: []link{
+               {url: "youtube.com/watch?v=gDcXA3MWX3k"},
             },
          },
       },
@@ -463,14 +560,21 @@ var Games = []game{
       link: []link{
          {url: "wikipedia.org/wiki/The_Elder_Scrolls_V:_Skyrim"},
          {
-            text: " Jeremy Soule • Album",
-            url: "youtube.com/playlist?list=OLAK5uy_kOC_oYOG8Rb_bLVukPtxzs2i-fZ65DYg4",
+            text: "Jeremy Soule • Album",
+            url:  "youtube.com/playlist?list=OLAK5uy_kOC_oYOG8Rb_bLVukPtxzs2i-fZ65DYg4",
          },
       },
       track: []track{
          {
+            number: 3,
+            name:   "from past to present",
+            link: []link{
+               {url: "youtube.com/watch?v=thCxUo37PXw"},
+            },
+         },
+         {
             number: 5,
-            name: "ancient stones",
+            name:   "ancient stones",
             link: []link{
                {url: "youtube.com/watch?v=kX-oTQR1ihk"},
             },
