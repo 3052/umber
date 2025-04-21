@@ -1,51 +1,8 @@
 package videoGame
 
-type link struct {
-   text string
-   url  string
-}
-
-type track struct {
-   number int
-   name   string
-   link   []link
-}
-
-type game struct {
-   name  string
-   link  []link
-   track []track
-}
-
 var Games = []game{
    {
-      name: "portal",
-      link: []link{
-         {url: "wikipedia.org/wiki/Portal_(video_game)"},
-         {
-            text: "Rabbit OST",
-            url: "youtube.com/playlist?list=PLH834K1pkcjKfeTgaAhrEPQxaLPBHayJ9",
-         },
-      },
-      track: []track{
-         {
-            number: 3,
-            name: "self esteem fund",
-            link: []link{
-               {
-                  text: "rabbit ost",
-                  url: "youtube.com/watch?v=9oQYVui9EaU",
-               },
-               {
-                  text: "thyzzie",
-                  url: "youtube.com/watch?v=pT7pVK5q8tk",
-               },
-            },
-         },
-      },
-   },
-   {
-      name: "Donkey Kong Country 2",
+      name: "donkey kong country 2",
       link: []link{
          {url: "wikipedia.org/wiki/Donkey_Kong_Country_2"},
          {
@@ -99,7 +56,7 @@ var Games = []game{
       },
    },
    {
-      name: "Mega Man X (video game)",
+      name: "mega man x",
       link: []link{
          {url: "wikipedia.org/wiki/Mega_Man_X_(video_game)"},
          {
@@ -125,7 +82,7 @@ var Games = []game{
       },
    },
    {
-      name: "Pilotwings 64",
+      name: "pilotwings 64",
       link: []link{
          {url: "wikipedia.org/wiki/Pilotwings_64"},
          {
@@ -235,7 +192,70 @@ var Games = []game{
       },
    },
    {
-      name: "Super Mario 64",
+      name: "portal",
+      link: []link{
+         {url: "wikipedia.org/wiki/Portal_(video_game)"},
+         {
+            text: "Rabbit OST",
+            url: "youtube.com/playlist?list=PLH834K1pkcjKfeTgaAhrEPQxaLPBHayJ9",
+         },
+      },
+      track: []track{
+         {
+            number: 3,
+            name: "self esteem fund",
+            link: []link{
+               {
+                  text: "rabbit ost",
+                  url: "youtube.com/watch?v=9oQYVui9EaU",
+               },
+               {
+                  text: "thyzzie",
+                  url: "youtube.com/watch?v=pT7pVK5q8tk",
+               },
+            },
+         },
+      },
+   },
+   {
+      name: "star fox 64",
+      link: []link{
+         {url: "archive.org/details/starfox-64-soundtrack-cd"},
+         {url: "wikipedia.org/wiki/Star_Fox_64"},
+         {
+            text: "LadyKitsune1116",
+            url: "youtube.com/playlist?list=PLTcAyMjIQ7rJaUcAy1yVaeMQbHnwmzMWy",
+         },
+      },
+      track: []track{
+         {
+            number: 1,
+            name:   "opening theme",
+            link: []link{
+               {url: "archive.org/details/starfox-64-soundtrack-cd/01+-+Opening+Theme.flac"},
+               {url: "youtube.com/watch?v=EC1GyQ2SyUw"},
+            },
+         },
+         {
+            number: 2,
+            name:   "title theme",
+            link: []link{
+               {url: "archive.org/details/starfox-64-soundtrack-cd/02+-+Title+Theme.flac"},
+               {url: "youtube.com/watch?v=C6EZWbrBVRk"},
+            },
+         },
+         {
+            number: 3,
+            name:   "select theme",
+            link: []link{
+               {url: "archive.org/details/starfox-64-soundtrack-cd/03+-+Select+Theme.flac"},
+               {url: "youtube.com/watch?v=_l4CmiCPrq0"},
+            },
+         },
+      },
+   },
+   {
+      name: "super mario 64",
       link: []link{
          {url: "google.com/search?q=Koji+Kondo+Super+Mario+64"},
          {url: "wikipedia.org/wiki/Super_Mario_64"},
@@ -284,7 +304,7 @@ var Games = []game{
       },
    },
    {
-      name: "Super Mario Galaxy 2",
+      name: "super mario galaxy 2",
       link: []link{
          {url: "wikipedia.org/wiki/Super_Mario_Galaxy_2"},
          {
@@ -303,7 +323,7 @@ var Games = []game{
       },
    },
    {
-      name: "Super Mario World",
+      name: "super mario world",
       link: []link{
          {url: "wikipedia.org/wiki/Super_Mario_World"},
          {
@@ -322,7 +342,28 @@ var Games = []game{
       },
    },
    {
-      name: "The Legend of Zelda: Ocarina of Time",
+      name: "the legend of zelda: majora's mask",
+      link: []link{
+         {url: "wikipedia.org/wiki/The_Legend_of_Zelda:_Majora's_Mask"},
+         {url: "zeldauniverse.net/media/music/majoras-mask-original-soundtrack"},
+         {
+            text: "Cha Chingo Christiano",
+            url: "youtube.com/playlist?list=PLESFnlO3kNnojaXTldE2ThGR0NpMuA595",
+         },
+      },
+      track: []track{
+         {
+            number: 19,
+            name:   "cremia's carriage",
+            link: []link{
+               {url: "youtube.com/watch?v=OkWTYpGF_20"},
+               {url: "zeldauniverse.s3.amazonaws.com/soundtracks/majorasmaskost/cd2/2-19+Cremias+Carriage.mp3"},
+            },
+         },
+      },
+   },
+   {
+      name: "the legend of zelda: ocarina of time",
       link: []link{
          {url: "wikipedia.org/wiki/The_Legend_of_Zelda:_Ocarina_of_Time"},
          {url: "zeldauniverse.net/media/music/ocarina-of-time-original-soundtrack"},
@@ -439,7 +480,7 @@ var Games = []game{
       },
    },
    {
-      name: "The Legend of Zelda: The Wind Waker",
+      name: "the legend of zelda: the wind waker",
       link: []link{
          {url: "wikipedia.org/wiki/The_Legend_of_Zelda:_The_Wind_Waker"},
          {url: "zeldauniverse.net/media/music/the-wind-waker-original-soundtrack"},
@@ -467,62 +508,21 @@ var Games = []game{
          },
       },
    },
-   {
-      name: "The Legend of Zelda: Majora's Mask",
-      link: []link{
-         {url: "wikipedia.org/wiki/The_Legend_of_Zelda:_Majora's_Mask"},
-         {url: "zeldauniverse.net/media/music/majoras-mask-original-soundtrack"},
-         {
-            text: "Cha Chingo Christiano",
-            url: "youtube.com/playlist?list=PLESFnlO3kNnojaXTldE2ThGR0NpMuA595",
-         },
-      },
-      track: []track{
-         {
-            number: 19,
-            name:   "cremia's carriage",
-            link: []link{
-               {url: "youtube.com/watch?v=OkWTYpGF_20"},
-               {url: "zeldauniverse.s3.amazonaws.com/soundtracks/majorasmaskost/cd2/2-19+Cremias+Carriage.mp3"},
-            },
-         },
-      },
-   },
-   {
-      name: "Star Fox 64",
-      link: []link{
-         {url: "archive.org/details/starfox-64-soundtrack-cd"},
-         {url: "wikipedia.org/wiki/Star_Fox_64"},
-         {
-            text: "LadyKitsune1116",
-            url: "youtube.com/playlist?list=PLTcAyMjIQ7rJaUcAy1yVaeMQbHnwmzMWy",
-         },
-      },
-      track: []track{
-         {
-            number: 1,
-            name:   "opening theme",
-            link: []link{
-               {url: "archive.org/details/starfox-64-soundtrack-cd/01+-+Opening+Theme.flac"},
-               {url: "youtube.com/watch?v=EC1GyQ2SyUw"},
-            },
-         },
-         {
-            number: 2,
-            name:   "title theme",
-            link: []link{
-               {url: "archive.org/details/starfox-64-soundtrack-cd/02+-+Title+Theme.flac"},
-               {url: "youtube.com/watch?v=C6EZWbrBVRk"},
-            },
-         },
-         {
-            number: 3,
-            name:   "select theme",
-            link: []link{
-               {url: "archive.org/details/starfox-64-soundtrack-cd/03+-+Select+Theme.flac"},
-               {url: "youtube.com/watch?v=_l4CmiCPrq0"},
-            },
-         },
-      },
-   },
+}
+
+type link struct {
+   text string
+   url  string
+}
+
+type track struct {
+   number int
+   name   string
+   link   []link
+}
+
+type game struct {
+   name  string
+   link  []link
+   track []track
 }
