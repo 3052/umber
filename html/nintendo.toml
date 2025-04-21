@@ -1,4 +1,49 @@
 [[game]]
+name = 'Super Mario 64'
+
+[[game.link]]
+url = 'google.com/search?q=Koji+Kondo+Super+Mario+64'
+
+[[game.link]]
+url = 'wikipedia.org/wiki/Super_Mario_64'
+
+[[game.link]]
+text = 'RadiatorRampardos'
+url = 'youtube.com/playlist?list=PLB4DC2508C4D0076D'
+
+[[game.link]]
+text = 'SilvaGunner'
+url = 'youtube.com/playlist?list=PLu0fouVDrRZM1j1U4lTBgNnLbEX4R4Nld'
+
+[[game.track]]
+number = 9
+name = 'Dire, Dire Docks'
+
+[[game.track.link]]
+text = 'RadiatorRampardos'
+url = 'youtube.com/watch?v=Zqa2mgjbOIM'
+
+[[game.track.link]]
+text = 'Relaxing Piano - Super Mario 64 Underwater Theme'
+url = 'youtube.com/watch?v=XRh0Z36RrWY'
+
+[[game.track.link]]
+text = 'SilvaGunner'
+url = 'youtube.com/watch?v=N6G7uFlUyn4'
+
+[[game.track]]
+number = 35
+name = 'staff roll'
+
+[[game.track.link]]
+text = 'RadiatorRampardos'
+url = 'youtube.com/watch?v=o-xRxXYpavU'
+
+[[game.track.link]]
+text = 'SilvaGunner'
+url = 'youtube.com/watch?v=_UmksF3MFXg'
+
+[[game]]
 name = 'Pilotwings 64'
 
 [[game.link]]
@@ -125,47 +170,6 @@ name = 'select theme'
 
 [[game.track.link]]
 url = 'archive.org/details/starfox-64-soundtrack-cd/03+-+Select+Theme.flac'
-
-[[game]]
-name = 'Super Mario 64'
-
-[[game.link]]
-url = 'google.com/search?q=Koji+Kondo+Super+Mario+64'
-
-[[game.link]]
-url = 'wikipedia.org/wiki/Super_Mario_64'
-
-[[game.link]]
-text = 'RadiatorRampardos'
-url = 'youtube.com/playlist?list=PLB4DC2508C4D0076D'
-
-[[game.link]]
-text = 'SilvaGunner'
-url = 'youtube.com/playlist?list=PLu0fouVDrRZM1j1U4lTBgNnLbEX4R4Nld'
-
-[[game.track]]
-number = 9
-name = 'Dire, Dire Docks'
-
-[[game.track.link]]
-text = 'RadiatorRampardos'
-url = 'youtube.com/watch?v=Zqa2mgjbOIM'
-
-[[game.track.link]]
-text = 'SilvaGunner'
-url = 'youtube.com/watch?v=N6G7uFlUyn4'
-
-[[game.track]]
-number = 35
-name = 'staff roll'
-
-[[game.track.link]]
-text = 'RadiatorRampardos'
-url = 'youtube.com/watch?v=o-xRxXYpavU'
-
-[[game.track.link]]
-text = 'SilvaGunner'
-url = 'youtube.com/watch?v=_UmksF3MFXg'
 
 [[game]]
 name = 'Super Mario Galaxy 2'
@@ -323,107 +327,143 @@ url = 'youtube.com/watch?v=_UN8OcTfOVA'
 [[game.track.link]]
 url = 'zeldauniverse.s3.amazonaws.com/soundtracks/ocarinaoftimeost/41+-+Potion+Shop.mp3'
 
-###
-
 [[game.track]]
 number = 44
 name = 'temple of time'
-url = [
-   'youtube.com/watch?v=Sv66WYSQPAc',
-   'zeldauniverse.s3.amazonaws.com/soundtracks/ocarinaoftimeost/44+-+Temple+Of+Time.mp3'
-]
+
+[[game.track.link]]
+url = 'youtube.com/watch?v=Sv66WYSQPAc'
+
+[[game.track.link]]
+url = 'zeldauniverse.s3.amazonaws.com/soundtracks/ocarinaoftimeost/44+-+Temple+Of+Time.mp3'
 
 [[game.track]]
 number = 50
 name = "sheik's theme"
-url = [
-   'youtube.com/watch?v=3iV8MkbGm2o',
-   'zeldauniverse.s3.amazonaws.com/soundtracks/ocarinaoftimeost/50+-+Sheiks+Theme.mp3'
-]
+
+[[game.track.link]]
+url = 'youtube.com/watch?v=3iV8MkbGm2o'
+
+[[game.track.link]]
+url = 'zeldauniverse.s3.amazonaws.com/soundtracks/ocarinaoftimeost/50+-+Sheiks+Theme.mp3'
 
 [[game.track]]
 number = 57
 name = 'windmill hut'
-url = [
-   'youtube.com/watch?v=ms9-vyV0HNo',
-   'zeldauniverse.s3.amazonaws.com/soundtracks/ocarinaoftimeost/57+-+Windmill+Hut.mp3'
-]
+
+[[game.track.link]]
+url = 'youtube.com/watch?v=ms9-vyV0HNo'
+
+[[game.track.link]]
+url = 'zeldauniverse.s3.amazonaws.com/soundtracks/ocarinaoftimeost/57+-+Windmill+Hut.mp3'
 
 [[game.track]]
 number = 68
 name = 'gerudo valley'
-url = [
-   'youtube.com/watch?v=gmwdOH6fJ1s',
-   'zeldauniverse.s3.amazonaws.com/soundtracks/ocarinaoftimeost/68+-+Gerudo+Valley.mp3'
-]
+
+[[game.track.link]]
+url = 'youtube.com/watch?v=gmwdOH6fJ1s'
+
+[[game.track.link]]
+url = 'zeldauniverse.s3.amazonaws.com/soundtracks/ocarinaoftimeost/68+-+Gerudo+Valley.mp3'
 
 [[game]]
 name = 'The Legend of Zelda: The Wind Waker'
-url = [
-   'wikipedia.org/wiki/The_Legend_of_Zelda:_The_Wind_Waker',
-   'youtube.com/playlist?list=PLH834K1pkcjJRwrw6j-Ah3FL48SDAsK_z',
-   'zeldauniverse.net/media/music/the-wind-waker-original-soundtrack'
-]
+
+[[game.link]]
+url = 'wikipedia.org/wiki/The_Legend_of_Zelda:_The_Wind_Waker'
+
+[[game.link]]
+url = 'zeldauniverse.net/media/music/the-wind-waker-original-soundtrack'
+
+[[game.link]]
+text = 'Rabbit OST'
+url = 'youtube.com/playlist?list=PLH834K1pkcjJRwrw6j-Ah3FL48SDAsK_z'
 
 [[game.track]]
 number = 3
 name = 'the legendary hero'
-url = [
-   'youtube.com/watch?v=jNuLYOMwdS0',
-   'zeldauniverse.s3.amazonaws.com/soundtracks/thewindwakerost/cd1/The_Legend_of_Zelda_-_The_Wind_Waker_-_03_-_Legendary_Hero.mp3'
-]
+
+[[game.track.link]]
+url = 'youtube.com/watch?v=jNuLYOMwdS0'
+
+[[game.track.link]]
+url = 'zeldauniverse.s3.amazonaws.com/soundtracks/thewindwakerost/cd1/The_Legend_of_Zelda_-_The_Wind_Waker_-_03_-_Legendary_Hero.mp3'
 
 [[game.track]]
 number = 38
 name = 'dragon roost island'
-url = [
-   'youtube.com/watch?v=02pp7Pb7Bls',
-   'zeldauniverse.s3.amazonaws.com/soundtracks/thewindwakerost/cd1/The_Legend_of_Zelda_-_The_Wind_Waker_-_38_-_Dragon_Island.mp3'
-]
+
+[[game.track.link]]
+url = 'youtube.com/watch?v=02pp7Pb7Bls'
+
+[[game.track.link]]
+url = 'zeldauniverse.s3.amazonaws.com/soundtracks/thewindwakerost/cd1/The_Legend_of_Zelda_-_The_Wind_Waker_-_38_-_Dragon_Island.mp3'
+
 [[game]]
 name = 'Donkey Kong Country 2'
-url = [
-   'discogs.com/release/12927228-David-Wise-Donkey-Kong-Country-2-Diddys-Kong-Quest',
-   'drive.google.com/drive/folders/1jUTvy4Bf81cFl8KxzBV0u2qz9WbL83Tm',
-   'wikipedia.org/wiki/Donkey_Kong_Country_2',
-   'youtube.com/playlist?list=PLKNuUcvZGX23N53oLt93q4CZRj8m-Il_-'
-]
+
+[[game.link]]
+url = 'wikipedia.org/wiki/Donkey_Kong_Country_2'
+
+[[game.link]]
+text = "Jammin' Sam Miller"
+url = 'youtube.com/playlist?list=PLKNuUcvZGX23N53oLt93q4CZRj8m-Il_-'
 
 [[game.track]]
 number = 15
 name = 'mining melancholy'
-url = [
-   'youtube.com/watch?v=cBK2YIrY62I',
-   'youtube.com/watch?v=qpJbv1JEA4I'
-]
+
+[[game.track.link]]
+text = 'Donkey Kong Country 2 - Mining Melancholy [Restored]'
+url = 'youtube.com/watch?v=cBK2YIrY62I'
+
+[[game.track.link]]
+text = 'Donkey Kong Country 2 - Mining Melancholy [Restored] 2023 Mix'
+url = 'youtube.com/watch?v=qpJbv1JEA4I'
 
 [[game.track]]
 number = 19
 name = 'stickerbush symphony'
-url = [
-   'youtube.com/watch?v=TxP2nqBIC44',
-   'youtube.com/watch?v=qIk6YFTzckc'
-]
+
+[[game.track.link]]
+text = 'Donkey Kong Country 2 - Stickerbush Symphony [Restored]'
+url = 'youtube.com/watch?v=qIk6YFTzckc'
+
+[[game.track.link]]
+text = 'Donkey Kong Country 2 - Stickerbush Symphony [Restored] 2024 Mix'
+url = 'youtube.com/watch?v=TxP2nqBIC44'
 
 [[game.track]]
 number = 23
 name = 'forest interlude'
-url = [
-   'youtube.com/watch?v=AZOZXoDwCzI',
-   'youtube.com/watch?v=wxAZfLenfa0'
-]
+
+[[game.track.link]]
+text = 'Donkey Kong Country 2 - Forest Interlude [Restored]'
+url = 'youtube.com/watch?v=wxAZfLenfa0'
+
+[[game.track.link]]
+text = 'Donkey Kong Country 2 - Forest Interlude [Restored] 2025 Mix'
+url = 'youtube.com/watch?v=AZOZXoDwCzI'
 
 [[game]]
 name = 'Mega Man X (video game)'
-url = [
-   'wikipedia.org/wiki/Mega_Man_X_(video_game)',
-   'youtube.com/playlist?list=PLLVedurB7ZPbdTRgvL53QN_0o8bWO9vL3'
-]
+
+[[game.link]]
+url = 'wikipedia.org/wiki/Mega_Man_X_(video_game)'
+
+[[game.link]]
+text = 'Frygoon'
+url = 'youtube.com/playlist?list=PLLVedurB7ZPbdTRgvL53QN_0o8bWO9vL3'
 
 [[game.track]]
 number = 12
 name = 'Chill Penguin (Snow Mountain Stage)'
-url = [
-   'youtube.com/watch?v=etuuQyKuel4',
-   'youtube.com/watch?v=fcOjHuAD6SI'
-]
+
+[[game.track.link]]
+text = 'Mega Man X OST - T12: Chill Penguin (Snow Mountain Stage)'
+url = 'youtube.com/watch?v=fcOjHuAD6SI'
+
+[[game.track.link]]
+text = 'Mega Man X1 - Chill Peguin Stage(Jazz Remix)'
+url = 'youtube.com/watch?v=etuuQyKuel4'
