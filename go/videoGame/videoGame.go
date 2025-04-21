@@ -274,16 +274,20 @@ var Games = []game{
             name:   "Dire, Dire Docks",
             link: []link{
                {
-                  url:  "youtube.com/watch?v=Zqa2mgjbOIM",
+                  text: "dire dire docks but it’s boards of canada",
+                  url:  "youtube.com/watch?v=7ik1_snr7B8",
+               },
+               {
                   text: "RadiatorRampardos",
+                  url:  "youtube.com/watch?v=Zqa2mgjbOIM",
                },
                {
+                  text: "relaxing piano - super mario 64 underwater theme",
                   url:  "youtube.com/watch?v=XRh0Z36RrWY",
-                  text: "Relaxing Piano - Super Mario 64 Underwater Theme",
                },
                {
-                  url:  "youtube.com/watch?v=N6G7uFlUyn4",
                   text: "SilvaGunner",
+                  url:  "youtube.com/watch?v=N6G7uFlUyn4",
                },
             },
          },
