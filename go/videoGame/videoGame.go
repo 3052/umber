@@ -105,15 +105,15 @@ var Games = []game{
             link: []link{
                {
                   url:  "youtube.com/watch?v=h8-OfKFPnjw",
-                  text: "Pilotwings 64: Hang Glider",
-               },
-               {
-                  url:  "youtube.com/watch?v=nv69iNJbqKo",
-                  text: "Pilotwings 64: Hang Glider HD",
+                  text: "2019",
                },
                {
                   url:  "youtube.com/watch?v=aaInC-vCjt0",
-                  text: "Pilotwings 64: Hang Glider Retro HD+",
+                  text: "2020",
+               },
+               {
+                  url:  "youtube.com/watch?v=nv69iNJbqKo",
+                  text: "2022",
                },
             },
          },
@@ -123,15 +123,15 @@ var Games = []game{
             link: []link{
                {
                   url:  "youtube.com/watch?v=sAtiUoPB7d4",
-                  text: "Pilotwings 64: Rocket Belt",
-               },
-               {
-                  url:  "youtube.com/watch?v=1QI0zjNZJtU",
-                  text: "Pilotwings 64: Rocket Belt HD",
+                  text: "2019",
                },
                {
                   url:  "youtube.com/watch?v=R9u06H6j8a0",
-                  text: "Pilotwings 64: Rocket Belt Retro HD+",
+                  text: "2020",
+               },
+               {
+                  url:  "youtube.com/watch?v=1QI0zjNZJtU",
+                  text: "2022",
                },
             },
          },
@@ -141,15 +141,15 @@ var Games = []game{
             link: []link{
                {
                   url:  "youtube.com/watch?v=NDlyfygPZDs",
-                  text: "Pilotwings 64: Sky Diving",
-               },
-               {
-                  url:  "youtube.com/watch?v=uARj6X14qE8",
-                  text: "Pilotwings 64: Sky Diving HD",
+                  text: "2019",
                },
                {
                   url:  "youtube.com/watch?v=cbb0ubUAJqc",
-                  text: "Pilotwings 64: Sky Diving Retro HD+",
+                  text: "2020",
+               },
+               {
+                  url:  "youtube.com/watch?v=uARj6X14qE8",
+                  text: "2022",
                },
             },
          },
@@ -159,15 +159,15 @@ var Games = []game{
             link: []link{
                {
                   url:  "youtube.com/watch?v=DROiSgvFsRY",
-                  text: "Pilotwings 64: Birdman",
-               },
-               {
-                  url:  "youtube.com/watch?v=bsUNUqk-JHg",
-                  text: "Pilotwings 64: Birdman HD",
+                  text: "2019",
                },
                {
                   url:  "youtube.com/watch?v=ar8oGTSg5Lk",
-                  text: "Pilotwings 64: Birdman Retro HD+",
+                  text: "2020",
+               },
+               {
+                  url:  "youtube.com/watch?v=bsUNUqk-JHg",
+                  text: "2022",
                },
             },
          },
@@ -177,15 +177,15 @@ var Games = []game{
             link: []link{
                {
                   url:  "youtube.com/watch?v=mziDsd_SE0M",
-                  text: "Pilotwings 64: Bravissimo!",
-               },
-               {
-                  url:  "youtube.com/watch?v=mdHjSThrRYc",
-                  text: "Pilotwings 64: Bravissimo! HD",
+                  text: "2019",
                },
                {
                   url:  "youtube.com/watch?v=qzT0yKHN1f8",
-                  text: "Pilotwings 64: Bravissimo! Retro HD+",
+                  text: "2020",
+               },
+               {
+                  url:  "youtube.com/watch?v=mdHjSThrRYc",
+                  text: "2022",
                },
             },
          },
@@ -197,21 +197,21 @@ var Games = []game{
          {url: "wikipedia.org/wiki/Portal_(video_game)"},
          {
             text: "Rabbit OST",
-            url: "youtube.com/playlist?list=PLH834K1pkcjKfeTgaAhrEPQxaLPBHayJ9",
+            url:  "youtube.com/playlist?list=PLH834K1pkcjKfeTgaAhrEPQxaLPBHayJ9",
          },
       },
       track: []track{
          {
             number: 3,
-            name: "self esteem fund",
+            name:   "self esteem fund",
             link: []link{
                {
                   text: "rabbit ost",
-                  url: "youtube.com/watch?v=9oQYVui9EaU",
+                  url:  "youtube.com/watch?v=9oQYVui9EaU",
                },
                {
                   text: "thyzzie",
-                  url: "youtube.com/watch?v=pT7pVK5q8tk",
+                  url:  "youtube.com/watch?v=pT7pVK5q8tk",
                },
             },
          },
@@ -224,7 +224,7 @@ var Games = []game{
          {url: "wikipedia.org/wiki/Star_Fox_64"},
          {
             text: "LadyKitsune1116",
-            url: "youtube.com/playlist?list=PLTcAyMjIQ7rJaUcAy1yVaeMQbHnwmzMWy",
+            url:  "youtube.com/playlist?list=PLTcAyMjIQ7rJaUcAy1yVaeMQbHnwmzMWy",
          },
       },
       track: []track{
@@ -292,12 +292,12 @@ var Games = []game{
             name:   "staff roll",
             link: []link{
                {
-                  url:  "youtube.com/watch?v=o-xRxXYpavU",
                   text: "RadiatorRampardos",
+                  url:  "youtube.com/watch?v=o-xRxXYpavU",
                },
                {
-                  url:  "youtube.com/watch?v=_UmksF3MFXg",
                   text: "SilvaGunner",
+                  url:  "youtube.com/watch?v=_UmksF3MFXg",
                },
             },
          },
@@ -348,7 +348,7 @@ var Games = []game{
          {url: "zeldauniverse.net/media/music/majoras-mask-original-soundtrack"},
          {
             text: "Cha Chingo Christiano",
-            url: "youtube.com/playlist?list=PLESFnlO3kNnojaXTldE2ThGR0NpMuA595",
+            url:  "youtube.com/playlist?list=PLESFnlO3kNnojaXTldE2ThGR0NpMuA595",
          },
       },
       track: []track{
