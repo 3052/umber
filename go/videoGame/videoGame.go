@@ -2,6 +2,32 @@ package videoGame
 
 var Games = []game{
    {
+      name: "donkey kong country",
+      link: []link{
+         {url: "wikipedia.org/wiki/Donkey_Kong_Country"},
+         {
+            text: "Jammin' Sam Miller",
+            url:  "youtube.com/playlist?list=PLKNuUcvZGX21obTJzXuVHUWRcS2cCBBsP",
+         },
+      },
+      track: []track{
+         {
+            number: 7,
+            name:   "aquatic ambience",
+            link: []link{
+               {
+                  text: "Aquatic Ambience [Restored]",
+                  url: "youtube.com/watch?v=-5rAjOjTGtc",
+               },
+               {
+                  text: "Aquatic Ambience [Restored] [2023 Mix]",
+                  url: "youtube.com/watch?v=39hGqV42CkM",
+               },
+            },
+         },
+      },
+   },
+   {
       name: "donkey kong country 2",
       link: []link{
          {url: "wikipedia.org/wiki/Donkey_Kong_Country_2"},
@@ -51,6 +77,25 @@ var Games = []game{
                   url:  "youtube.com/watch?v=AZOZXoDwCzI",
                   text: "Donkey Kong Country 2 - Forest Interlude [Restored] 2025 Mix",
                },
+            },
+         },
+      },
+   },
+   {
+      name: "machinarium",
+      link: []link{
+         {url: "wikipedia.org/wiki/Machinarium"},
+         {
+            text: "kaikarden",
+            url:  "youtube.com/playlist?list=PLDF2E3F105D56FCE6",
+         },
+      },
+      track: []track{
+         {
+            number: 0,
+            name:   "by the wall",
+            link: []link{
+               { url:  "youtube.com/watch?v=jex5rtwx94k" },
             },
          },
       },
@@ -346,6 +391,93 @@ var Games = []game{
       },
    },
    {
+      name: "the elder scrolls iii: morrowind",
+      link: []link{
+         {url: "wikipedia.org/wiki/The_Elder_Scrolls_III:_Morrowind"},
+         {
+            text: "ETSLord",
+            url: "youtube.com/playlist?list=PL47A1A80CE45D22ED",
+         },
+      },
+      track: []track{
+         {
+            number: 1,
+            name: "Nerevar Rising",
+            link: []link{
+               {url: "youtube.com/watch?v=OHyY8BFPJZw"},
+            },
+         },
+         {
+            number: 2,
+            name: "Peaceful Waters",
+            link: []link{
+               {url: "youtube.com/watch?v=PIlh-wEDYTQ"},
+            },
+         },
+         {
+            number: 4,
+            name: "over the next hill",
+            link: []link{
+               {url: "youtube.com/watch?v=llINJR3X31A"},
+            },
+         },
+         {
+            number: 6,
+            name: "the road most travelled",
+            link: []link{
+               {url: "youtube.com/watch?v=HR432XFDUQQ"},
+            },
+         },
+         {
+            number: 8,
+            name: "blessing of vivec",
+            link: []link{
+               {url: "youtube.com/watch?v=FzZP3IWmTv0"},
+            },
+         },
+         {
+            number: 10,
+            name: "silt sunrise",
+            link: []link{
+               {url: "youtube.com/watch?v=83nQz4JCk1s"},
+            },
+         },
+         {
+            number: 12,
+            name: "shed your travails",
+            link: []link{
+               {url: "youtube.com/watch?v=_ETl-hlOCBk"},
+            },
+         },
+         {
+            number: 14,
+            name: "caprice",
+            link: []link{
+               {url: "youtube.com/watch?v=qCLYm55Vtus"},
+            },
+         },
+      },
+   },
+   {
+      name: "the elder scrolls v: skyrim",
+      link: []link{
+         {url: "wikipedia.org/wiki/The_Elder_Scrolls_V:_Skyrim"},
+         {
+            text: " Jeremy Soule • Album",
+            url: "youtube.com/playlist?list=OLAK5uy_kOC_oYOG8Rb_bLVukPtxzs2i-fZ65DYg4",
+         },
+      },
+      track: []track{
+         {
+            number: 5,
+            name: "ancient stones",
+            link: []link{
+               {url: "youtube.com/watch?v=kX-oTQR1ihk"},
+            },
+         },
+      },
+   },
+   {
       name: "the legend of zelda: majora's mask",
       link: []link{
          {url: "wikipedia.org/wiki/The_Legend_of_Zelda:_Majora's_Mask"},
@@ -514,9 +646,10 @@ var Games = []game{
    },
 }
 
-type link struct {
-   text string
-   url  string
+type game struct {
+   name  string
+   link  []link
+   track []track
 }
 
 type track struct {
@@ -525,8 +658,7 @@ type track struct {
    link   []link
 }
 
-type game struct {
-   name  string
-   link  []link
-   track []track
+type link struct {
+   text string
+   url  string
 }
