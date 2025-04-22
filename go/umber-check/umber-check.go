@@ -14,6 +14,41 @@ import (
 
 const visitor_id = "CgtveHIwVmJ4Z3pySSjF3JHABjIKCgJVUxIEGgAgKw=="
 
+func (p *Player) New(video_id string) error {
+   value := map[string]any{
+      "contentCheckOk": true,
+      "context": map[string]any{
+         "client": map[string]string{
+            "clientName":    "IOS",
+            "clientVersion": "20.03.02",
+         },
+      },
+      "racyCheckOk": true,
+      "videoId":     video_id,
+   }
+   data, err := json.MarshalIndent(value, "", " ")
+   if err != nil {
+      return err
+   }
+   req, err := http.NewRequest(
+      "POST", "https://www.youtube.com/youtubei/v1/player",
+      bytes.NewReader(data),
+   )
+   if err != nil {
+      return err
+   }
+   req.Header.Set("x-goog-visitor-id", visitor_id)
+   resp, err := http.DefaultClient.Do(req)
+   if err != nil {
+      return err
+   }
+   defer resp.Body.Close()
+   if resp.StatusCode != http.StatusOK {
+      return errors.New(resp.Status)
+   }
+   return json.NewDecoder(resp.Body).Decode(p)
+}
+
 func main() {
    name := flag.String("n", "umber.json", "name")
    start := flag.Int("s", -1, "start")
@@ -73,39 +108,4 @@ type Player struct {
       VideoId          string
       ViewCount        int64 `json:",string"`
    }
-}
-
-func (p *Player) New(video_id string) error {
-   value := map[string]any{
-      "contentCheckOk": true,
-      "context": map[string]any{
-         "client": map[string]string{
-            "clientName":    "IOS",
-            "clientVersion": "20.03.02",
-         },
-      },
-      "racyCheckOk": true,
-      "videoId":     video_id,
-   }
-   data, err := json.MarshalIndent(value, "", " ")
-   if err != nil {
-      return err
-   }
-   req, err := http.NewRequest(
-      "POST", "https://www.youtube.com/youtubei/v1/player",
-      bytes.NewReader(data),
-   )
-   if err != nil {
-      return err
-   }
-   req.Header.Set("x-goog-visitor-id", visitor_id)
-   resp, err := http.DefaultClient.Do(req)
-   if err != nil {
-      return err
-   }
-   defer resp.Body.Close()
-   if resp.StatusCode != http.StatusOK {
-      return errors.New(resp.Status)
-   }
-   return json.NewDecoder(resp.Body).Decode(p)
 }

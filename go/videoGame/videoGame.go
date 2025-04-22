@@ -662,6 +662,13 @@ var Games = []game{
             },
          },
          {
+            number: 34,
+            name:   "lost woods",
+            link: []link{
+               {url: "youtube.com/watch?v=NJZX8oGxcp4"},
+            },
+         },
+         {
             number: 39,
             name:   "zora's domain",
             link: []link{
@@ -715,6 +722,13 @@ var Games = []game{
             link: []link{
                {url: "youtube.com/watch?v=gmwdOH6fJ1s"},
                {url: "zeldauniverse.s3.amazonaws.com/soundtracks/ocarinaoftimeost/68+-+Gerudo+Valley.mp3"},
+            },
+         },
+         {
+            number: 91,
+            name:   "Title Theme (Hyrule Symphony)",
+            link: []link{
+               {url: "youtube.com/watch?v=vYnaMDIn2Mk"},
             },
          },
       },
