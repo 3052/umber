@@ -18,122 +18,6 @@ import (
    "time"
 )
 
-type yt_img struct {
-   Height  int
-   Name    string
-   VideoId string
-   Width   int
-}
-
-var yt_imgs = []yt_img{
-   {Width: 120, Height: 90, Name: "default.jpg"},
-   {Width: 120, Height: 90, Name: "1.jpg"},
-   {Width: 120, Height: 90, Name: "2.jpg"},
-   {Width: 120, Height: 90, Name: "3.jpg"},
-   {Width: 120, Height: 90, Name: "default.webp"},
-   {Width: 120, Height: 90, Name: "1.webp"},
-   {Width: 120, Height: 90, Name: "2.webp"},
-   {Width: 120, Height: 90, Name: "3.webp"},
-   {Width: 320, Height: 180, Name: "mq1.jpg"},
-   {Width: 320, Height: 180, Name: "mq2.jpg"},
-   {Width: 320, Height: 180, Name: "mq3.jpg"},
-   {Width: 320, Height: 180, Name: "mqdefault.jpg"},
-   {Width: 320, Height: 180, Name: "mq1.webp"},
-   {Width: 320, Height: 180, Name: "mq2.webp"},
-   {Width: 320, Height: 180, Name: "mq3.webp"},
-   {Width: 320, Height: 180, Name: "mqdefault.webp"},
-   {Width: 480, Height: 360, Name: "0.jpg"},
-   {Width: 480, Height: 360, Name: "hqdefault.jpg"},
-   {Width: 480, Height: 360, Name: "hq1.jpg"},
-   {Width: 480, Height: 360, Name: "hq2.jpg"},
-   {Width: 480, Height: 360, Name: "hq3.jpg"},
-   {Width: 480, Height: 360, Name: "0.webp"},
-   {Width: 480, Height: 360, Name: "hqdefault.webp"},
-   {Width: 480, Height: 360, Name: "hq1.webp"},
-   {Width: 480, Height: 360, Name: "hq2.webp"},
-   {Width: 480, Height: 360, Name: "hq3.webp"},
-   {Width: 640, Height: 480, Name: "sddefault.jpg"},
-   {Width: 640, Height: 480, Name: "sd1.jpg"},
-   {Width: 640, Height: 480, Name: "sd2.jpg"},
-   {Width: 640, Height: 480, Name: "sd3.jpg"},
-   {Width: 640, Height: 480, Name: "sddefault.webp"},
-   {Width: 640, Height: 480, Name: "sd1.webp"},
-   {Width: 640, Height: 480, Name: "sd2.webp"},
-   {Width: 640, Height: 480, Name: "sd3.webp"},
-   {Width: 1280, Height: 720, Name: "hq720.jpg"},
-   {Width: 1280, Height: 720, Name: "maxresdefault.jpg"},
-   {Width: 1280, Height: 720, Name: "maxres1.jpg"},
-   {Width: 1280, Height: 720, Name: "maxres2.jpg"},
-   {Width: 1280, Height: 720, Name: "maxres3.jpg"},
-   {Width: 1280, Height: 720, Name: "hq720.webp"},
-   {Width: 1280, Height: 720, Name: "maxresdefault.webp"},
-   {Width: 1280, Height: 720, Name: "maxres1.webp"},
-   {Width: 1280, Height: 720, Name: "maxres2.webp"},
-   {Width: 1280, Height: 720, Name: "maxres3.webp"},
-}
-
-func (y *yt_img) String() string {
-   var b strings.Builder
-   b.WriteString("http://i.ytimg.com/vi")
-   if strings.HasSuffix(y.Name, ".webp") {
-      b.WriteString("_webp")
-   }
-   b.WriteByte('/')
-   b.WriteString(y.VideoId)
-   b.WriteByte('/')
-   b.WriteString(y.Name)
-   return b.String()
-}
-
-func (d *date) UnmarshalText(data []byte) error {
-   var err error
-   d[0], err = time.Parse(time.RFC3339, string(data))
-   if err != nil {
-      return err
-   }
-   return nil
-}
-
-type date [1]time.Time
-
-type song struct {
-   Q string
-   S string
-}
-
-func read_songs(name string) ([]song, error) {
-   data, err := os.ReadFile(name)
-   if err != nil {
-      return nil, err
-   }
-   var songs []song
-   err = json.Unmarshal(data, &songs)
-   if err != nil {
-      return nil, err
-   }
-   return songs, nil
-}
-
-type player struct {
-   Microformat struct {
-      PlayerMicroformatRenderer struct {
-         PublishDate date
-      }
-   }
-   PlayabilityStatus struct {
-      Status string
-      Reason string
-   }
-   VideoDetails struct {
-      Author           string
-      LengthSeconds    int64 `json:",string"`
-      ShortDescription string
-      Title            string
-      VideoId          string
-      ViewCount        int64 `json:",string"`
-   }
-}
-
 func (p *player) New(video_id string) error {
    value := map[string]any{
       "contentCheckOk": true,
@@ -286,3 +170,119 @@ func (f *flags) do_youtube() error {
    }
    return write_file(f.name, buf.Bytes())
 }
+type yt_img struct {
+   Height  int
+   Name    string
+   VideoId string
+   Width   int
+}
+
+var yt_imgs = []yt_img{
+   {Width: 120, Height: 90, Name: "default.jpg"},
+   {Width: 120, Height: 90, Name: "1.jpg"},
+   {Width: 120, Height: 90, Name: "2.jpg"},
+   {Width: 120, Height: 90, Name: "3.jpg"},
+   {Width: 120, Height: 90, Name: "default.webp"},
+   {Width: 120, Height: 90, Name: "1.webp"},
+   {Width: 120, Height: 90, Name: "2.webp"},
+   {Width: 120, Height: 90, Name: "3.webp"},
+   {Width: 320, Height: 180, Name: "mq1.jpg"},
+   {Width: 320, Height: 180, Name: "mq2.jpg"},
+   {Width: 320, Height: 180, Name: "mq3.jpg"},
+   {Width: 320, Height: 180, Name: "mqdefault.jpg"},
+   {Width: 320, Height: 180, Name: "mq1.webp"},
+   {Width: 320, Height: 180, Name: "mq2.webp"},
+   {Width: 320, Height: 180, Name: "mq3.webp"},
+   {Width: 320, Height: 180, Name: "mqdefault.webp"},
+   {Width: 480, Height: 360, Name: "0.jpg"},
+   {Width: 480, Height: 360, Name: "hqdefault.jpg"},
+   {Width: 480, Height: 360, Name: "hq1.jpg"},
+   {Width: 480, Height: 360, Name: "hq2.jpg"},
+   {Width: 480, Height: 360, Name: "hq3.jpg"},
+   {Width: 480, Height: 360, Name: "0.webp"},
+   {Width: 480, Height: 360, Name: "hqdefault.webp"},
+   {Width: 480, Height: 360, Name: "hq1.webp"},
+   {Width: 480, Height: 360, Name: "hq2.webp"},
+   {Width: 480, Height: 360, Name: "hq3.webp"},
+   {Width: 640, Height: 480, Name: "sddefault.jpg"},
+   {Width: 640, Height: 480, Name: "sd1.jpg"},
+   {Width: 640, Height: 480, Name: "sd2.jpg"},
+   {Width: 640, Height: 480, Name: "sd3.jpg"},
+   {Width: 640, Height: 480, Name: "sddefault.webp"},
+   {Width: 640, Height: 480, Name: "sd1.webp"},
+   {Width: 640, Height: 480, Name: "sd2.webp"},
+   {Width: 640, Height: 480, Name: "sd3.webp"},
+   {Width: 1280, Height: 720, Name: "hq720.jpg"},
+   {Width: 1280, Height: 720, Name: "maxresdefault.jpg"},
+   {Width: 1280, Height: 720, Name: "maxres1.jpg"},
+   {Width: 1280, Height: 720, Name: "maxres2.jpg"},
+   {Width: 1280, Height: 720, Name: "maxres3.jpg"},
+   {Width: 1280, Height: 720, Name: "hq720.webp"},
+   {Width: 1280, Height: 720, Name: "maxresdefault.webp"},
+   {Width: 1280, Height: 720, Name: "maxres1.webp"},
+   {Width: 1280, Height: 720, Name: "maxres2.webp"},
+   {Width: 1280, Height: 720, Name: "maxres3.webp"},
+}
+
+func (y *yt_img) String() string {
+   var b strings.Builder
+   b.WriteString("http://i.ytimg.com/vi")
+   if strings.HasSuffix(y.Name, ".webp") {
+      b.WriteString("_webp")
+   }
+   b.WriteByte('/')
+   b.WriteString(y.VideoId)
+   b.WriteByte('/')
+   b.WriteString(y.Name)
+   return b.String()
+}
+
+func (d *date) UnmarshalText(data []byte) error {
+   var err error
+   d[0], err = time.Parse(time.RFC3339, string(data))
+   if err != nil {
+      return err
+   }
+   return nil
+}
+
+type date [1]time.Time
+
+type song struct {
+   Q string
+   S string
+}
+
+func read_songs(name string) ([]song, error) {
+   data, err := os.ReadFile(name)
+   if err != nil {
+      return nil, err
+   }
+   var songs []song
+   err = json.Unmarshal(data, &songs)
+   if err != nil {
+      return nil, err
+   }
+   return songs, nil
+}
+
+type player struct {
+   Microformat struct {
+      PlayerMicroformatRenderer struct {
+         PublishDate date
+      }
+   }
+   PlayabilityStatus struct {
+      Status string
+      Reason string
+   }
+   VideoDetails struct {
+      Author           string
+      LengthSeconds    int64 `json:",string"`
+      ShortDescription string
+      Title            string
+      VideoId          string
+      ViewCount        int64 `json:",string"`
+   }
+}
+
