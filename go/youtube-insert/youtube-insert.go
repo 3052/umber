@@ -104,72 +104,6 @@ func write_file(name string, data []byte) error {
    return os.WriteFile(name, data, os.ModePerm)
 }
 
-type flags struct {
-   name     string
-   video_id string
-}
-
-func main() {
-   log.SetFlags(log.Ltime)
-   var f flags
-   flag.StringVar(&f.name, "n", "umber.json", "name")
-   flag.StringVar(&f.video_id, "v", "", "video ID")
-   flag.Parse()
-   if f.video_id != "" {
-      err := f.do_youtube()
-      if err != nil {
-         panic(err)
-      }
-   } else {
-      flag.Usage()
-   }
-}
-
-func (f *flags) do_youtube() error {
-   // 1 player
-   var play player
-   err := play.New(f.video_id)
-   if err != nil {
-      return err
-   }
-   fmt.Println(play.VideoDetails.ShortDescription)
-   // 2 image
-   image, err := get_image(f.video_id)
-   if err != nil {
-      return err
-   }
-   // 3 values
-   now := strconv.FormatInt(time.Now().Unix(), 36)
-   values := url.Values{}
-   values.Set("a", now)
-   values.Set("b", f.video_id)
-   if image != "" {
-      values.Set("c", image)
-   }
-   values.Set("p", "y")
-   values.Set("y", strconv.Itoa(
-      play.Microformat.PlayerMicroformatRenderer.PublishDate[0].Year(),
-   ))
-   // 4 song
-   var song1 song
-   song1.Q = values.Encode()
-   song1.S = play.VideoDetails.Author + " - " + play.VideoDetails.Title
-   // 5 songs
-   songs, err := read_songs(f.name)
-   if err != nil {
-      return err
-   }
-   songs = slices.Insert(songs, 0, song1)
-   var buf bytes.Buffer
-   enc := json.NewEncoder(&buf)
-   enc.SetEscapeHTML(false)
-   enc.SetIndent("", " ")
-   err = enc.Encode(songs)
-   if err != nil {
-      return err
-   }
-   return write_file(f.name, buf.Bytes())
-}
 type yt_img struct {
    Height  int
    Name    string
@@ -286,3 +220,63 @@ type player struct {
    }
 }
 
+func main() {
+   log.SetFlags(log.Ltime)
+   name := flag.String("n", "umber.json", "name")
+   video_id := flag.String("v", "", "video ID")
+   flag.Parse()
+   if *video_id != "" {
+      err := do_video_id(*video_id, *name)
+      if err != nil {
+         panic(err)
+      }
+   } else {
+      flag.Usage()
+   }
+}
+
+func do_video_id(video_id, name string) error {
+   // 1 player
+   var play player
+   err := play.New(video_id)
+   if err != nil {
+      return err
+   }
+   fmt.Println(play.VideoDetails.ShortDescription)
+   // 2 image
+   image, err := get_image(video_id)
+   if err != nil {
+      return err
+   }
+   // 3 values
+   now := strconv.FormatInt(time.Now().Unix(), 36)
+   values := url.Values{}
+   values.Set("a", now)
+   values.Set("b", video_id)
+   if image != "" {
+      values.Set("c", image)
+   }
+   values.Set("p", "y")
+   values.Set("y", strconv.Itoa(
+      play.Microformat.PlayerMicroformatRenderer.PublishDate[0].Year(),
+   ))
+   // 4 song
+   var song1 song
+   song1.Q = values.Encode()
+   song1.S = play.VideoDetails.Author + " - " + play.VideoDetails.Title
+   // 5 songs
+   songs, err := read_songs(name)
+   if err != nil {
+      return err
+   }
+   songs = slices.Insert(songs, 0, song1)
+   var buf bytes.Buffer
+   enc := json.NewEncoder(&buf)
+   enc.SetEscapeHTML(false)
+   enc.SetIndent("", " ")
+   err = enc.Encode(songs)
+   if err != nil {
+      return err
+   }
+   return write_file(name, buf.Bytes())
+}
