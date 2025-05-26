@@ -99,11 +99,6 @@ func get_image(video_id string) (string, error) {
    return "", nil
 }
 
-func write_file(name string, data []byte) error {
-   log.Println("WriteFile", name)
-   return os.WriteFile(name, data, os.ModePerm)
-}
-
 type yt_img struct {
    Height  int
    Name    string
@@ -182,24 +177,6 @@ func (d *date) UnmarshalText(data []byte) error {
 
 type date [1]time.Time
 
-type song struct {
-   Q string
-   S string
-}
-
-func read_songs(name string) ([]song, error) {
-   data, err := os.ReadFile(name)
-   if err != nil {
-      return nil, err
-   }
-   var songs []song
-   err = json.Unmarshal(data, &songs)
-   if err != nil {
-      return nil, err
-   }
-   return songs, nil
-}
-
 type player struct {
    Microformat struct {
       PlayerMicroformatRenderer struct {
@@ -218,6 +195,29 @@ type player struct {
       VideoId          string
       ViewCount        int64 `json:",string"`
    }
+}
+
+func write_file(name string, data []byte) error {
+   log.Println("WriteFile", name)
+   return os.WriteFile(name, data, os.ModePerm)
+}
+
+type song struct {
+   Q string
+   S string
+}
+
+func read_songs(name string) ([]song, error) {
+   data, err := os.ReadFile(name)
+   if err != nil {
+      return nil, err
+   }
+   var songs []song
+   err = json.Unmarshal(data, &songs)
+   if err != nil {
+      return nil, err
+   }
+   return songs, nil
 }
 
 func main() {
@@ -249,9 +249,8 @@ func do_video_id(video_id, name string) error {
       return err
    }
    // 3 values
-   now := strconv.FormatInt(time.Now().Unix(), 36)
    values := url.Values{}
-   values.Set("a", now)
+   values.Set("a", strconv.FormatInt(time.Now().Unix(), 36))
    values.Set("b", video_id)
    if image != "" {
       values.Set("c", image)
