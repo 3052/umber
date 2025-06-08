@@ -17,6 +17,21 @@ var KellyMoran = []album{
       },
    },
    {
+      name: "moves in the field",
+      link: []link{
+         {url: "youtube.com/playlist?list=OLAK5uy_mI7sh2DxPKFiColG-vykv9e74yqdKQuMI"},
+      },
+      track: []track{
+         {
+            number: 4,
+            name:   "Dancer Polynomials",
+            link: []link{
+               {url: "youtube.com/watch?v=E6LxCW7cl4E"},
+            },
+         },
+      },
+   },
+   {
       name: "ultraviolet",
       link: []link{
          {url: "youtube.com/playlist?list=OLAK5uy_mQz8ftbRzC-chKW0YSJ6yyPmgdrHv12CI"},
