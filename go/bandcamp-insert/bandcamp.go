@@ -39,16 +39,7 @@ func main() {
    if len(os.Args) >= 3 {
       args := os.Args[2:]
       var song1 *song
-      switch os.Args[1] {
-      case "http":
-         song1, err = new_http().parse(args)
-      case "bandcamp":
-         song1, err = new_bandcamp().parse(args)
-      case "soundcloud":
-         song1, err = new_soundcloud().parse(args)
-      case "youtube":
-         song1, err = new_youtube().parse(args)
-      }
+      song1, err = new_bandcamp().parse(args)
       if err != nil {
          panic(err)
       }
@@ -72,6 +63,7 @@ func main() {
       new_youtube().f.Usage()
    }
 }
+
 type bandcamp_set struct {
    address string
    f       *flag.FlagSet
