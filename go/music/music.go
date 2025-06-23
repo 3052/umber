@@ -29,6 +29,20 @@ var KellyMoran = []album{
                {url: "youtube.com/watch?v=E6LxCW7cl4E"},
             },
          },
+         {
+            number: 5,
+            name:   "sodalis",
+            link: []link{
+               {url: "youtube.com/watch?v=VBlhTlz1LXA"},
+            },
+         },
+         {
+            number: 6,
+            name:   "leitmotif",
+            link: []link{
+               {url: "youtube.com/watch?v=o63kYG-j6Lg"},
+            },
+         },
       },
    },
    {
