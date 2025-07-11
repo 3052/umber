@@ -38,12 +38,12 @@ func main() {
    }
    if len(os.Args) >= 3 {
       args := os.Args[2:]
-      var song1 *song
-      song1, err = new_bandcamp().parse(args)
+      var songVar *song
+      songVar, err = new_bandcamp().parse(args)
       if err != nil {
          panic(err)
       }
-      songs = append([]*song{song1}, songs...)
+      songs = append([]*song{songVar}, songs...)
       var buf bytes.Buffer
       enc := json.NewEncoder(&buf)
       enc.SetEscapeHTML(false)
@@ -91,9 +91,9 @@ func (b *bandcamp_set) parse(args []string) (*song, error) {
    if err != nil {
       return nil, err
    }
-   var song1 song
-   song1.S = detail.TralbumArtist + " - " + detail.Title
-   song1.Q = url.Values{
+   var songVar song
+   songVar.S = detail.TralbumArtist + " - " + detail.Title
+   songVar.Q = url.Values{
       "a": {strconv.FormatInt(time.Now().Unix(), 36)},
       "b": {strconv.Itoa(params.Iid)},
       "c": {strconv.FormatInt(detail.ArtId, 10)},
@@ -102,5 +102,5 @@ func (b *bandcamp_set) parse(args []string) (*song, error) {
          strconv.Itoa(detail.Time().Year()),
       },
    }.Encode()
-   return &song1, nil
+   return &songVar, nil
 }
