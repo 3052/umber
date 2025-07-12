@@ -72,15 +72,15 @@ func do_address(address, name string) error {
       strconv.Itoa(resolve.DisplayDate.Year()),
    )
    // 3 song
-   var song1 song
-   song1.Q = values.Encode()
-   song1.S = resolve.Title
+   var songVar song
+   songVar.Q = values.Encode()
+   songVar.S = resolve.Title
    // 4 songs
    songs, err := read_songs(name)
    if err != nil {
       return err
    }
-   songs = slices.Insert(songs, 0, song1)
+   songs = slices.Insert(songs, 0, songVar)
    var buf bytes.Buffer
    encode := json.NewEncoder(&buf)
    encode.SetEscapeHTML(false)

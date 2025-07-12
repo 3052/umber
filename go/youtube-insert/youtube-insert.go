@@ -260,15 +260,15 @@ func do_video_id(video_id, name string) error {
       play.Microformat.PlayerMicroformatRenderer.PublishDate[0].Year(),
    ))
    // 4 song
-   var song1 song
-   song1.Q = values.Encode()
-   song1.S = play.VideoDetails.Author + " - " + play.VideoDetails.Title
+   var songVar song
+   songVar.Q = values.Encode()
+   songVar.S = play.VideoDetails.Author + " - " + play.VideoDetails.Title
    // 5 songs
    songs, err := read_songs(name)
    if err != nil {
       return err
    }
-   songs = slices.Insert(songs, 0, song1)
+   songs = slices.Insert(songs, 0, songVar)
    var buf bytes.Buffer
    enc := json.NewEncoder(&buf)
    enc.SetEscapeHTML(false)

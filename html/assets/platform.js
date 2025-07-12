@@ -13,10 +13,10 @@ const date_parts = [
 
 export function date_format(id) {
    const parse = parseInt(id, 36);
-   const date1 = new Date(parse * 1000);
+   const dateVar = new Date(parse * 1000);
    function format(part) {
       const time = new Intl.DateTimeFormat('en', part);
-      return time.format(date1);
+      return time.format(dateVar);
    }
    return date_parts.map(format).join(' ');
 }

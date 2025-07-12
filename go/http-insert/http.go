@@ -23,15 +23,15 @@ func (f *flags) do_http() error {
    values.Set("p", "h")
    values.Set("y", f.year)
    // 2 song
-   var song1 song
-   song1.Q = values.Encode()
-   song1.S = path.Base(f.audio)
+   var songVar song
+   songVar.Q = values.Encode()
+   songVar.S = path.Base(f.audio)
    // 3 songs
    songs, err := read_songs(f.name)
    if err != nil {
       return err
    }
-   songs = slices.Insert(songs, 0, song1)
+   songs = slices.Insert(songs, 0, songVar)
    var buf bytes.Buffer
    enc := json.NewEncoder(&buf)
    enc.SetEscapeHTML(false)
