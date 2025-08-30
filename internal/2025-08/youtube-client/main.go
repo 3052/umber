@@ -7,51 +7,15 @@ import (
    "fmt"
    "net/http"
    "time"
-   //"io"
 )
-
-//func get_status(url string) (string, error) {
-//   resp, err := http.Get(url)
-//   if err != nil {
-//      return "", err
-//   }
-//   defer resp.Body.Close()
-//   _, err = io.Copy(io.Discard, resp.Body)
-//   if err != nil {
-//      return "", err
-//   }
-//   return resp.Status, nil
-//}
-
-func main() {
-   for _, client := range clients {
-      play, err := client.player()
-      if err != nil {
-         fmt.Println(err, client)
-      } else {
-         fmt.Println(play.PlayabilityStatus, client)
-      }
-      //i := slices.IndexFunc(play.StreamingData.AdaptiveFormats,
-      //   func(a *adaptive_format) bool {
-      //      return a.AudioQuality == "AUDIO_QUALITY_MEDIUM"
-      //   },
-      //)
-      //status, err := get_status(play.StreamingData.AdaptiveFormats[i].Url)
-      //if err != nil {
-      //   panic(err)
-      //}
-      //fmt.Println(status)
-      time.Sleep(100 * time.Millisecond)
-   }
-}
 
 func (c *ClientVersion) player() (*player, error) {
    value := map[string]any{
       "contentCheckOk": true,
       "context": map[string]any{
          "client": map[string]string{
-            "clientName":    c.Name,
-            "clientVersion": c.Version,
+            "clientName":    c.name,
+            "clientVersion": c.version,
          },
       },
       "racyCheckOk": true,
@@ -106,3 +70,52 @@ type adaptive_format struct {
    MimeType     string
    Url          string
 }
+func main() {
+   for _, client := range clients {
+      if client.status != no_longer_supported {
+         play, err := client.player()
+         if err != nil {
+            fmt.Println(err, client)
+         } else {
+            fmt.Println(play.PlayabilityStatus, client)
+         }
+         time.Sleep(100 * time.Millisecond)
+      }
+   }
+}
+
+//func get_status(url string) (string, error) {
+//   resp, err := http.Get(url)
+//   if err != nil {
+//      return "", err
+//   }
+//   defer resp.Body.Close()
+//   _, err = io.Copy(io.Discard, resp.Body)
+//   if err != nil {
+//      return "", err
+//   }
+//   return resp.Status, nil
+//}
+
+//func main() {
+//   for _, client := range clients {
+//      play, err := client.player()
+//      if err != nil {
+//         fmt.Println(err, client)
+//      } else {
+//         fmt.Println(play.PlayabilityStatus, client)
+//      }
+//      i := slices.IndexFunc(play.StreamingData.AdaptiveFormats,
+//         func(a *adaptive_format) bool {
+//            return a.AudioQuality == "AUDIO_QUALITY_MEDIUM"
+//         },
+//      )
+//      status, err := get_status(play.StreamingData.AdaptiveFormats[i].Url)
+//      if err != nil {
+//         panic(err)
+//      }
+//      fmt.Println(status)
+//      time.Sleep(100 * time.Millisecond)
+//   }
+//}
+
