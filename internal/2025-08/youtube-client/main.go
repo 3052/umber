@@ -29,7 +29,7 @@ func main() {
       //   panic(err)
       //}
       //fmt.Println(status)
-      time.Sleep(time.Second)
+      time.Sleep(99 * time.Millisecond)
    }
 }
 
@@ -107,9 +107,3 @@ type adaptive_format struct {
    MimeType     string
    Url          string
 }
-
-const (
-   // youtube.com/watch?v=fix-RSKlccw
-   video_id   = "fix-RSKlccw"
-   visitor_id = "CgtNbzlJR19GY24tNCjl_pDABjIKCgJVUxIEGgAgDA=="
-)
