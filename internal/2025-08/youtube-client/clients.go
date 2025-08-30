@@ -8,6 +8,9 @@ const video_id_kids = "QmpHcrA2hC0"
 // youtube.com/watch?v=fD0qZRK1lQ0
 const video_id_vr = "fD0qZRK1lQ0"
 
+// youtube.com/watch?v=OvAzRkbtEiA
+const video_id_remix = "OvAzRkbtEiA"
+
 type ClientVersion struct {
    id       int
    name     string
@@ -59,9 +62,9 @@ var clients = []ClientVersion{
       video_id: video_id_kids,
    },
    {
-      id:       8,
-      name:     "TVLITE",
-      status:   no_longer_supported,
+      id:     8,
+      name:   "TVLITE",
+      status: no_longer_supported,
    },
    {
       id:       10,
@@ -88,9 +91,9 @@ var clients = []ClientVersion{
       video_id: video_id_kids,
    },
    {
-      id:       16,
-      name:     "TVAPPLE",
-      status:   no_longer_supported,
+      id:     16,
+      name:   "TVAPPLE",
+      status: no_longer_supported,
    },
    {
       id:       18,
@@ -107,9 +110,9 @@ var clients = []ClientVersion{
       video_id: video_id_kids,
    },
    {
-      id:       21,
-      name:     "ANDROID_MUSIC",
-      status:   sign_in,
+      id:     21,
+      name:   "ANDROID_MUSIC",
+      status: sign_in,
    },
    {
       id:       23,
@@ -118,9 +121,9 @@ var clients = []ClientVersion{
       video_id: video_id_kids,
    },
    {
-      id:       26,
-      name:     "IOS_MUSIC",
-      status:   sign_in,
+      id:     26,
+      name:   "IOS_MUSIC",
+      status: sign_in,
    },
    {
       id:       27,
@@ -132,12 +135,13 @@ var clients = []ClientVersion{
       id:       28,
       name:     "ANDROID_VR",
       version:  "1.37",
-      video_id: video_id_kids,
+      video_id: video_id_vr,
+      status:   ok,
    },
    {
-      id:       29,
-      name:     "ANDROID_UNPLUGGED",
-      status:   sign_in,
+      id:     29,
+      name:   "ANDROID_UNPLUGGED",
+      status: sign_in,
    },
    {
       id:       30,
@@ -152,14 +156,14 @@ var clients = []ClientVersion{
       video_id: video_id_kids,
    },
    {
-      id:       33,
-      name:     "IOS_UNPLUGGED",
-      status:   sign_in,
+      id:     33,
+      name:   "IOS_UNPLUGGED",
+      status: sign_in,
    },
    {
-      id:       38,
-      name:     "ANDROID_LITE",
-      status:   no_longer_supported,
+      id:     38,
+      name:   "ANDROID_LITE",
+      status: no_longer_supported,
    },
    {
       id:       39,
@@ -168,9 +172,9 @@ var clients = []ClientVersion{
       video_id: video_id_kids,
    },
    {
-      id:       41,
-      name:     "WEB_UNPLUGGED",
-      status:   sign_in,
+      id:     41,
+      name:   "WEB_UNPLUGGED",
+      status: sign_in,
    },
    {
       id:       42,
@@ -198,9 +202,9 @@ var clients = []ClientVersion{
       video_id: video_id_kids,
    },
    {
-      id:       57,
-      name:     "TVHTML5_AUDIO",
-      status:   sign_in,
+      id:     57,
+      name:   "TVHTML5_AUDIO",
+      status: sign_in,
    },
    {
       id:       58,
@@ -222,14 +226,14 @@ var clients = []ClientVersion{
       video_id: video_id_kids,
    },
    {
-      id:       61,
-      name:     "WEB_MUSIC",
-      status:   no_longer_supported,
+      id:     61,
+      name:   "WEB_MUSIC",
+      status: no_longer_supported,
    },
    {
-      id:       62,
-      name:     "WEB_CREATOR",
-      status:   sign_in,
+      id:     62,
+      name:   "WEB_CREATOR",
+      status: sign_in,
    },
    {
       id:       63,
@@ -244,9 +248,9 @@ var clients = []ClientVersion{
       video_id: video_id_kids,
    },
    {
-      id:       65,
-      name:     "TVHTML5_UNPLUGGED",
-      status:   sign_in,
+      id:     65,
+      name:   "TVHTML5_UNPLUGGED",
+      status: sign_in,
    },
    {
       id:       66,
@@ -258,7 +262,8 @@ var clients = []ClientVersion{
       id:       67,
       name:     "WEB_REMIX",
       version:  "1.20220918",
-      video_id: video_id_kids,
+      video_id: video_id_remix,
+      status:   ok,
    },
    {
       id:       68,
@@ -267,19 +272,19 @@ var clients = []ClientVersion{
       video_id: video_id_kids,
    },
    {
-      id:       69,
-      name:     "WEB_UNPLUGGED_ONBOARDING",
-      status:   no_longer_supported,
+      id:     69,
+      name:   "WEB_UNPLUGGED_ONBOARDING",
+      status: no_longer_supported,
    },
    {
-      id:       70,
-      name:     "WEB_UNPLUGGED_OPS",
-      status:   sign_in,
+      id:     70,
+      name:   "WEB_UNPLUGGED_OPS",
+      status: sign_in,
    },
    {
-      id:       71,
-      name:     "WEB_UNPLUGGED_PUBLIC",
-      status:   no_longer_supported,
+      id:     71,
+      name:   "WEB_UNPLUGGED_PUBLIC",
+      status: no_longer_supported,
    },
    {
       id:       72,
@@ -320,9 +325,9 @@ var clients = []ClientVersion{
       video_id: video_id_kids,
    },
    {
-      id:       80,
-      name:     "TVHTML5_YONGLE",
-      status:   no_longer_supported,
+      id:     80,
+      name:   "TVHTML5_YONGLE",
+      status: no_longer_supported,
    },
    {
       id:       84,
@@ -331,9 +336,9 @@ var clients = []ClientVersion{
       video_id: video_id_kids,
    },
    {
-      id:       85,
-      name:     "TVHTML5_SIMPLY_EMBEDDED_PLAYER",
-      status:   sign_in,
+      id:     85,
+      name:   "TVHTML5_SIMPLY_EMBEDDED_PLAYER",
+      status: sign_in,
    },
    {
       id:       86,

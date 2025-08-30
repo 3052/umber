@@ -4,14 +4,62 @@ import (
    "bytes"
    "encoding/json"
    "errors"
+   "flag"
    "fmt"
    "net/http"
    "time"
 )
 
+func (c *ClientVersion) player() (*player, error) {
+   value := map[string]any{
+      "contentCheckOk": true,
+      "context": map[string]any{
+         "client": map[string]string{
+            "clientName":    c.name,
+            "clientVersion": c.version,
+         },
+      },
+      "racyCheckOk": true,
+      "videoId":     c.video_id,
+   }
+   data, err := json.Marshal(value)
+   if err != nil {
+      return nil, err
+   }
+   req, err := http.NewRequest(
+      "POST", "https://www.youtube.com/youtubei/v1/player",
+      bytes.NewReader(data),
+   )
+   if err != nil {
+      return nil, err
+   }
+   req.Header.Set("x-goog-visitor-id", visitor_id)
+   resp, err := http.DefaultClient.Do(req)
+   if err != nil {
+      return nil, err
+   }
+   defer resp.Body.Close()
+   if resp.StatusCode != http.StatusOK {
+      return nil, errors.New(resp.Status)
+   }
+   play := &player{}
+   err = json.NewDecoder(resp.Body).Decode(play)
+   if err != nil {
+      return nil, err
+   }
+   return play, nil
+}
+
 func main() {
+   check_ok := flag.Bool("c", false, "check OK")
+   flag.Parse()
    for _, client := range clients {
-      ok := client.check_not_ok()
+      var ok bool
+      if *check_ok {
+         ok = client.check_ok()
+      } else {
+         ok = client.check_not_ok()
+      }
       if !ok {
          panic(client)
       }
@@ -60,46 +108,6 @@ func (c *ClientVersion) check_ok() bool {
       }
    }
    return true
-}
-
-func (c *ClientVersion) player() (*player, error) {
-   value := map[string]any{
-      "contentCheckOk": true,
-      "context": map[string]any{
-         "client": map[string]string{
-            "clientName":    c.name,
-            "clientVersion": c.version,
-         },
-      },
-      "racyCheckOk": true,
-      "videoId":     c.video_id,
-   }
-   data, err := json.Marshal(value)
-   if err != nil {
-      return nil, err
-   }
-   req, err := http.NewRequest(
-      "POST", "https://www.youtube.com/youtubei/v1/player",
-      bytes.NewReader(data),
-   )
-   if err != nil {
-      return nil, err
-   }
-   req.Header.Set("x-goog-visitor-id", visitor_id)
-   resp, err := http.DefaultClient.Do(req)
-   if err != nil {
-      return nil, err
-   }
-   defer resp.Body.Close()
-   if resp.StatusCode != http.StatusOK {
-      return nil, errors.New(resp.Status)
-   }
-   play := &player{}
-   err = json.NewDecoder(resp.Body).Decode(play)
-   if err != nil {
-      return nil, err
-   }
-   return play, nil
 }
 
 type player struct {
