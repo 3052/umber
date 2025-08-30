@@ -31,6 +31,8 @@ func main() {
       panic(sep)
    }
    var value struct {
+      InnertubeClientName string `json:"INNERTUBE_CLIENT_NAME"`
+      InnertubeClientVersion string `json:"INNERTUBE_CLIENT_VERSION"`
       InnertubeContext struct {
          Client struct {
             VisitorData string
@@ -41,6 +43,7 @@ func main() {
    if err != nil {
       panic(err)
    }
+   fmt.Printf("%+\n", value)
    visitor, err := url.PathUnescape(value.InnertubeContext.Client.VisitorData)
    if err != nil {
       panic(err)
