@@ -4,20 +4,32 @@ import (
    "bytes"
    "encoding/json"
    "errors"
-   "io"
-   "log"
+   "fmt"
    "net/http"
    "time"
+   //"io"
 )
 
+//func get_status(url string) (string, error) {
+//   resp, err := http.Get(url)
+//   if err != nil {
+//      return "", err
+//   }
+//   defer resp.Body.Close()
+//   _, err = io.Copy(io.Discard, resp.Body)
+//   if err != nil {
+//      return "", err
+//   }
+//   return resp.Status, nil
+//}
+
 func main() {
-   log.SetFlags(log.Ltime)
    for _, client := range clients {
       play, err := client.player()
       if err != nil {
-         log.Println(err, client)
+         fmt.Println(err, client)
       } else {
-         log.Println(play.PlayabilityStatus, client)
+         fmt.Println(play.PlayabilityStatus, client)
       }
       //i := slices.IndexFunc(play.StreamingData.AdaptiveFormats,
       //   func(a *adaptive_format) bool {
@@ -29,7 +41,7 @@ func main() {
       //   panic(err)
       //}
       //fmt.Println(status)
-      time.Sleep(99 * time.Millisecond)
+      time.Sleep(100 * time.Millisecond)
    }
 }
 
@@ -38,7 +50,7 @@ func (c *ClientVersion) player() (*player, error) {
       "contentCheckOk": true,
       "context": map[string]any{
          "client": map[string]string{
-            "clientName":   c.Name,
+            "clientName":    c.Name,
             "clientVersion": c.Version,
          },
       },
@@ -86,19 +98,6 @@ type player struct {
       Title   string
       VideoId string
    }
-}
-
-func get_status(url string) (string, error) {
-   resp, err := http.Get(url)
-   if err != nil {
-      return "", err
-   }
-   defer resp.Body.Close()
-   _, err = io.Copy(io.Discard, resp.Body)
-   if err != nil {
-      return "", err
-   }
-   return resp.Status, nil
 }
 
 type adaptive_format struct {
