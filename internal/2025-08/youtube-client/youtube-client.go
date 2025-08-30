@@ -4,28 +4,170 @@ import (
    "bytes"
    "encoding/json"
    "errors"
-   "flag"
    "fmt"
+   "io"
    "net/http"
-   "net/url"
-   "os"
-   "time"
+   "slices"
 )
+
+type ClientVersion struct {
+   ID      int    `json:"id"`
+   Name    string `json:"name"`
+   Version string `json:"version"`
+}
+
+var clients = []ClientVersion{
+   {1, "WEB", "2.20250829.01.00"},
+   {1, "WEB", "2.20220918"},
+   {2, "MWEB", "2.20250829.01.00"},
+   {2, "MWEB", "2.20220918"},
+   {3, "ANDROID", "20.34.37"},
+   {3, "ANDROID", "17.36.4"},
+   {5, "IOS", "20.34.2"},
+   {5, "IOS", "17.36.4"},
+   {7, "TVHTML5", "7.20241201.18.00"},
+   {7, "TVHTML5", "7.20220918"},
+   {8, "TVLITE", "2"},
+   {10, "TVANDROID", "1.0"},
+   {13, "XBOXONEGUIDE", "1.0"},
+   {14, "ANDROID_CREATOR", "20.34.100"},
+   {14, "ANDROID_CREATOR", "22.36.102"},
+   {15, "IOS_CREATOR", "20.34.x"},
+   {15, "IOS_CREATOR", "22.36.102"},
+   {16, "TVAPPLE", "1.0"},
+   {18, "ANDROID_KIDS", "7.36.1"},
+   {19, "IOS_KIDS", "7.36.1"},
+   {21, "ANDROID_MUSIC", "8.34.51"},
+   {21, "ANDROID_MUSIC", "5.26.1"},
+   {23, "ANDROID_TV", "6.18.303"},
+   {23, "ANDROID_TV", "2.19.1.303051424"},
+   {26, "IOS_MUSIC", "08.34"},
+   {26, "IOS_MUSIC", "5.26.1"},
+   {27, "MWEB_TIER_2", "2.20250829.01.00"},
+   {27, "MWEB_TIER_2", "9.20220918"},
+   {28, "ANDROID_VR", "1.37"},
+   {29, "ANDROID_UNPLUGGED", "6.36"},
+   {30, "ANDROID_TESTSUITE", "1.9"},
+   {31, "WEB_MUSIC_ANALYTICS", "0.2"},
+   {33, "IOS_UNPLUGGED", "6.36"},
+   {38, "ANDROID_LITE", "3.26.1"},
+   {39, "IOS_EMBEDDED_PLAYER", "2.4"},
+   {41, "WEB_UNPLUGGED", "2.20250829.01.00"},
+   {41, "WEB_UNPLUGGED", "1.20220918"},
+   {42, "WEB_EXPERIMENTS", "2.20250829.01.00"},
+   {42, "WEB_EXPERIMENTS", "1"},
+   {43, "TVHTML5_CAST", "1.1"},
+   {55, "ANDROID_EMBEDDED_PLAYER", "17.36.4"},
+   {56, "WEB_EMBEDDED_PLAYER", "2.20250829.01.00"},
+   {56, "WEB_EMBEDDED_PLAYER", "9.20220918"},
+   {57, "TVHTML5_AUDIO", "2.0"},
+   {58, "TV_UNPLUGGED_CAST", "0.1"},
+   {59, "TVHTML5_KIDS", "3.20220918"},
+   {60, "WEB_HEROES", "2.20250829.01.00"},
+   {60, "WEB_HEROES", "0.1"},
+   {61, "WEB_MUSIC", "2.20250829.01.00"},
+   {61, "WEB_MUSIC", "1.0"},
+   {62, "WEB_CREATOR", "2.20250829.01.00"},
+   {62, "WEB_CREATOR", "1.20220918"},
+   {63, "TV_UNPLUGGED_ANDROID", "1.37"},
+   {64, "IOS_LIVE_CREATION_EXTENSION", "17.36.4"},
+   {65, "TVHTML5_UNPLUGGED", "6.36"},
+   {66, "IOS_MESSAGES_EXTENSION", "17.36.4"},
+   {67, "WEB_REMIX", "2.20250829.01.00"},
+   {67, "WEB_REMIX", "1.20220918"},
+   {68, "IOS_UPTIME", "1.0"},
+   {69, "WEB_UNPLUGGED_ONBOARDING", "2.20250829.01.00"},
+   {69, "WEB_UNPLUGGED_ONBOARDING", "0.1"},
+   {70, "WEB_UNPLUGGED_OPS", "2.20250829.01.00"},
+   {70, "WEB_UNPLUGGED_OPS", "0.1"},
+   {71, "WEB_UNPLUGGED_PUBLIC", "2.20250829.01.00"},
+   {71, "WEB_UNPLUGGED_PUBLIC", "0.1"},
+   {72, "TVHTML5_VR", "0.1"},
+   {73, "WEB_LIVE_STREAMING", "2.20250829.01.00"},
+   {74, "ANDROID_TV_KIDS", "1.19.1"},
+   {75, "TVHTML5_SIMPLY", "1.0"},
+   {76, "WEB_KIDS", "2.20250829.01.00"},
+   {76, "WEB_KIDS", "2.20220918"},
+   {77, "MUSIC_INTEGRATIONS", "0.1"},
+   {80, "TVHTML5_YONGLE", "0.1"},
+   {84, "GOOGLE_ASSISTANT", "0.1"},
+   {85, "TVHTML5_SIMPLY_EMBEDDED_PLAYER", "2.0"},
+   {86, "WEB_MUSIC_EMBEDDED_PLAYER", "2.20250829.01.00"},
+   {87, "WEB_INTERNAL_ANALYTICS", "2.20250829.01.00"},
+   {87, "WEB_INTERNAL_ANALYTICS", "0.1"},
+   {88, "WEB_PARENT_TOOLS", "2.20250829.01.00"},
+   {88, "WEB_PARENT_TOOLS", "1.20220918"},
+   {89, "GOOGLE_MEDIA_ACTIONS", "0.1"},
+   {90, "WEB_PHONE_VERIFICATION", "2.20250829.01.00"},
+   {90, "WEB_PHONE_VERIFICATION", "1.0.0"},
+   {93, "TVHTML5_FOR_KIDS", "7.20220918"},
+   {94, "GOOGLE_LIST_RECS", "0.1"},
+   {95, "MEDIA_CONNECT_FRONTEND", "0.1"},
+   {98, "WEB_EFFECT_MAKER", "2.20250829.01.00"},
+   {99, "WEB_SHOPPING_EXTENSION", "2.20250829.01.00"},
+   {100, "WEB_PLAYABLES_PORTAL", "2.20250829.01.00"},
+   {102, "WEB_LIVE_APPS", "2.20250829.01.00"},
+   {103, "WEB_MUSIC_INTEGRATIONS", "2.20250829.01.00"},
+}
+
+func main() {
+   var play player
+   err := play.New(visitor_id, video_id)
+   if err != nil {
+      panic(err)
+   }
+   i := slices.IndexFunc(play.StreamingData.AdaptiveFormats,
+      func(a *adaptive_format) bool {
+         return a.AudioQuality == "AUDIO_QUALITY_MEDIUM"
+      },
+   )
+   status, err := get_status(play.StreamingData.AdaptiveFormats[i].Url)
+   if err != nil {
+      panic(err)
+   }
+   fmt.Println(status)
+}
+
+func get_status(url string) (string, error) {
+   resp, err := http.Get(url)
+   if err != nil {
+      return "", err
+   }
+   defer resp.Body.Close()
+   _, err = io.Copy(io.Discard, resp.Body)
+   if err != nil {
+      return "", err
+   }
+   return resp.Status, nil
+}
 
 type player struct {
    PlayabilityStatus struct {
       Status string
       Reason string
    }
+   StreamingData struct {
+      AdaptiveFormats []*adaptive_format
+   }
    VideoDetails struct {
-      Author           string
-      LengthSeconds    int64 `json:",string"`
-      ShortDescription string
-      Title            string
-      VideoId          string
-      ViewCount        int64 `json:",string"`
+      Author  string
+      Title   string
+      VideoId string
    }
 }
+
+type adaptive_format struct {
+   AudioQuality string
+   Itag         int
+   MimeType     string
+   Url          string
+}
+
+const (
+   // youtube.com/watch?v=fix-RSKlccw
+   video_id   = "fix-RSKlccw"
+   visitor_id = "CgtNbzlJR19GY24tNCjl_pDABjIKCgJVUxIEGgAgDA=="
+)
 
 func (p *player) New(visitor_id, video_id string) error {
    value := map[string]any{
@@ -60,58 +202,4 @@ func (p *player) New(visitor_id, video_id string) error {
       return errors.New(resp.Status)
    }
    return json.NewDecoder(resp.Body).Decode(p)
-}
-
-func main() {
-   visitor_id := flag.String("v", "", "visitor ID")
-   name := flag.String("n", "umber.json", "name")
-   start := flag.Int("s", 0, "start")
-   flag.Parse()
-   if *visitor_id != "" {
-      err := do_check(*visitor_id, *name, *start)
-      if err != nil {
-         panic(err)
-      }
-   } else {
-      flag.Usage()
-   }
-}
-
-func do_check(visitor_id, name string, start int) error {
-   file, err := os.Open(name)
-   if err != nil {
-      return err
-   }
-   defer file.Close()
-   var songs []struct {
-      Q string
-      S string
-   }
-   err = json.NewDecoder(file).Decode(&songs)
-   if err != nil {
-      return err
-   }
-   for i, song := range songs {
-      if i >= start {
-         query, err := url.ParseQuery(song.Q)
-         if err != nil {
-            return err
-         }
-         if query.Get("p") == "y" {
-            video_id := query.Get("b")
-            var play player
-            err = play.New(visitor_id, video_id)
-            if err != nil {
-               return err
-            }
-            fmt.Println(i, len(songs), video_id, song.S)
-            if play.PlayabilityStatus.Status != "OK" {
-               fmt.Printf("%+v\n", play.PlayabilityStatus)
-               break
-            }
-            time.Sleep(99 * time.Millisecond)
-         }
-      }
-   }
-   return nil
 }
