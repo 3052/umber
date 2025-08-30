@@ -1,92 +1,24 @@
 package main
 
-import (
-   "bytes"
-   "encoding/json"
-   "errors"
-   "io"
-   "log"
-   "net/http"
-   "time"
-)
-
-func main() {
-   log.SetFlags(log.Ltime)
-   for _, client := range clients {
-      play, err := client.player()
-      if err != nil {
-         log.Println(err, client)
-      } else {
-         log.Println(play.PlayabilityStatus, client)
-      }
-      //i := slices.IndexFunc(play.StreamingData.AdaptiveFormats,
-      //   func(a *adaptive_format) bool {
-      //      return a.AudioQuality == "AUDIO_QUALITY_MEDIUM"
-      //   },
-      //)
-      //status, err := get_status(play.StreamingData.AdaptiveFormats[i].Url)
-      //if err != nil {
-      //   panic(err)
-      //}
-      //fmt.Println(status)
-      time.Sleep(time.Second)
-   }
-}
-
-func (c *ClientVersion) player() (*player, error) {
-   value := map[string]any{
-      "contentCheckOk": true,
-      "context": map[string]any{
-         "client": map[string]string{
-            "clientName":   c.Name,
-            "clientVersion": c.Version,
-         },
-      },
-      "racyCheckOk": true,
-      "videoId":     video_id,
-   }
-   data, err := json.Marshal(value)
-   if err != nil {
-      return nil, err
-   }
-   req, err := http.NewRequest(
-      "POST", "https://www.youtube.com/youtubei/v1/player",
-      bytes.NewReader(data),
-   )
-   if err != nil {
-      return nil, err
-   }
-   req.Header.Set("x-goog-visitor-id", visitor_id)
-   resp, err := http.DefaultClient.Do(req)
-   if err != nil {
-      return nil, err
-   }
-   defer resp.Body.Close()
-   if resp.StatusCode != http.StatusOK {
-      return nil, errors.New(resp.Status)
-   }
-   play := &player{}
-   err = json.NewDecoder(resp.Body).Decode(play)
-   if err != nil {
-      return nil, err
-   }
-   return play, nil
-}
-
-type player struct {
-   PlayabilityStatus struct {
-      Status string
-      Reason string
-   }
-   StreamingData struct {
-      AdaptiveFormats []*adaptive_format
-   }
-   VideoDetails struct {
-      Author  string
-      Title   string
-      VideoId string
-   }
-}
+//{ERROR This video is unavailable} {18 ANDROID_KIDS 7.36.1}
+//{ERROR This video is unavailable} {19 IOS_KIDS 7.36.1}
+//{ERROR This video is unavailable} {76 WEB_KIDS 2.20220918}
+//{ERROR This video is unavailable} {76 WEB_KIDS 2.20250829.01.00}
+//{LOGIN_REQUIRED Please sign in} {21 ANDROID_MUSIC 8.34.51}
+//{LOGIN_REQUIRED Please sign in} {26 IOS_MUSIC 5.26.1}
+//{LOGIN_REQUIRED Please sign in} {29 ANDROID_UNPLUGGED 6.36}
+//{LOGIN_REQUIRED Please sign in} {33 IOS_UNPLUGGED 6.36}
+//{LOGIN_REQUIRED Please sign in} {41 WEB_UNPLUGGED 1.20220918}
+//{LOGIN_REQUIRED Please sign in} {62 WEB_CREATOR 1.20220918}
+//{UNPLAYABLE Please sign in} {57 TVHTML5_AUDIO 2.0}
+//{UNPLAYABLE Please sign in} {65 TVHTML5_UNPLUGGED 6.36}
+//{UNPLAYABLE Please sign in} {70 WEB_UNPLUGGED_OPS 0.1}
+//{UNPLAYABLE Please sign in} {85 TVHTML5_SIMPLY_EMBEDDED_PLAYER 2.0}
+//{UNPLAYABLE This video is not available} {30 ANDROID_TESTSUITE 1.9}
+//{UNPLAYABLE This video is not available} {59 TVHTML5_KIDS 3.20220918}
+//{UNPLAYABLE This video is not available} {93 TVHTML5_FOR_KIDS 7.20220918}
+//{UNPLAYABLE Video unavailable} {56 WEB_EMBEDDED_PLAYER 2.20250829.01.00}
+//{UNPLAYABLE Video unavailable} {56 WEB_EMBEDDED_PLAYER 9.20220918}
 
 var clients = []ClientVersion{
    {1, "WEB", "2.20250829.01.00"},
@@ -188,29 +120,3 @@ type ClientVersion struct {
    Name    string `json:"name"`
    Version string `json:"version"`
 }
-
-func get_status(url string) (string, error) {
-   resp, err := http.Get(url)
-   if err != nil {
-      return "", err
-   }
-   defer resp.Body.Close()
-   _, err = io.Copy(io.Discard, resp.Body)
-   if err != nil {
-      return "", err
-   }
-   return resp.Status, nil
-}
-
-type adaptive_format struct {
-   AudioQuality string
-   Itag         int
-   MimeType     string
-   Url          string
-}
-
-const (
-   // youtube.com/watch?v=fix-RSKlccw
-   video_id   = "fix-RSKlccw"
-   visitor_id = "CgtNbzlJR19GY24tNCjl_pDABjIKCgJVUxIEGgAgDA=="
-)

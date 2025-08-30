@@ -54,10 +54,6 @@
 404 Not Found {90 WEB_PHONE_VERIFICATION 2.20250829.01.00}
 404 Not Found {98 WEB_EFFECT_MAKER 2.20250829.01.00}
 404 Not Found {99 WEB_SHOPPING_EXTENSION 2.20250829.01.00}
-{ERROR This video is unavailable} {18 ANDROID_KIDS 7.36.1}
-{ERROR This video is unavailable} {19 IOS_KIDS 7.36.1}
-{ERROR This video is unavailable} {76 WEB_KIDS 2.20220918}
-{ERROR This video is unavailable} {76 WEB_KIDS 2.20250829.01.00}
 {ERROR YouTube is no longer supported in this application or device.} {16 TVAPPLE 1.0}
 {ERROR YouTube is no longer supported in this application or device.} {38 ANDROID_LITE 3.26.1}
 {ERROR YouTube is no longer supported in this application or device.} {61 WEB_MUSIC 1.0}
@@ -65,12 +61,6 @@
 {ERROR YouTube is no longer supported in this application or device.} {71 WEB_UNPLUGGED_PUBLIC 0.1}
 {ERROR YouTube is no longer supported in this application or device.} {8 TVLITE 2}
 {ERROR YouTube is no longer supported in this application or device.} {80 TVHTML5_YONGLE 0.1}
-{LOGIN_REQUIRED Please sign in} {21 ANDROID_MUSIC 8.34.51}
-{LOGIN_REQUIRED Please sign in} {26 IOS_MUSIC 5.26.1}
-{LOGIN_REQUIRED Please sign in} {29 ANDROID_UNPLUGGED 6.36}
-{LOGIN_REQUIRED Please sign in} {33 IOS_UNPLUGGED 6.36}
-{LOGIN_REQUIRED Please sign in} {41 WEB_UNPLUGGED 1.20220918}
-{LOGIN_REQUIRED Please sign in} {62 WEB_CREATOR 1.20220918}
 {OK } {1 WEB 2.20220918}
 {OK } {1 WEB 2.20250829.01.00}
 {OK } {2 MWEB 2.20220918}
@@ -84,6 +74,17 @@
 {OK } {7 TVHTML5 7.20241201.18.00}
 {OK } {75 TVHTML5_SIMPLY 1.0}
 {OK } {88 WEB_PARENT_TOOLS 1.20220918}
+
+{ERROR This video is unavailable} {18 ANDROID_KIDS 7.36.1}
+{ERROR This video is unavailable} {19 IOS_KIDS 7.36.1}
+{ERROR This video is unavailable} {76 WEB_KIDS 2.20220918}
+{ERROR This video is unavailable} {76 WEB_KIDS 2.20250829.01.00}
+{LOGIN_REQUIRED Please sign in} {21 ANDROID_MUSIC 8.34.51}
+{LOGIN_REQUIRED Please sign in} {26 IOS_MUSIC 5.26.1}
+{LOGIN_REQUIRED Please sign in} {29 ANDROID_UNPLUGGED 6.36}
+{LOGIN_REQUIRED Please sign in} {33 IOS_UNPLUGGED 6.36}
+{LOGIN_REQUIRED Please sign in} {41 WEB_UNPLUGGED 1.20220918}
+{LOGIN_REQUIRED Please sign in} {62 WEB_CREATOR 1.20220918}
 {UNPLAYABLE Please sign in} {57 TVHTML5_AUDIO 2.0}
 {UNPLAYABLE Please sign in} {65 TVHTML5_UNPLUGGED 6.36}
 {UNPLAYABLE Please sign in} {70 WEB_UNPLUGGED_OPS 0.1}
