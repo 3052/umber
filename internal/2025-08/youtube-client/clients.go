@@ -22,19 +22,9 @@ var clients = []ClientVersion{
       Version: "2.20250829.01.00",
    },
    {
-      ID:      1,
-      Name:    "WEB",
-      Version: "2.20220918",
-   },
-   {
       ID:      2,
       Name:    "MWEB",
       Version: "2.20250829.01.00",
-   },
-   {
-      ID:      2,
-      Name:    "MWEB",
-      Version: "2.20220918",
    },
    {
       ID:      3,
@@ -42,29 +32,14 @@ var clients = []ClientVersion{
       Version: "20.34.37",
    },
    {
-      ID:      3,
-      Name:    "ANDROID",
-      Version: "17.36.4",
-   },
-   {
       ID:      5,
       Name:    "IOS",
       Version: "20.34.2",
    },
    {
-      ID:      5,
-      Name:    "IOS",
-      Version: "17.36.4",
-   },
-   {
       ID:      7,
       Name:    "TVHTML5",
       Version: "7.20241201.18.00",
-   },
-   {
-      ID:      7,
-      Name:    "TVHTML5",
-      Version: "7.20220918",
    },
    {
       ID:     8,
@@ -84,17 +59,7 @@ var clients = []ClientVersion{
    {
       ID:      14,
       Name:    "ANDROID_CREATOR",
-      Version: "20.34.100",
-   },
-   {
-      ID:      14,
-      Name:    "ANDROID_CREATOR",
       Version: "22.36.102",
-   },
-   {
-      ID:      15,
-      Name:    "IOS_CREATOR",
-      Version: "20.34.x",
    },
    {
       ID:      15,
@@ -123,34 +88,14 @@ var clients = []ClientVersion{
       Version: "8.34.51",
    },
    {
-      ID:      21,
-      Name:    "ANDROID_MUSIC",
-      Version: "5.26.1",
-   },
-   {
       ID:      23,
       Name:    "ANDROID_TV",
       Version: "6.18.303",
    },
    {
-      ID:      23,
-      Name:    "ANDROID_TV",
-      Version: "2.19.1.303051424",
-   },
-   {
-      ID:      26,
-      Name:    "IOS_MUSIC",
-      Version: "08.34",
-   },
-   {
       ID:      26,
       Name:    "IOS_MUSIC",
       Version: "5.26.1",
-   },
-   {
-      ID:      27,
-      Name:    "MWEB_TIER_2",
-      Version: "2.20250829.01.00",
    },
    {
       ID:      27,
@@ -196,17 +141,7 @@ var clients = []ClientVersion{
    {
       ID:      41,
       Name:    "WEB_UNPLUGGED",
-      Version: "2.20250829.01.00",
-   },
-   {
-      ID:      41,
-      Name:    "WEB_UNPLUGGED",
       Version: "1.20220918",
-   },
-   {
-      ID:      42,
-      Name:    "WEB_EXPERIMENTS",
-      Version: "2.20250829.01.00",
    },
    {
       ID:      42,
@@ -222,11 +157,6 @@ var clients = []ClientVersion{
       ID:      55,
       Name:    "ANDROID_EMBEDDED_PLAYER",
       Version: "17.36.4",
-   },
-   {
-      ID:      56,
-      Name:    "WEB_EMBEDDED_PLAYER",
-      Version: "2.20250829.01.00",
    },
    {
       ID:      56,
@@ -251,22 +181,12 @@ var clients = []ClientVersion{
    {
       ID:      60,
       Name:    "WEB_HEROES",
-      Version: "2.20250829.01.00",
-   },
-   {
-      ID:      60,
-      Name:    "WEB_HEROES",
       Version: "0.1",
    },
    {
       ID:     61,
       Name:   "WEB_MUSIC",
       Status: no_longer_supported,
-   },
-   {
-      ID:      62,
-      Name:    "WEB_CREATOR",
-      Version: "2.20250829.01.00",
    },
    {
       ID:      62,
@@ -296,11 +216,6 @@ var clients = []ClientVersion{
    {
       ID:      67,
       Name:    "WEB_REMIX",
-      Version: "2.20250829.01.00",
-   },
-   {
-      ID:      67,
-      Name:    "WEB_REMIX",
       Version: "1.20220918",
    },
    {
@@ -312,11 +227,6 @@ var clients = []ClientVersion{
       ID:     69,
       Name:   "WEB_UNPLUGGED_ONBOARDING",
       Status: no_longer_supported,
-   },
-   {
-      ID:      70,
-      Name:    "WEB_UNPLUGGED_OPS",
-      Version: "2.20250829.01.00",
    },
    {
       ID:      70,
@@ -354,11 +264,6 @@ var clients = []ClientVersion{
       Version: "2.20250829.01.00",
    },
    {
-      ID:      76,
-      Name:    "WEB_KIDS",
-      Version: "2.20220918",
-   },
-   {
       ID:      77,
       Name:    "MUSIC_INTEGRATIONS",
       Version: "0.1",
@@ -386,17 +291,7 @@ var clients = []ClientVersion{
    {
       ID:      87,
       Name:    "WEB_INTERNAL_ANALYTICS",
-      Version: "2.20250829.01.00",
-   },
-   {
-      ID:      87,
-      Name:    "WEB_INTERNAL_ANALYTICS",
       Version: "0.1",
-   },
-   {
-      ID:      88,
-      Name:    "WEB_PARENT_TOOLS",
-      Version: "2.20250829.01.00",
    },
    {
       ID:      88,
@@ -407,11 +302,6 @@ var clients = []ClientVersion{
       ID:      89,
       Name:    "GOOGLE_MEDIA_ACTIONS",
       Version: "0.1",
-   },
-   {
-      ID:      90,
-      Name:    "WEB_PHONE_VERIFICATION",
-      Version: "2.20250829.01.00",
    },
    {
       ID:      90,
