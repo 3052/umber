@@ -9,7 +9,7 @@ func main() {
    if err != nil {
       panic(err)
    }
-   err = os.CopyFS(umber, os.DirFS("html"))
+   err = os.CopyFS(umber, os.DirFS("page"))
    if err != nil {
       panic(err)
    }
