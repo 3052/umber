@@ -4,16 +4,88 @@ import (
    "bytes"
    "encoding/json"
    "errors"
-   "fmt"
    "io"
+   "log"
    "net/http"
-   "slices"
+   "time"
 )
 
-type ClientVersion struct {
-   ID      int    `json:"id"`
-   Name    string `json:"name"`
-   Version string `json:"version"`
+func main() {
+   log.SetFlags(log.Ltime)
+   for _, client := range clients {
+      play, err := client.player()
+      if err != nil {
+         log.Println(err, client)
+      } else {
+         log.Println(play.PlayabilityStatus, client)
+      }
+      //i := slices.IndexFunc(play.StreamingData.AdaptiveFormats,
+      //   func(a *adaptive_format) bool {
+      //      return a.AudioQuality == "AUDIO_QUALITY_MEDIUM"
+      //   },
+      //)
+      //status, err := get_status(play.StreamingData.AdaptiveFormats[i].Url)
+      //if err != nil {
+      //   panic(err)
+      //}
+      //fmt.Println(status)
+      time.Sleep(time.Second)
+   }
+}
+
+func (c *ClientVersion) player() (*player, error) {
+   value := map[string]any{
+      "contentCheckOk": true,
+      "context": map[string]any{
+         "client": map[string]string{
+            "clientName":   c.Name,
+            "clientVersion": c.Version,
+         },
+      },
+      "racyCheckOk": true,
+      "videoId":     video_id,
+   }
+   data, err := json.Marshal(value)
+   if err != nil {
+      return nil, err
+   }
+   req, err := http.NewRequest(
+      "POST", "https://www.youtube.com/youtubei/v1/player",
+      bytes.NewReader(data),
+   )
+   if err != nil {
+      return nil, err
+   }
+   req.Header.Set("x-goog-visitor-id", visitor_id)
+   resp, err := http.DefaultClient.Do(req)
+   if err != nil {
+      return nil, err
+   }
+   defer resp.Body.Close()
+   if resp.StatusCode != http.StatusOK {
+      return nil, errors.New(resp.Status)
+   }
+   play := &player{}
+   err = json.NewDecoder(resp.Body).Decode(play)
+   if err != nil {
+      return nil, err
+   }
+   return play, nil
+}
+
+type player struct {
+   PlayabilityStatus struct {
+      Status string
+      Reason string
+   }
+   StreamingData struct {
+      AdaptiveFormats []*adaptive_format
+   }
+   VideoDetails struct {
+      Author  string
+      Title   string
+      VideoId string
+   }
 }
 
 var clients = []ClientVersion{
@@ -23,8 +95,9 @@ var clients = []ClientVersion{
    {2, "MWEB", "2.20220918"},
    {3, "ANDROID", "20.34.37"},
    {3, "ANDROID", "17.36.4"},
-   {5, "IOS", "20.34.2"},
    {5, "IOS", "17.36.4"},
+   {5, "IOS", "20.34.2"},
+   {5, "IOS", "20.03.02"},
    {7, "TVHTML5", "7.20241201.18.00"},
    {7, "TVHTML5", "7.20220918"},
    {8, "TVLITE", "2"},
@@ -110,22 +183,10 @@ var clients = []ClientVersion{
    {103, "WEB_MUSIC_INTEGRATIONS", "2.20250829.01.00"},
 }
 
-func main() {
-   var play player
-   err := play.New(visitor_id, video_id)
-   if err != nil {
-      panic(err)
-   }
-   i := slices.IndexFunc(play.StreamingData.AdaptiveFormats,
-      func(a *adaptive_format) bool {
-         return a.AudioQuality == "AUDIO_QUALITY_MEDIUM"
-      },
-   )
-   status, err := get_status(play.StreamingData.AdaptiveFormats[i].Url)
-   if err != nil {
-      panic(err)
-   }
-   fmt.Println(status)
+type ClientVersion struct {
+   ID      int    `json:"id"`
+   Name    string `json:"name"`
+   Version string `json:"version"`
 }
 
 func get_status(url string) (string, error) {
@@ -141,21 +202,6 @@ func get_status(url string) (string, error) {
    return resp.Status, nil
 }
 
-type player struct {
-   PlayabilityStatus struct {
-      Status string
-      Reason string
-   }
-   StreamingData struct {
-      AdaptiveFormats []*adaptive_format
-   }
-   VideoDetails struct {
-      Author  string
-      Title   string
-      VideoId string
-   }
-}
-
 type adaptive_format struct {
    AudioQuality string
    Itag         int
@@ -168,38 +214,3 @@ const (
    video_id   = "fix-RSKlccw"
    visitor_id = "CgtNbzlJR19GY24tNCjl_pDABjIKCgJVUxIEGgAgDA=="
 )
-
-func (p *player) New(visitor_id, video_id string) error {
-   value := map[string]any{
-      "contentCheckOk": true,
-      "context": map[string]any{
-         "client": map[string]string{
-            "clientName":    "IOS",
-            "clientVersion": "20.03.02",
-         },
-      },
-      "racyCheckOk": true,
-      "videoId":     video_id,
-   }
-   data, err := json.MarshalIndent(value, "", " ")
-   if err != nil {
-      return err
-   }
-   req, err := http.NewRequest(
-      "POST", "https://www.youtube.com/youtubei/v1/player",
-      bytes.NewReader(data),
-   )
-   if err != nil {
-      return err
-   }
-   req.Header.Set("x-goog-visitor-id", visitor_id)
-   resp, err := http.DefaultClient.Do(req)
-   if err != nil {
-      return err
-   }
-   defer resp.Body.Close()
-   if resp.StatusCode != http.StatusOK {
-      return errors.New(resp.Status)
-   }
-   return json.NewDecoder(resp.Body).Decode(p)
-}
