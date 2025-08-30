@@ -9,6 +9,59 @@ import (
    "time"
 )
 
+func main() {
+   for _, client := range clients {
+      ok := client.check_not_ok()
+      if !ok {
+         panic(client)
+      }
+      time.Sleep(100 * time.Millisecond)
+   }
+}
+
+func (c *ClientVersion) check_not_ok() bool {
+   if c.status == ok {
+      return true
+   }
+   if c.status == no_longer_supported {
+      return true
+   }
+   if c.status == sign_in {
+      return true
+   }
+   if c.video_id == "" {
+      return false
+   }
+   if c.version == "" {
+      return false
+   }
+   play, err := c.player()
+   if err != nil {
+      fmt.Println(err, c)
+   } else {
+      fmt.Printf("%+v %v\n", play.PlayabilityStatus, c)
+   }
+   return true
+}
+
+func (c *ClientVersion) check_ok() bool {
+   if c.status == ok {
+      if c.version == "" {
+         return false
+      }
+      if c.video_id == "" {
+         return false
+      }
+      play, err := c.player()
+      if err != nil {
+         fmt.Println(err, c)
+      } else {
+         fmt.Printf("%+v %v\n", play.PlayabilityStatus, c)
+      }
+   }
+   return true
+}
+
 func (c *ClientVersion) player() (*player, error) {
    value := map[string]any{
       "contentCheckOk": true,
@@ -19,7 +72,7 @@ func (c *ClientVersion) player() (*player, error) {
          },
       },
       "racyCheckOk": true,
-      "videoId":     video_id,
+      "videoId":     c.video_id,
    }
    data, err := json.Marshal(value)
    if err != nil {
@@ -70,19 +123,6 @@ type adaptive_format struct {
    MimeType     string
    Url          string
 }
-func main() {
-   for _, client := range clients {
-      if client.status != no_longer_supported {
-         play, err := client.player()
-         if err != nil {
-            fmt.Println(err, client)
-         } else {
-            fmt.Println(play.PlayabilityStatus, client)
-         }
-         time.Sleep(100 * time.Millisecond)
-      }
-   }
-}
 
 //func get_status(url string) (string, error) {
 //   resp, err := http.Get(url)
@@ -118,4 +158,3 @@ func main() {
 //      time.Sleep(100 * time.Millisecond)
 //   }
 //}
-
