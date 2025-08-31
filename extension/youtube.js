@@ -10,8 +10,6 @@ async function youTube() {
    req.headers = {};
    //////////////////////////////////////////////////////////////////////////////
    req.headers['X-Goog-Visitor-Id'] = 'CgtNbzlJR19GY24tNCjl_pDABjIKCgJVUxIEGgAgDA==';
-   //body.context.client.clientName = 'IOS';
-   //body.context.client.clientVersion = '20.03.02';
    body.context.client.clientName = 'ANDROID';
    body.context.client.clientVersion = '20.34.37';
    //////////////////////////////////////////////////////////////////////////////
