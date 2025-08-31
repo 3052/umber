@@ -9,9 +9,11 @@ async function youTube() {
    body.context.client = {};
    req.headers = {};
    //////////////////////////////////////////////////////////////////////////////
-   body.context.client.clientName = 'IOS';
-   body.context.client.clientVersion = '20.03.02';
    req.headers['X-Goog-Visitor-Id'] = 'CgtNbzlJR19GY24tNCjl_pDABjIKCgJVUxIEGgAgDA==';
+   //body.context.client.clientName = 'IOS';
+   //body.context.client.clientVersion = '20.03.02';
+   body.context.client.clientName = 'ANDROID';
+   body.context.client.clientVersion = '20.34.37';
    //////////////////////////////////////////////////////////////////////////////
    req.body = JSON.stringify(body);
    req.method = 'POST';

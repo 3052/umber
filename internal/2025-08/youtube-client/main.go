@@ -7,6 +7,7 @@ import (
    "flag"
    "fmt"
    "net/http"
+   "slices"
    "time"
 )
 
@@ -14,7 +15,7 @@ func (c *ClientVersion) player() (*player, error) {
    value := map[string]any{
       "contentCheckOk": true,
       "context": map[string]any{
-         "client": map[string]string{
+         "client": map[string]any{
             "clientName":    c.name,
             "clientVersion": c.version,
          },
@@ -33,7 +34,9 @@ func (c *ClientVersion) player() (*player, error) {
    if err != nil {
       return nil, err
    }
+   //////////////////////////////////////////////////////////////////////////////
    req.Header.Set("x-goog-visitor-id", visitor_id)
+   //////////////////////////////////////////////////////////////////////////////
    resp, err := http.DefaultClient.Do(req)
    if err != nil {
       return nil, err
@@ -54,17 +57,64 @@ func main() {
    check_ok := flag.Bool("c", false, "check OK")
    flag.Parse()
    for _, client := range clients {
-      var ok bool
       if *check_ok {
-         ok = client.check_ok()
+         err := client.check_ok()
+         if err != nil {
+            panic(err)
+         }
       } else {
-         ok = client.check_not_ok()
-      }
-      if !ok {
-         panic(client)
+         if !client.check_not_ok() {
+            fmt.Println(client)
+            return
+         }
       }
       time.Sleep(100 * time.Millisecond)
    }
+}
+
+func (c *ClientVersion) check_ok() error {
+   if c.status == ok {
+      if c.version == "" {
+         return errors.New("version")
+      }
+      if c.video_id == "" {
+         return errors.New("video ID")
+      }
+      play, err := c.player()
+      if err != nil {
+         fmt.Println(err, c)
+         return nil
+      }
+      i := slices.IndexFunc(play.StreamingData.AdaptiveFormats,
+         func(a *adaptive_format) bool {
+            return a.AudioQuality == "AUDIO_QUALITY_MEDIUM"
+         },
+      )
+      if i >= 0 {
+         format := play.StreamingData.AdaptiveFormats[i]
+         if format.Url != "" {
+            status, err := get_status(format.Url)
+            if err != nil {
+               return err
+            }
+            fmt.Printf("%v %+v %v\n", status, play.PlayabilityStatus, c)
+         } else {
+            fmt.Printf("%+v %v\n", play.PlayabilityStatus, c)
+         }
+      } else {
+         fmt.Printf("%+v %v\n", play.PlayabilityStatus, c)
+      }
+   }
+   return nil
+}
+
+func get_status(url string) (string, error) {
+   resp, err := http.Get(url)
+   if err != nil {
+      return "", err
+   }
+   defer resp.Body.Close()
+   return resp.Status, nil
 }
 
 func (c *ClientVersion) check_not_ok() bool {
@@ -72,6 +122,9 @@ func (c *ClientVersion) check_not_ok() bool {
       return true
    }
    if c.status == no_longer_supported {
+      return true
+   }
+   if c.status == not_available {
       return true
    }
    if c.status == sign_in {
@@ -88,24 +141,6 @@ func (c *ClientVersion) check_not_ok() bool {
       fmt.Println(err, c)
    } else {
       fmt.Printf("%+v %v\n", play.PlayabilityStatus, c)
-   }
-   return true
-}
-
-func (c *ClientVersion) check_ok() bool {
-   if c.status == ok {
-      if c.version == "" {
-         return false
-      }
-      if c.video_id == "" {
-         return false
-      }
-      play, err := c.player()
-      if err != nil {
-         fmt.Println(err, c)
-      } else {
-         fmt.Printf("%+v %v\n", play.PlayabilityStatus, c)
-      }
    }
    return true
 }
@@ -131,38 +166,3 @@ type adaptive_format struct {
    MimeType     string
    Url          string
 }
-
-//func get_status(url string) (string, error) {
-//   resp, err := http.Get(url)
-//   if err != nil {
-//      return "", err
-//   }
-//   defer resp.Body.Close()
-//   _, err = io.Copy(io.Discard, resp.Body)
-//   if err != nil {
-//      return "", err
-//   }
-//   return resp.Status, nil
-//}
-
-//func main() {
-//   for _, client := range clients {
-//      play, err := client.player()
-//      if err != nil {
-//         fmt.Println(err, client)
-//      } else {
-//         fmt.Println(play.PlayabilityStatus, client)
-//      }
-//      i := slices.IndexFunc(play.StreamingData.AdaptiveFormats,
-//         func(a *adaptive_format) bool {
-//            return a.AudioQuality == "AUDIO_QUALITY_MEDIUM"
-//         },
-//      )
-//      status, err := get_status(play.StreamingData.AdaptiveFormats[i].Url)
-//      if err != nil {
-//         panic(err)
-//      }
-//      fmt.Println(status)
-//      time.Sleep(100 * time.Millisecond)
-//   }
-//}

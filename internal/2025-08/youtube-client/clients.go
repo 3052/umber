@@ -21,6 +21,7 @@ type ClientVersion struct {
 
 const (
    no_longer_supported = "YouTube is no longer supported in this application or device."
+   not_available       = "This video is not available"
    ok                  = "OK"
    sign_in             = "Please sign in"
 )
@@ -79,10 +80,9 @@ var clients = []ClientVersion{
       video_id: video_id_kids,
    },
    {
-      id:       14,
-      name:     "ANDROID_CREATOR",
-      version:  "22.36.102",
-      video_id: video_id_kids,
+      id:     14,
+      name:   "ANDROID_CREATOR",
+      status: sign_in,
    },
    {
       id:       15,
@@ -144,10 +144,9 @@ var clients = []ClientVersion{
       status: sign_in,
    },
    {
-      id:       30,
-      name:     "ANDROID_TESTSUITE",
-      version:  "1.9",
-      video_id: video_id_kids,
+      id:     30,
+      name:   "ANDROID_TESTSUITE",
+      status: not_available,
    },
    {
       id:       31,
