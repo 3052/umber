@@ -1,7 +1,7 @@
 'use strict';
 
 async function bandcamp() {
-   let ref = new URL('http://bandcamp.com/api/mobile/24/tralbum_details');
+   let ref = new URL('https://bandcamp.com/api/mobile/24/tralbum_details');
    // bandcamp.com/EmbeddedPlayer/track=4023025438
    let ind = this.href.indexOf('=');
    let param = new URLSearchParams({
