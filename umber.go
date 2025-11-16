@@ -2,7 +2,7 @@ package main
 
 import "os"
 
-const umber = "../41.neocities.org/umber"
+const umber = "D:/41.neocities.org/umber"
 
 func main() {
    err := os.RemoveAll(umber)
