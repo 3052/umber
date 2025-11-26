@@ -16,6 +16,23 @@ import (
    "time"
 )
 
+type flag_set struct {
+   address string
+   file    string
+}
+
+func write_file(name string, data []byte) error {
+   log.Println("WriteFile", name)
+   return os.WriteFile(name, data, os.ModePerm)
+}
+
+type tralbum struct {
+   Id   int
+   Type byte
+}
+
+///
+
 func (f *flag_set) do() error {
    var params ReportParams
    err := params.New(f.address)
@@ -24,7 +41,7 @@ func (f *flag_set) do() error {
    }
    tralbum, ok := params.Tralbum()
    if !ok {
-      return errors.New("Tralbum")
+      return errors.New("tralbum")
    }
    detail, err := tralbum.Tralbum()
    if err != nil {
@@ -82,14 +99,9 @@ func cut_before(s, sep []byte) ([]byte, []byte, bool) {
    return s, nil, false
 }
 
-func write_file(name string, data []byte) error {
-   log.Println("WriteFile", name)
-   return os.WriteFile(name, data, os.ModePerm)
-}
-
 type TralbumDetails struct {
    ArtId         int64 `json:"art_id"`
-   ReleaseDate   int64  `json:"release_date"`
+   ReleaseDate   int64 `json:"release_date"`
    Title         string
    TralbumArtist string `json:"tralbum_artist"`
 }
@@ -141,22 +153,17 @@ func (r *ReportParams) New(urlVar string) error {
    return json.Unmarshal(p.DataTouReportParams, r)
 }
 
-func (r *ReportParams) Tralbum() (*Tralbum, bool) {
+func (r *ReportParams) Tralbum() (*tralbum, bool) {
    switch r.Itype {
    case "a":
-      return &Tralbum{r.Iid, 'a'}, true
+      return &tralbum{r.Iid, 'a'}, true
    case "t":
-      return &Tralbum{r.Iid, 't'}, true
+      return &tralbum{r.Iid, 't'}, true
    }
    return nil, false
 }
 
-type Tralbum struct {
-   Id int
-   Type byte
-}
-
-func (t *Tralbum) Tralbum() (*TralbumDetails, error) {
+func (t *tralbum) tralbum() (*TralbumDetails, error) {
    req, _ := http.NewRequest("", "http://bandcamp.com", nil)
    req.URL.Path = "/api/mobile/24/tralbum_details"
    req.URL.RawQuery = url.Values{
@@ -174,9 +181,4 @@ func (t *Tralbum) Tralbum() (*TralbumDetails, error) {
       return nil, err
    }
    return detail, nil
-}
-
-type flag_set struct {
-   address string
-   file string
 }
