@@ -154,16 +154,16 @@ var yt_imgs = []yt_img{
 }
 
 func (y *yt_img) String() string {
-   var b strings.Builder
-   b.WriteString("http://i.ytimg.com/vi")
+   var data strings.Builder
+   data.WriteString("http://i.ytimg.com/vi")
    if strings.HasSuffix(y.Name, ".webp") {
-      b.WriteString("_webp")
+      data.WriteString("_webp")
    }
-   b.WriteByte('/')
-   b.WriteString(y.VideoId)
-   b.WriteByte('/')
-   b.WriteString(y.Name)
-   return b.String()
+   data.WriteByte('/')
+   data.WriteString(y.VideoId)
+   data.WriteByte('/')
+   data.WriteString(y.Name)
+   return data.String()
 }
 
 func (d *date) UnmarshalText(data []byte) error {
@@ -260,15 +260,15 @@ func do_video_id(video_id, name string) error {
       play.Microformat.PlayerMicroformatRenderer.PublishDate[0].Year(),
    ))
    // 4 song
-   var songVar song
-   songVar.Q = values.Encode()
-   songVar.S = play.VideoDetails.Author + " - " + play.VideoDetails.Title
+   var song_var song
+   song_var.Q = values.Encode()
+   song_var.S = play.VideoDetails.Author + " - " + play.VideoDetails.Title
    // 5 songs
    songs, err := read_songs(name)
    if err != nil {
       return err
    }
-   songs = slices.Insert(songs, 0, songVar)
+   songs = slices.Insert(songs, 0, song_var)
    var buf bytes.Buffer
    enc := json.NewEncoder(&buf)
    enc.SetEscapeHTML(false)
