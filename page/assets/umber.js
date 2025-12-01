@@ -86,6 +86,18 @@ async function main() {
    }
    const text = localStorage.getItem('umber');
    let table = JSON.parse(text);
+
+   // --- START: FIX ---
+   // Sort the table by the 'a' parameter (timestamp) in descending order.
+   // This ensures pagination works correctly even if the source JSON is unordered.
+   table.sort(function(x, y) {
+      const qx = new URLSearchParams(x.Q);
+      const qy = new URLSearchParams(y.Q);
+      // Parse the base-36 encoded IDs into integers for proper numerical comparison.
+      return parseInt(qy.get('a'), 36) - parseInt(qx.get('a'), 36);
+   });
+   // --- END: FIX ---
+
    // 1. filter
    if (search.has('s')) {
       function filter(row) {

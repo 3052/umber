@@ -7,18 +7,17 @@ export function new_http(q) {
    return back;
 }
 
-const date_parts = [
-   {weekday: 'short'}, {month: 'short'}, {day: 'numeric'}, {year: 'numeric'}
-];
-
 export function date_format(id) {
-   const parse = parseInt(id, 36);
-   const date_var = new Date(parse * 1000);
-   function format(part) {
-      const time = new Intl.DateTimeFormat('en', part);
-      return time.format(date_var);
-   }
-   return date_parts.map(format).join(' ');
+   const date_var = new Date(parseInt(id, 36) * 1000);
+   const time_fmt = new Intl.DateTimeFormat('en', {
+      weekday: 'short', month: 'short', day: 'numeric', year: 'numeric'
+   });
+   
+   return time_fmt.formatToParts(date_var).filter(function(p) {
+      return p.type !== 'literal';
+   }).map(function(p) {
+      return p.value;
+   }).join(' ');
 }
 
 export function new_bandcamp(param) {
@@ -42,17 +41,18 @@ export function new_soundcloud(param) {
 export function new_youtube(param) {
    const yt = {};
    yt.href = 'https://www.youtube.com/watch?v=' + param.get('b');
+   
+   let img = 'sddefault.webp';
    if (param.has('c')) {
-      yt.src = param.get('c');
-   } else {
-      yt.src = 'sddefault.webp';
+      img = param.get('c');
    }
-   yt.src = param.get('b') + '/' + yt.src;
-   // need HTTPS to avoid "Parts of this page are not secure"
-   if (yt.src.endsWith('.webp')) {
-      yt.src = 'https://i.ytimg.com/vi_webp/' + yt.src;
+   
+   const path = param.get('b') + '/' + img;
+   
+   if (img.endsWith('.webp')) {
+      yt.src = 'https://i.ytimg.com/vi_webp/' + path;
    } else {
-      yt.src = 'https://i.ytimg.com/vi/' + yt.src;
+      yt.src = 'https://i.ytimg.com/vi/' + path;
    }
    return yt;
 }
