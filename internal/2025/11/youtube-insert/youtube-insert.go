@@ -228,7 +228,7 @@ func main() {
    if *video_id != "" {
       err := do_video_id(*video_id, *name)
       if err != nil {
-         panic(err)
+         log.Fatal(err)
       }
    } else {
       flag.Usage()
