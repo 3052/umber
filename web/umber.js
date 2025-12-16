@@ -6,7 +6,7 @@ import {
    new_http,
    new_soundcloud,
    new_youtube
-} from '/umber/assets/platform.js';
+} from '/umber/platform.js';
 
 function figure(row) {
    const param = new URLSearchParams(row.Q);
