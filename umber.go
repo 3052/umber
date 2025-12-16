@@ -12,7 +12,7 @@ func main() {
    if err != nil {
       log.Fatal(err)
    }
-   err = os.CopyFS(umber, os.DirFS("page"))
+   err = os.CopyFS(umber, os.DirFS("web"))
    if err != nil {
       log.Fatal(err)
    }
