@@ -19,7 +19,7 @@ import (
 )
 
 func (p *player) New(video_id string) error {
-   value := map[string]any{
+   data, err := json.Marshal(map[string]any{
       "contentCheckOk": true,
       "context": map[string]any{
          "client": map[string]string{
@@ -29,8 +29,7 @@ func (p *player) New(video_id string) error {
       },
       "racyCheckOk": true,
       "videoId":     video_id,
-   }
-   data, err := json.MarshalIndent(value, "", " ")
+   })
    if err != nil {
       return err
    }
