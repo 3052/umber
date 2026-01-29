@@ -1,0 +1,28 @@
+body {
+   background: radial-gradient(#dee1ec 80%, #becbff);
+}
+h1 {
+   color: #D40000;
+   font-family: Calibri;
+}
+figcaption,
+footer {
+   font-family: sans-serif;
+}
+figure {
+   margin-bottom: 2rem;
+   margin-left: 0;
+   margin-right: 0;
+}
+figcaption {
+   margin-top: 9px;
+}
+figure {
+   margin-top: 2rem;
+}
+video {
+   max-height: 240px;
+}
+body {
+   text-align: center;
+}
