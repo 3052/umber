@@ -18,3 +18,7 @@ New music:
 - https://pitchfork.com
 - https://radio4000.com
 - https://remixrotation.com
+
+## Discord
+
+https://discord.com/invite/rMFzDRQhSx
