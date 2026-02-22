@@ -83,12 +83,11 @@ func get_image(video_id string) (string, error) {
    for index, img := range imgs {
       img.VideoId = video_id
       address := img.String()
-      fmt.Println(address)
-      resp, err := http.Head(address)
+      status, err := head(address)
       if err != nil {
          return "", err
       }
-      if resp.StatusCode == http.StatusOK {
+      if status == http.StatusOK {
          if index == 0 {
             return "", nil
          }
@@ -96,6 +95,16 @@ func get_image(video_id string) (string, error) {
       }
    }
    return "", nil
+}
+
+func head(address string) (int, error) {
+   fmt.Println(address)
+   resp, err := http.Head(address)
+   if err != nil {
+      return 0, err
+   }
+   defer resp.Body.Close()
+   return resp.StatusCode, nil
 }
 
 type yt_img struct {
