@@ -2,6 +2,7 @@ package main
 
 import (
    "bytes"
+   "cmp"
    "encoding/json"
    "errors"
    "flag"
@@ -12,11 +13,38 @@ import (
    "os"
    "path"
    "slices"
-   "sort"
    "strconv"
    "strings"
    "time"
 )
+
+func get_image(video_id string) (string, error) {
+   yt_imgs = slices.DeleteFunc(yt_imgs, func(img *yt_img) bool {
+      return img.Height >= 720
+   })
+   slices.SortStableFunc(yt_imgs, func(a, b *yt_img) int {
+      return cmp.Or(
+         a.Height - b.Height,
+         strings.Index(a.Name, "default") - strings.Index(b.Name, "default"),
+         strings.Index(a.Name, "webp") - strings.Index(b.Name, "webp"),
+      )
+   })
+   for index, img := range yt_imgs {
+      img.VideoId = video_id
+      address := img.String()
+      status, err := head(address)
+      if err != nil {
+         return "", err
+      }
+      if status == http.StatusOK {
+         if index == 0 {
+            return "", nil
+         }
+         return path.Base(address), nil
+      }
+   }
+   return "", nil
+}
 
 func (p *player) New(video_id string) error {
    data, err := json.Marshal(map[string]any{
@@ -56,47 +84,6 @@ func (p *player) New(video_id string) error {
    return json.NewDecoder(resp.Body).Decode(p)
 }
 
-func get_image(video_id string) (string, error) {
-   var imgs []yt_img
-   for _, img := range yt_imgs {
-      if img.Height < 720 {
-         imgs = append(imgs, img)
-      }
-   }
-   sort.SliceStable(imgs, func(a, b int) bool {
-      com := imgs[a].Height - imgs[b].Height
-      if com != 0 {
-         return com >= 1
-      }
-      def := func(i int) int {
-         return strings.Index(imgs[i].Name, "default")
-      }
-      com = def(a) - def(b)
-      if com != 0 {
-         return com >= 1
-      }
-      def = func(i int) int {
-         return strings.Index(imgs[i].Name, "webp")
-      }
-      return def(b) < def(a)
-   })
-   for index, img := range imgs {
-      img.VideoId = video_id
-      address := img.String()
-      status, err := head(address)
-      if err != nil {
-         return "", err
-      }
-      if status == http.StatusOK {
-         if index == 0 {
-            return "", nil
-         }
-         return path.Base(address), nil
-      }
-   }
-   return "", nil
-}
-
 func head(address string) (int, error) {
    fmt.Println(address)
    resp, err := http.Head(address)
@@ -114,7 +101,7 @@ type yt_img struct {
    Width   int
 }
 
-var yt_imgs = []yt_img{
+var yt_imgs = []*yt_img{
    {Width: 120, Height: 90, Name: "default.jpg"},
    {Width: 120, Height: 90, Name: "1.jpg"},
    {Width: 120, Height: 90, Name: "2.jpg"},
