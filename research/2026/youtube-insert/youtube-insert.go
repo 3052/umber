@@ -24,9 +24,9 @@ func get_image(video_id string) (string, error) {
    })
    slices.SortStableFunc(yt_imgs, func(a, b *yt_img) int {
       return cmp.Or(
-         a.Height - b.Height,
-         strings.Index(a.Name, "default") - strings.Index(b.Name, "default"),
-         strings.Index(a.Name, "webp") - strings.Index(b.Name, "webp"),
+         a.Height-b.Height,
+         strings.Index(a.Name, "default")-strings.Index(b.Name, "default"),
+         strings.Index(a.Name, "webp")-strings.Index(b.Name, "webp"),
       )
    })
    for index, img := range yt_imgs {
