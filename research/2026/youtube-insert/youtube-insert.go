@@ -164,10 +164,7 @@ func (y *yt_img) String() string {
 func (d *date) UnmarshalText(data []byte) error {
    var err error
    d[0], err = time.Parse(time.RFC3339, string(data))
-   if err != nil {
-      return err
-   }
-   return nil
+   return err
 }
 
 type date [1]time.Time
