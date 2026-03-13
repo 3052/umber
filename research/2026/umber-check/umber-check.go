@@ -12,6 +12,45 @@ import (
    "time"
 )
 
+func do_check(visitor_id, name string, start int) error {
+   file, err := os.Open(name)
+   if err != nil {
+      return err
+   }
+   defer file.Close()
+   var songs []struct {
+      Q string
+      S string
+   }
+   err = json.NewDecoder(file).Decode(&songs)
+   if err != nil {
+      return err
+   }
+   for i, song := range songs {
+      if i >= start {
+         query, err := url.ParseQuery(song.Q)
+         if err != nil {
+            return err
+         }
+         if query.Get("p") == "y" {
+            video_id := query.Get("b")
+            var play player
+            err = play.New(visitor_id, video_id)
+            if err != nil {
+               return err
+            }
+            fmt.Println(i, len(songs)-i, video_id, song.S)
+            if play.PlayabilityStatus.Status != "OK" {
+               fmt.Printf("%+v\n", play.PlayabilityStatus)
+               break
+            }
+            time.Sleep(99 * time.Millisecond)
+         }
+      }
+   }
+   return nil
+}
+
 type player struct {
    PlayabilityStatus struct {
       Status string
@@ -77,41 +116,3 @@ func main() {
    }
 }
 
-func do_check(visitor_id, name string, start int) error {
-   file, err := os.Open(name)
-   if err != nil {
-      return err
-   }
-   defer file.Close()
-   var songs []struct {
-      Q string
-      S string
-   }
-   err = json.NewDecoder(file).Decode(&songs)
-   if err != nil {
-      return err
-   }
-   for i, song := range songs {
-      if i >= start {
-         query, err := url.ParseQuery(song.Q)
-         if err != nil {
-            return err
-         }
-         if query.Get("p") == "y" {
-            video_id := query.Get("b")
-            var play player
-            err = play.New(visitor_id, video_id)
-            if err != nil {
-               return err
-            }
-            fmt.Println(i, len(songs), video_id, song.S)
-            if play.PlayabilityStatus.Status != "OK" {
-               fmt.Printf("%+v\n", play.PlayabilityStatus)
-               break
-            }
-            time.Sleep(99 * time.Millisecond)
-         }
-      }
-   }
-   return nil
-}
