@@ -6,11 +6,66 @@ import (
    "errors"
    "flag"
    "fmt"
+   "log"
    "net/http"
    "net/url"
    "os"
    "time"
 )
+
+func fetch_player(visitor_id, video_id string) (*player, error) {
+   data, err := json.Marshal(map[string]any{
+      "contentCheckOk": true,
+      "context": map[string]any{
+         "client": map[string]string{
+            "clientName":    "IOS",
+            "clientVersion": "20.03.02",
+         },
+      },
+      "racyCheckOk": true,
+      "videoId":     video_id,
+   })
+   if err != nil {
+      return nil, err
+   }
+   req, err := http.NewRequest(
+      "POST", "https://www.youtube.com/youtubei/v1/player",
+      bytes.NewReader(data),
+   )
+   if err != nil {
+      return nil, err
+   }
+   req.Header.Set("x-goog-visitor-id", visitor_id)
+   resp, err := http.DefaultClient.Do(req)
+   if err != nil {
+      return nil, err
+   }
+   defer resp.Body.Close()
+   if resp.StatusCode != http.StatusOK {
+      return nil, errors.New(resp.Status)
+   }
+   result := &player{}
+   err = json.NewDecoder(resp.Body).Decode(result)
+   if err != nil {
+      return nil, err
+   }
+   return result, nil
+}
+
+func main() {
+   visitor_id := flag.String("v", "", "visitor ID")
+   name := flag.String("n", "umber.json", "name")
+   start := flag.Int("s", 0, "start")
+   flag.Parse()
+   if *visitor_id != "" {
+      err := do_check(*visitor_id, *name, *start)
+      if err != nil {
+         log.Fatal(err)
+      }
+   } else {
+      flag.Usage()
+   }
+}
 
 func do_check(visitor_id, name string, start int) error {
    file, err := os.Open(name)
@@ -34,8 +89,7 @@ func do_check(visitor_id, name string, start int) error {
          }
          if query.Get("p") == "y" {
             video_id := query.Get("b")
-            var play player
-            err = play.New(visitor_id, video_id)
+            play, err := fetch_player(visitor_id, video_id)
             if err != nil {
                return err
             }
@@ -65,54 +119,3 @@ type player struct {
       ViewCount        int64 `json:",string"`
    }
 }
-
-func (p *player) New(visitor_id, video_id string) error {
-   value := map[string]any{
-      "contentCheckOk": true,
-      "context": map[string]any{
-         "client": map[string]string{
-            "clientName":    "IOS",
-            "clientVersion": "20.03.02",
-         },
-      },
-      "racyCheckOk": true,
-      "videoId":     video_id,
-   }
-   data, err := json.MarshalIndent(value, "", " ")
-   if err != nil {
-      return err
-   }
-   req, err := http.NewRequest(
-      "POST", "https://www.youtube.com/youtubei/v1/player",
-      bytes.NewReader(data),
-   )
-   if err != nil {
-      return err
-   }
-   req.Header.Set("x-goog-visitor-id", visitor_id)
-   resp, err := http.DefaultClient.Do(req)
-   if err != nil {
-      return err
-   }
-   defer resp.Body.Close()
-   if resp.StatusCode != http.StatusOK {
-      return errors.New(resp.Status)
-   }
-   return json.NewDecoder(resp.Body).Decode(p)
-}
-
-func main() {
-   visitor_id := flag.String("v", "", "visitor ID")
-   name := flag.String("n", "umber.json", "name")
-   start := flag.Int("s", 0, "start")
-   flag.Parse()
-   if *visitor_id != "" {
-      err := do_check(*visitor_id, *name, *start)
-      if err != nil {
-         panic(err)
-      }
-   } else {
-      flag.Usage()
-   }
-}
-
