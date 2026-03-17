@@ -18,35 +18,7 @@ import (
    "time"
 )
 
-func get_image(video_id string) (string, error) {
-   yt_imgs = slices.DeleteFunc(yt_imgs, func(img *yt_img) bool {
-      return img.Height >= 720
-   })
-   slices.SortStableFunc(yt_imgs, func(a, b *yt_img) int {
-      return cmp.Or(
-         a.Height-b.Height,
-         strings.Index(a.Name, "default")-strings.Index(b.Name, "default"),
-         strings.Index(a.Name, "webp")-strings.Index(b.Name, "webp"),
-      )
-   })
-   for index, img := range yt_imgs {
-      img.VideoId = video_id
-      address := img.String()
-      status, err := head(address)
-      if err != nil {
-         return "", err
-      }
-      if status == http.StatusOK {
-         if index == 0 {
-            return "", nil
-         }
-         return path.Base(address), nil
-      }
-   }
-   return "", nil
-}
-
-func (p *player) New(video_id string) error {
+func fetch_player(video_id string) (*player, error) {
    data, err := json.Marshal(map[string]any{
       "contentCheckOk": true,
       "context": map[string]any{
@@ -59,14 +31,14 @@ func (p *player) New(video_id string) error {
       "videoId":     video_id,
    })
    if err != nil {
-      return err
+      return nil, err
    }
    req, err := http.NewRequest(
       "POST", "https://www.youtube.com/youtubei/v1/player",
       bytes.NewReader(data),
    )
    if err != nil {
-      return err
+      return nil, err
    }
    // data := base64.RawStdEncoding.EncodeToString([]byte("########"))
    // var message protobuf.Message
@@ -75,13 +47,18 @@ func (p *player) New(video_id string) error {
    req.Header.Set("x-goog-visitor-id", "CgtJeU1qSXlNakl5TQ")
    resp, err := http.DefaultClient.Do(req)
    if err != nil {
-      return err
+      return nil, err
    }
    defer resp.Body.Close()
    if resp.StatusCode != http.StatusOK {
-      return errors.New(resp.Status)
+      return nil, errors.New(resp.Status)
    }
-   return json.NewDecoder(resp.Body).Decode(p)
+   result := &player{}
+   err = json.NewDecoder(resp.Body).Decode(result)
+   if err != nil {
+      return nil, err
+   }
+   return result, nil
 }
 
 func head(address string) (int, error) {
@@ -229,8 +206,7 @@ func main() {
 
 func do_video_id(video_id, name string) error {
    // 1 player
-   var play player
-   err := play.New(video_id)
+   play, err := fetch_player(video_id)
    if err != nil {
       return err
    }
@@ -270,4 +246,31 @@ func do_video_id(video_id, name string) error {
       return err
    }
    return write_file(name, buf.Bytes())
+}
+func get_image(video_id string) (string, error) {
+   yt_imgs = slices.DeleteFunc(yt_imgs, func(img *yt_img) bool {
+      return img.Height >= 720
+   })
+   slices.SortStableFunc(yt_imgs, func(a, b *yt_img) int {
+      return cmp.Or(
+         a.Height-b.Height,
+         strings.Index(a.Name, "default")-strings.Index(b.Name, "default"),
+         strings.Index(a.Name, "webp")-strings.Index(b.Name, "webp"),
+      )
+   })
+   for index, img := range yt_imgs {
+      img.VideoId = video_id
+      address := img.String()
+      status, err := head(address)
+      if err != nil {
+         return "", err
+      }
+      if status == http.StatusOK {
+         if index == 0 {
+            return "", nil
+         }
+         return path.Base(address), nil
+      }
+   }
+   return "", nil
 }
