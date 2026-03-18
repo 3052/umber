@@ -18,6 +18,34 @@ import (
    "time"
 )
 
+func get_image(video_id string) (string, error) {
+   yt_imgs = slices.DeleteFunc(yt_imgs, func(img *yt_img) bool {
+      return img.Height >= 720
+   })
+   slices.SortStableFunc(yt_imgs, func(a, b *yt_img) int {
+      return cmp.Or(
+         b.Height - a.Height,
+         strings.Index(b.Name, "default")-strings.Index(a.Name, "default"),
+         strings.Index(b.Name, "webp")-strings.Index(a.Name, "webp"),
+      )
+   })
+   for index, img := range yt_imgs {
+      img.VideoId = video_id
+      address := img.String()
+      status, err := head(address)
+      if err != nil {
+         return "", err
+      }
+      if status == http.StatusOK {
+         if index == 0 {
+            return "", nil
+         }
+         return path.Base(address), nil
+      }
+   }
+   return "", nil
+}
+
 func fetch_player(video_id string) (*player, error) {
    data, err := json.Marshal(map[string]any{
       "contentCheckOk": true,
@@ -246,31 +274,4 @@ func do_video_id(video_id, name string) error {
       return err
    }
    return write_file(name, buf.Bytes())
-}
-func get_image(video_id string) (string, error) {
-   yt_imgs = slices.DeleteFunc(yt_imgs, func(img *yt_img) bool {
-      return img.Height >= 720
-   })
-   slices.SortStableFunc(yt_imgs, func(a, b *yt_img) int {
-      return cmp.Or(
-         a.Height-b.Height,
-         strings.Index(a.Name, "default")-strings.Index(b.Name, "default"),
-         strings.Index(a.Name, "webp")-strings.Index(b.Name, "webp"),
-      )
-   })
-   for index, img := range yt_imgs {
-      img.VideoId = video_id
-      address := img.String()
-      status, err := head(address)
-      if err != nil {
-         return "", err
-      }
-      if status == http.StatusOK {
-         if index == 0 {
-            return "", nil
-         }
-         return path.Base(address), nil
-      }
-   }
-   return "", nil
 }
