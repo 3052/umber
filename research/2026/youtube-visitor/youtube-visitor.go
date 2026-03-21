@@ -44,14 +44,14 @@ func main() {
 }
 
 type yt_cfg struct {
-   InnertubeClientName string `json:"INNERTUBE_CLIENT_NAME"`
+   InnertubeClientName    string `json:"INNERTUBE_CLIENT_NAME"`
    InnertubeClientVersion string `json:"INNERTUBE_CLIENT_VERSION"`
-   InnertubeContext struct {
+   InnertubeContext       struct {
       Client struct {
          VisitorData visitor_data
       }
    } `json:"INNERTUBE_CONTEXT"`
-   InnertubeContextClientName int `json:"INNERTUBE_CONTEXT_CLIENT_NAME"`
+   InnertubeContextClientName    int    `json:"INNERTUBE_CONTEXT_CLIENT_NAME"`
    InnertubeContextClientVersion string `json:"INNERTUBE_CONTEXT_CLIENT_VERSION"`
 }
 
