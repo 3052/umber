@@ -1,17 +1,19 @@
 package main
 
 import (
+   "bytes"
    "encoding/json"
+   "errors"
    "io"
+   "log"
    "net/http"
    "net/url"
    "os"
-   "strings"
 )
 
 const sep = "\nytcfg.set("
 
-func main() {
+func do() error {
    var req http.Request
    req.Header = http.Header{}
    req.URL = &url.URL{}
@@ -19,27 +21,32 @@ func main() {
    req.URL.Scheme = "https"
    resp, err := http.DefaultClient.Do(&req)
    if err != nil {
-      panic(err)
+      return err
    }
    defer resp.Body.Close()
    data, err := io.ReadAll(resp.Body)
    if err != nil {
-      panic(err)
+      return err
    }
-   _, data1, found := strings.Cut(string(data), sep)
+   var found bool
+   _, data, found = bytes.Cut(data, []byte(sep))
    if !found {
-      panic(sep)
+      return errors.New(sep)
    }
-   var cfg yt_cfg
-   err = json.NewDecoder(strings.NewReader(data1)).Decode(&cfg)
+   var result yt_cfg
+   err = json.Unmarshal(data, &result)
    if err != nil {
-      panic(err)
+      return err
    }
    encode := json.NewEncoder(os.Stdout)
    encode.SetIndent("", " ")
-   err = encode.Encode(cfg)
+   return encode.Encode(result)
+}
+
+func main() {
+   err := do()
    if err != nil {
-      panic(err)
+      log.Fatal(err)
    }
 }
 
