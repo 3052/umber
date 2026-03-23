@@ -51,27 +51,23 @@ func do() error {
 
 // extractJSON isolates the JSON payload by balancing curly braces 
 // directly on a byte slice to avoid memory allocations.
-func extractJSON(content []byte, prefix []byte) ([]byte, error) {
-   startIdx := bytes.Index(content, prefix)
-   if startIdx == -1 {
+func extractJSON(content []byte, prefix[]byte) ([]byte, error) {
+   _, after, found := bytes.Cut(content, prefix)
+   if !found {
       return nil, fmt.Errorf("prefix %q not found in file", prefix)
    }
-   // Move the index forward to where the JSON object actually begins
-   jsonStart := startIdx + len(prefix)
-   // Make sure we haven't run out of bytes
-   if jsonStart >= len(content) {
+   if len(after) == 0 {
       return nil, fmt.Errorf("content ends abruptly after prefix")
    }
-   // Make sure we are actually starting at a curly brace
-   if content[jsonStart] != '{' {
-      return nil, fmt.Errorf("expected '{' at the start of JSON, got %c", content[jsonStart])
+   if after[0] != '{' {
+      return nil, fmt.Errorf("expected '{' at the start of JSON, got %c", after[0])
    }
    openBraces := 0
    inString := false
    escapeNext := false
-   // Parse through the bytes to find the exact end of the JSON object
-   for i := jsonStart; i < len(content); i++ {
-      char := content[i]
+   // Parse through the bytes to find the exact end of the JSON object.
+   // We can use a clean range loop now that we are looking exclusively at the 'after' slice.
+   for i, char := range after {
       // Handle escaped characters (e.g., \")
       if escapeNext {
          escapeNext = false
@@ -95,7 +91,7 @@ func extractJSON(content []byte, prefix []byte) ([]byte, error) {
             // When the count goes back to 0, we've found the end of the JSON body
             if openBraces == 0 {
                // Return the exact slice of bytes representing the JSON object
-               return content[jsonStart : i+1], nil
+               return after[:i+1], nil
             }
          }
       }
