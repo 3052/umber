@@ -11,15 +11,6 @@ import (
    "os"
 )
 
-const sep = "\nytcfg.set("
-
-func main() {
-   err := do()
-   if err != nil {
-      log.Fatal(err)
-   }
-}
-
 func do() error {
    var req http.Request
    req.Header = http.Header{}
@@ -120,4 +111,13 @@ type yt_cfg struct {
    } `json:"INNERTUBE_CONTEXT"`
    InnertubeContextClientName    int    `json:"INNERTUBE_CONTEXT_CLIENT_NAME"`
    InnertubeContextClientVersion string `json:"INNERTUBE_CONTEXT_CLIENT_VERSION"`
+}
+
+const sep = "\nytcfg.set("
+
+func main() {
+   err := do()
+   if err != nil {
+      log.Fatal(err)
+   }
 }
