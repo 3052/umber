@@ -12,11 +12,13 @@ import (
 )
 
 func do() error {
-   var req http.Request
-   req.Header = http.Header{}
-   req.URL = &url.URL{}
-   req.URL.Host = "www.youtube.com"
-   req.URL.Scheme = "https"
+   req := http.Request{
+      URL: &url.URL{
+         Scheme: "https",
+         Host: "www.youtube.com",
+      },
+      Header: http.Header{},
+   }
    resp, err := http.DefaultClient.Do(&req)
    if err != nil {
       return err
