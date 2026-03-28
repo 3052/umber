@@ -5,6 +5,7 @@ import (
    "encoding/json"
    "errors"
    "flag"
+   "fmt"
    "html"
    "io"
    "log"
@@ -17,9 +18,8 @@ import (
    "time"
 )
 
-func (f *flag_set) do() error {
-   var params report_params
-   err := params.fetch(f.address)
+func (c *client) do_address() error {
+   params, err := fetch_report_params(c.address)
    if err != nil {
       return err
    }
@@ -27,8 +27,8 @@ func (f *flag_set) do() error {
    if err != nil {
       return err
    }
-   var song_var song
-   song_var.S = details.TralbumArtist + " - " + details.Title
+   var song_data song
+   song_data.S = fmt.Sprintf("%v - %v", details.TralbumArtist, details.Title)
    values := url.Values{}
    values.Set("a", strconv.FormatInt(time.Now().Unix(), 36))
    values.Set("b", strconv.Itoa(params.Iid))
@@ -37,8 +37,8 @@ func (f *flag_set) do() error {
    values.Set("y", strconv.Itoa(
       time.Unix(details.ReleaseDate, 0).Year(),
    ))
-   song_var.Q = values.Encode()
-   data, err := os.ReadFile(f.file)
+   song_data.Q = values.Encode()
+   data, err := os.ReadFile(c.file)
    if err != nil {
       return err
    }
@@ -47,43 +47,42 @@ func (f *flag_set) do() error {
    if err != nil {
       return err
    }
-   songs = slices.Insert(songs, 0, song_var)
+   songs = slices.Insert(songs, 0, song_data)
    var buf bytes.Buffer
-   enc := json.NewEncoder(&buf)
-   enc.SetEscapeHTML(false)
-   enc.SetIndent("", " ")
-   err = enc.Encode(songs)
+   encode := json.NewEncoder(&buf)
+   encode.SetEscapeHTML(false)
+   encode.SetIndent("", " ")
+   err = encode.Encode(songs)
    if err != nil {
       return err
    }
-   return write_file(f.file, buf.Bytes())
-}
-type tralbum_details struct {
-   ArtId         int `json:"art_id"`
-   ReleaseDate   int64 `json:"release_date"`
-   Title         string
-   TralbumArtist string `json:"tralbum_artist"`
+   return write_file(c.file, buf.Bytes())
 }
 
 func (r *report_params) tralbum() (*tralbum_details, error) {
-   req, _ := http.NewRequest("", "http://bandcamp.com", nil)
-   req.URL.Path = "/api/mobile/24/tralbum_details"
-   req.URL.RawQuery = url.Values{
-      "band_id":      {"1"},
-      "tralbum_id":   {strconv.Itoa(r.Iid)},
-      "tralbum_type": {r.Itype},
-   }.Encode()
-   resp, err := http.DefaultClient.Do(req)
+   req := http.Request{
+      URL: &url.URL{
+         Scheme: "http",
+         Host: "bandcamp.com",
+         Path: "/api/mobile/24/tralbum_details",
+         RawQuery: url.Values{
+            "band_id":      {"1"},
+            "tralbum_id":   {strconv.Itoa(r.Iid)},
+            "tralbum_type": {r.Itype},
+         }.Encode(),
+      },
+   }
+   resp, err := http.DefaultClient.Do(&req)
    if err != nil {
       return nil, err
    }
    defer resp.Body.Close()
-   details := &tralbum_details{}
-   err = json.NewDecoder(resp.Body).Decode(details)
+   result := &tralbum_details{}
+   err = json.NewDecoder(resp.Body).Decode(result)
    if err != nil {
       return nil, err
    }
-   return details, nil
+   return result, nil
 }
 
 type report_params struct {
@@ -92,54 +91,70 @@ type report_params struct {
    Itype string `json:"i_type"`
 }
 
-func main() {
-   var set flag_set
-   flag.StringVar(&set.address, "a", "", "address")
-   flag.StringVar(&set.file, "f", "umber.json", "file")
-   flag.Parse()
-   if set.address != "" {
-      err := set.do()
-      if err != nil {
-         panic(err)
-      }
-   } else {
-      flag.Usage()
-   }
-}
-
-func (r *report_params) fetch(address string) error {
-   resp, err := http.Get(address)
-   if err != nil {
-      return err
-   }
-   defer resp.Body.Close()
-   data, err := io.ReadAll(resp.Body)
-   if err != nil {
-      return err
-   }
-   _, value, found := strings.Cut(string(data), `data-tou-report-params="`)
-   if !found {
-      return errors.New("attribute not found")
-   }
-   value, _, found = strings.Cut(value, `"`)
-   if !found {
-      return errors.New("closing quote not found")
-   }
-   value = html.UnescapeString(value)
-   return json.Unmarshal([]byte(value), r)
-}
-
 type song struct {
    Q string
    S string
 }
 
-type flag_set struct {
+type client struct {
    address string
    file    string
+}
+
+type tralbum_details struct {
+   ArtId         int `json:"art_id"`
+   ReleaseDate   int64 `json:"release_date"`
+   Title         string
+   TralbumArtist string `json:"tralbum_artist"`
 }
 
 func write_file(name string, data []byte) error {
    log.Println("WriteFile", name)
    return os.WriteFile(name, data, os.ModePerm)
+}
+
+func main() {
+   err := new(client).do()
+   if err != nil {
+      log.Fatal(err)
+   }
+}
+
+func (c *client) do() error {
+   flag.StringVar(&c.address, "a", "", "address")
+   flag.StringVar(&c.file, "f", "umber.json", "file")
+   flag.Parse()
+   if c.address != "" {
+      return c.do_address()
+   }
+   flag.Usage()
+   return nil
+}
+
+func fetch_report_params(url_data string) (*report_params, error) {
+   resp, err := http.Get(url_data)
+   if err != nil {
+      return nil, err
+   }
+   defer resp.Body.Close()
+   var builder strings.Builder
+   _, err = io.Copy(&builder, resp.Body)
+   if err != nil {
+      return nil, err
+   }
+   _, data, found := strings.Cut(builder.String(), `data-tou-report-params="`)
+   if !found {
+      return nil, errors.New("attribute not found")
+   }
+   data, _, found = strings.Cut(data, `"`)
+   if !found {
+      return nil, errors.New("closing quote not found")
+   }
+   data = html.UnescapeString(data)
+   result := &report_params{}
+   err = json.Unmarshal([]byte(data), result)
+   if err != nil {
+      return nil, err
+   }
+   return result, nil
 }
