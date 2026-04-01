@@ -63,8 +63,8 @@ func (r *report_params) tralbum() (*tralbum_details, error) {
    req := http.Request{
       URL: &url.URL{
          Scheme: "http",
-         Host: "bandcamp.com",
-         Path: "/api/mobile/24/tralbum_details",
+         Host:   "bandcamp.com",
+         Path:   "/api/mobile/24/tralbum_details",
          RawQuery: url.Values{
             "band_id":      {"1"},
             "tralbum_id":   {strconv.Itoa(r.Iid)},
@@ -102,7 +102,7 @@ type client struct {
 }
 
 type tralbum_details struct {
-   ArtId         int `json:"art_id"`
+   ArtId         int   `json:"art_id"`
    ReleaseDate   int64 `json:"release_date"`
    Title         string
    TralbumArtist string `json:"tralbum_artist"`

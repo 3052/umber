@@ -15,7 +15,7 @@ func do() error {
    req := http.Request{
       URL: &url.URL{
          Scheme: "https",
-         Host: "www.youtube.com",
+         Host:   "www.youtube.com",
       },
       Header: http.Header{},
    }
@@ -42,9 +42,9 @@ func do() error {
    return encode.Encode(result)
 }
 
-// extractJSON isolates the JSON payload by balancing curly braces 
+// extractJSON isolates the JSON payload by balancing curly braces
 // directly on a byte slice to avoid memory allocations.
-func extractJSON(content []byte, prefix[]byte) ([]byte, error) {
+func extractJSON(content []byte, prefix []byte) ([]byte, error) {
    _, after, found := bytes.Cut(content, prefix)
    if !found {
       return nil, fmt.Errorf("prefix %q not found in file", prefix)
