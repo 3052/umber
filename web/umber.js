@@ -8,10 +8,11 @@ import {
    new_youtube
 } from '/umber/platform.js';
 
+const temp = document.querySelector('template');
+const per_page = 30;
+
 function figure(row) {
    const param = new URLSearchParams(row.Q);
-   const temp = document.querySelector('template');
-   const a_id = param.get('a');
    const clone = temp.content.cloneNode(true);
    const attr = href_src(param);
    const anc = clone.querySelector('a');
@@ -24,7 +25,7 @@ function figure(row) {
    const rel = clone.querySelector('.release');
    rel.textContent = param.get('y');
    const post = clone.querySelector('.post');
-   post.textContent = date_format(a_id);
+   post.textContent = date_format(param.get('a'));
    const td_view = clone.querySelector('td.view');
    const th_view = clone.querySelector('th.view');
    const view = localStorage.getItem(anc.href);
@@ -33,13 +34,13 @@ function figure(row) {
    } else {
       th_view.style.display = 'none';
    }
-   // "function" for "this"
-   function views() {
-      const href = localStorage.getItem(this.href);
-      localStorage.setItem(this.href, Number(href) + 1);
+   
+   const views = () => {
+      const count = Number(localStorage.getItem(anc.href)) + 1;
+      localStorage.setItem(anc.href, count);
       th_view.style.display = td_view.style.display = '';
-      td_view.textContent = Number(href) + 1;
-   }
+      td_view.textContent = count;
+   };
    // web
    anc.addEventListener('click', views);
    // mobile
@@ -47,39 +48,19 @@ function figure(row) {
    return clone;
 }
 
-const per_page = 30;
+const platforms = {
+   b: new_bandcamp,
+   h: new_http,
+   s: new_soundcloud,
+   y: new_youtube
+};
 
 function href_src(query) {
-   switch (query.get('p')) {
-   case 'b':
-      return new_bandcamp(query);
-   case 'h':
-      return new_http(query);
-   case 's':
-      return new_soundcloud(query);
-   case 'y':
-      return new_youtube(query);
-   }
-}
-
-function get_low(meds) {
-   if (!search.has('a')) {
-      return 0;
-   }
-   for (const [i, med] of meds.entries()) {
-      const param = new URLSearchParams(med.Q);
-      const a_id = param.get('a');
-      // account for deleted entries
-      if (a_id <= search.get('a')) {
-         document.title = 'Umber - ' + date_format(a_id);
-         return i;
-      }
-   }
-   return 0;
+   return platforms[query.get('p')](query);
 }
 
 async function main() {
-   if (location.search === '') {
+   if (location.search === '' || localStorage.getItem('umber') === null) {
       const resp = await fetch('/umber/umber.json');
       const text = await resp.text();
       localStorage.setItem('umber', text);
@@ -87,44 +68,56 @@ async function main() {
    const text = localStorage.getItem('umber');
    let table = JSON.parse(text);
 
-   // --- START: FIX ---
-   // Sort the table by the 'a' parameter (timestamp) in descending order.
-   // This ensures pagination works correctly even if the source JSON is unordered.
-   table.sort(function(x, y) {
-      const qx = new URLSearchParams(x.Q);
-      const qy = new URLSearchParams(y.Q);
-      // Parse the base-36 encoded IDs into integers for proper numerical comparison.
-      return parseInt(qy.get('a'), 36) - parseInt(qx.get('a'), 36);
-   });
-   // --- END: FIX ---
-
-   // 1. filter
+   // Filter first to avoid unnecessary sorting work
    if (search.has('s')) {
-      function filter(row) {
-         // for now, just match one the artist, album and song.
-         return RegExp(search.get('s'), 'i').test(row.S);
+      const re = new RegExp(search.get('s'), 'i');
+      table = table.filter(row => re.test(row.S));
+   }
+
+   // Decorate: Calculate sort values once per row
+   table = table.map(row => {
+      const q = new URLSearchParams(row.Q);
+      const href = href_src(q).href;
+      const raw_view = localStorage.getItem(href);
+      return {
+         row: row,
+         views: raw_view !== null ? Number(raw_view) : 0,
+         date: parseInt(q.get('a'), 36)
+      };
+   });
+
+   // Sort using pre-calculated raw numbers
+   table.sort((x, y) => {
+      if (x.views !== y.views) {
+         return x.views - y.views;
       }
-      table = table.filter(filter);
+      return y.date - x.date;
+   });
+
+   // Undecorate: Restore the original row objects
+   table = table.map(item => item.row);
+
+   const page = search.has('page') ? parseInt(search.get('page'), 10) : 1;
+   const begin = (page - 1) * per_page;
+
+   if (page > 1) {
+      document.title = 'Umber - Page ' + page;
    }
-   const begin = get_low(table);
+
    const slice = table.slice(begin, begin + per_page);
-   for (const row of slice) {
-      document.getElementById('figures').append(figure(row));
-   }
+   document.getElementById('figures').append(...slice.map(figure));
+
    const older = document.getElementById('older');
-   const old_index = begin + per_page;
-   if (old_index < table.length) {
-      const param = new URLSearchParams(table[old_index].Q);
-      search.set('a', param.get('a'));
+   if (begin + per_page < table.length) {
+      search.set('page', page + 1);
       older.href = '?' + search.toString();
    } else {
       older.remove();
    }
+
    const newer = document.getElementById('newer');
-   const new_index = begin - per_page;
-   if (new_index >= 0) {
-      const param = new URLSearchParams(table[new_index].Q);
-      search.set('a', param.get('a'));
+   if (page > 1) {
+      search.set('page', page - 1);
       newer.href = '?' + search.toString();
    } else {
       newer.remove();
@@ -139,4 +132,5 @@ document.querySelector('form').onsubmit = function() {
 };
 
 const search = new URLSearchParams(location.search);
+search.delete('a'); // Clean up legacy pagination parameter if present
 main();

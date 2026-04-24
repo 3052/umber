@@ -16,8 +16,6 @@ import (
    "time"
 )
 
-// Explicitly indexed string array replicating the exact stable sort order
-// of the original logic (Height < 720, Default, Webp).
 var yt_imgs = []string{
    0:  "sddefault.webp",
    1:  "sddefault.jpg",
@@ -174,17 +172,9 @@ func main() {
    name := flag.String("n", "umber.json", "name")
    video_url := flag.String("u", "", "video URL")
    flag.Parse()
+   
    if *video_url != "" {
-      raw_url := *video_url
-
-      // Just in case an encoded URL gets passed in occasionally
-      if strings.Contains(raw_url, "%3A%2F%2F") {
-         if unescaped, err := url.QueryUnescape(raw_url); err == nil {
-            raw_url = unescaped
-         }
-      }
-
-      u, err := url.Parse(raw_url)
+      u, err := url.Parse(*video_url)
       if err != nil {
          log.Fatal("Invalid URL:", err)
       }
@@ -227,15 +217,15 @@ func do_video_id(video_id, name string) error {
       play.Microformat.PlayerMicroformatRenderer.PublishDate.Year(),
    ))
    // 4 song
-   var song_var song
-   song_var.Q = values.Encode()
-   song_var.S = play.VideoDetails.Author + " - " + play.VideoDetails.Title
+   var song_data song
+   song_data.Q = values.Encode()
+   song_data.S = play.VideoDetails.Author + " - " + play.VideoDetails.Title
    // 5 songs
    songs, err := read_songs(name)
    if err != nil {
       return err
    }
-   songs = slices.Insert(songs, 0, song_var)
+   songs = slices.Insert(songs, 0, song_data)
    var buf bytes.Buffer
    enc := json.NewEncoder(&buf)
    enc.SetEscapeHTML(false)
