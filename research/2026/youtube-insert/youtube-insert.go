@@ -2,7 +2,6 @@ package main
 
 import (
    "bytes"
-   "cmp"
    "encoding/json"
    "errors"
    "flag"
@@ -11,27 +10,59 @@ import (
    "net/http"
    "net/url"
    "os"
-   "path"
    "slices"
    "strconv"
    "strings"
    "time"
 )
 
+// Explicitly indexed string array replicating the exact stable sort order
+// of the original logic (Height < 720, Default, Webp).
+var yt_imgs = []string{
+   0:  "sddefault.webp",
+   1:  "sddefault.jpg",
+   2:  "sd1.webp",
+   3:  "sd2.webp",
+   4:  "sd3.webp",
+   5:  "sd1.jpg",
+   6:  "sd2.jpg",
+   7:  "sd3.jpg",
+   8:  "hqdefault.webp",
+   9:  "hqdefault.jpg",
+   10: "hq1.webp",
+   11: "hq2.webp",
+   12: "hq3.webp",
+   13: "0.webp",
+   14: "0.jpg",
+   15: "hq1.jpg",
+   16: "hq2.jpg",
+   17: "hq3.jpg",
+   18: "mqdefault.webp",
+   19: "mqdefault.jpg",
+   20: "mq1.webp",
+   21: "mq2.webp",
+   22: "mq3.webp",
+   23: "mq1.jpg",
+   24: "mq2.jpg",
+   25: "mq3.jpg",
+   26: "default.webp",
+   27: "default.jpg",
+   28: "1.webp",
+   29: "2.webp",
+   30: "3.webp",
+   31: "1.jpg",
+   32: "2.jpg",
+   33: "3.jpg",
+}
+
 func get_image(video_id string) (string, error) {
-   yt_imgs = slices.DeleteFunc(yt_imgs, func(img *yt_img) bool {
-      return img.Height >= 720
-   })
-   slices.SortStableFunc(yt_imgs, func(a, b *yt_img) int {
-      return cmp.Or(
-         b.Height-a.Height,
-         strings.Index(b.Name, "default")-strings.Index(a.Name, "default"),
-         strings.Index(b.Name, "webp")-strings.Index(a.Name, "webp"),
-      )
-   })
-   for index, img := range yt_imgs {
-      img.VideoId = video_id
-      address := img.String()
+   for index, name := range yt_imgs {
+      var address string
+      if strings.HasSuffix(name, ".webp") {
+         address = "http://i.ytimg.com/vi_webp/" + video_id + "/" + name
+      } else {
+         address = "http://i.ytimg.com/vi/" + video_id + "/" + name
+      }
       status, err := head(address)
       if err != nil {
          return "", err
@@ -40,7 +71,7 @@ func get_image(video_id string) (string, error) {
          if index == 0 {
             return "", nil
          }
-         return path.Base(address), nil
+         return name, nil
       }
    }
    return "", nil
@@ -68,10 +99,6 @@ func fetch_player(video_id string) (*player, error) {
    if err != nil {
       return nil, err
    }
-   // data := base64.RawStdEncoding.EncodeToString([]byte("########"))
-   // var message protobuf.Message
-   // message.AddBytes(1, []byte(data))
-   // return base64.RawStdEncoding.EncodeToString(message.Marshal())
    req.Header.Set("x-goog-visitor-id", "CgtJeU1qSXlNakl5TQ")
    resp, err := http.DefaultClient.Do(req)
    if err != nil {
@@ -99,85 +126,10 @@ func head(address string) (int, error) {
    return resp.StatusCode, nil
 }
 
-type yt_img struct {
-   Height  int
-   Name    string
-   VideoId string
-   Width   int
-}
-
-var yt_imgs = []*yt_img{
-   {Width: 120, Height: 90, Name: "default.jpg"},
-   {Width: 120, Height: 90, Name: "1.jpg"},
-   {Width: 120, Height: 90, Name: "2.jpg"},
-   {Width: 120, Height: 90, Name: "3.jpg"},
-   {Width: 120, Height: 90, Name: "default.webp"},
-   {Width: 120, Height: 90, Name: "1.webp"},
-   {Width: 120, Height: 90, Name: "2.webp"},
-   {Width: 120, Height: 90, Name: "3.webp"},
-   {Width: 320, Height: 180, Name: "mq1.jpg"},
-   {Width: 320, Height: 180, Name: "mq2.jpg"},
-   {Width: 320, Height: 180, Name: "mq3.jpg"},
-   {Width: 320, Height: 180, Name: "mqdefault.jpg"},
-   {Width: 320, Height: 180, Name: "mq1.webp"},
-   {Width: 320, Height: 180, Name: "mq2.webp"},
-   {Width: 320, Height: 180, Name: "mq3.webp"},
-   {Width: 320, Height: 180, Name: "mqdefault.webp"},
-   {Width: 480, Height: 360, Name: "0.jpg"},
-   {Width: 480, Height: 360, Name: "hqdefault.jpg"},
-   {Width: 480, Height: 360, Name: "hq1.jpg"},
-   {Width: 480, Height: 360, Name: "hq2.jpg"},
-   {Width: 480, Height: 360, Name: "hq3.jpg"},
-   {Width: 480, Height: 360, Name: "0.webp"},
-   {Width: 480, Height: 360, Name: "hqdefault.webp"},
-   {Width: 480, Height: 360, Name: "hq1.webp"},
-   {Width: 480, Height: 360, Name: "hq2.webp"},
-   {Width: 480, Height: 360, Name: "hq3.webp"},
-   {Width: 640, Height: 480, Name: "sddefault.jpg"},
-   {Width: 640, Height: 480, Name: "sd1.jpg"},
-   {Width: 640, Height: 480, Name: "sd2.jpg"},
-   {Width: 640, Height: 480, Name: "sd3.jpg"},
-   {Width: 640, Height: 480, Name: "sddefault.webp"},
-   {Width: 640, Height: 480, Name: "sd1.webp"},
-   {Width: 640, Height: 480, Name: "sd2.webp"},
-   {Width: 640, Height: 480, Name: "sd3.webp"},
-   {Width: 1280, Height: 720, Name: "hq720.jpg"},
-   {Width: 1280, Height: 720, Name: "maxresdefault.jpg"},
-   {Width: 1280, Height: 720, Name: "maxres1.jpg"},
-   {Width: 1280, Height: 720, Name: "maxres2.jpg"},
-   {Width: 1280, Height: 720, Name: "maxres3.jpg"},
-   {Width: 1280, Height: 720, Name: "hq720.webp"},
-   {Width: 1280, Height: 720, Name: "maxresdefault.webp"},
-   {Width: 1280, Height: 720, Name: "maxres1.webp"},
-   {Width: 1280, Height: 720, Name: "maxres2.webp"},
-   {Width: 1280, Height: 720, Name: "maxres3.webp"},
-}
-
-func (y *yt_img) String() string {
-   var data strings.Builder
-   data.WriteString("http://i.ytimg.com/vi")
-   if strings.HasSuffix(y.Name, ".webp") {
-      data.WriteString("_webp")
-   }
-   data.WriteByte('/')
-   data.WriteString(y.VideoId)
-   data.WriteByte('/')
-   data.WriteString(y.Name)
-   return data.String()
-}
-
-func (d *date) UnmarshalText(data []byte) error {
-   var err error
-   d[0], err = time.Parse(time.RFC3339, string(data))
-   return err
-}
-
-type date [1]time.Time
-
 type player struct {
    Microformat struct {
       PlayerMicroformatRenderer struct {
-         PublishDate date
+         PublishDate time.Time
       }
    }
    PlayabilityStatus struct {
@@ -220,10 +172,29 @@ func read_songs(name string) ([]song, error) {
 func main() {
    log.SetFlags(log.Ltime)
    name := flag.String("n", "umber.json", "name")
-   video_id := flag.String("v", "", "video ID")
+   video_url := flag.String("u", "", "video URL")
    flag.Parse()
-   if *video_id != "" {
-      err := do_video_id(*video_id, *name)
+   if *video_url != "" {
+      raw_url := *video_url
+
+      // Just in case an encoded URL gets passed in occasionally
+      if strings.Contains(raw_url, "%3A%2F%2F") {
+         if unescaped, err := url.QueryUnescape(raw_url); err == nil {
+            raw_url = unescaped
+         }
+      }
+
+      u, err := url.Parse(raw_url)
+      if err != nil {
+         log.Fatal("Invalid URL:", err)
+      }
+
+      video_id := u.Query().Get("v")
+      if video_id == "" {
+         log.Fatal("Could not extract 'v' parameter from URL")
+      }
+
+      err = do_video_id(video_id, *name)
       if err != nil {
          log.Fatal(err)
       }
@@ -253,7 +224,7 @@ func do_video_id(video_id, name string) error {
    }
    values.Set("p", "y")
    values.Set("y", strconv.Itoa(
-      play.Microformat.PlayerMicroformatRenderer.PublishDate[0].Year(),
+      play.Microformat.PlayerMicroformatRenderer.PublishDate.Year(),
    ))
    // 4 song
    var song_var song
