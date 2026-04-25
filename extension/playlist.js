@@ -1,99 +1,99 @@
 'use strict';
 
-function seekToSeconds() {
-   const seconds = parseInt(timeInputElement.value, 10);
+function seek() {
+   const seconds = parseInt(input.value, 10);
    console.log(seconds);
    document.querySelector('video').currentTime = seconds;
 }
 
-const timeInputElement = document.getElementById('timeInput');
+const input = document.getElementById('timeInput');
 
-timeInputElement.addEventListener('keydown', function(event) {
+input.addEventListener('keydown', function(event) {
    if (event.key === 'Enter') {
-      seekToSeconds();
+      seek();
    }
 });
 
 const main = document.querySelector('main');
 
 // Fast multithreaded downloader to bypass YouTube's 1x speed throttle
-async function fastDownload(url) {
+async function download(url) {
    try {
       // 1. Get the total file size using a tiny 1-byte request
-      const initRes = await fetch(url, { headers: { Range: 'bytes=0-0' } });
-      const rangeMatch = initRes.headers.get('content-range'); // e.g. "bytes 0-0/1234567"
-      await initRes.arrayBuffer(); // consume the 1 byte so connection closes cleanly
+      const probe = await fetch(url, { headers: { Range: 'bytes=0-0' } });
+      const header = probe.headers.get('content-range'); // e.g. "bytes 0-0/1234567"
+      await probe.arrayBuffer(); // consume the 1 byte so connection closes cleanly
       
-      if (rangeMatch === null) {
+      if (header === null) {
          // If the server doesn't support Range requests, fallback to standard download
-         const res = await fetch(url);
-         return await res.blob();
+         const response = await fetch(url);
+         return await response.blob();
       }
       
-      const totalSize = parseInt(rangeMatch.split('/')[1], 10);
+      const total = parseInt(header.split('/')[1], 10);
       const threads = 2; // 2 concurrent connections to be safe while bypassing throttle
-      const chunkSize = Math.ceil(totalSize / threads);
-      const promises = [];
+      const chunk = Math.ceil(total / threads);
+      const tasks = [];
       
       // 2. Fetch the chunks in parallel
       for (let i = 0; i < threads; i++) {
-         const start = i * chunkSize;
-         const end = Math.min((i + 1) * chunkSize - 1, totalSize - 1);
-         promises.push(
+         const start = i * chunk;
+         const end = Math.min((i + 1) * chunk - 1, total - 1);
+         tasks.push(
             fetch(url, { headers: { Range: `bytes=${start}-${end}` } })
-            .then(r => r.arrayBuffer())
+            .then(response => response.arrayBuffer())
          );
       }
       
       // 3. Reassemble the pieces in order
-      const buffers = await Promise.all(promises);
+      const buffers = await Promise.all(tasks);
       return new Blob(buffers);
       
-   } catch (err) {
-      console.error("Multithreaded download failed, falling back to single thread", err);
-      const res = await fetch(url);
-      return await res.blob();
+   } catch (error) {
+      console.error("Multithreaded download failed, falling back to single thread", error);
+      const response = await fetch(url);
+      return await response.blob();
    }
 }
 
-browser.runtime.onMessage.addListener(async function(event) {
-   const temp = document.querySelector('template');
-   const fig = temp.content.firstElementChild.cloneNode(true);
-   main.append(fig);
-   const vid = fig.querySelector('video');
-   const caption = fig.querySelector('figcaption');
+browser.runtime.onMessage.addListener(async function(message) {
+   const template = document.querySelector('template');
+   const figure = template.content.firstElementChild.cloneNode(true);
+   main.append(figure);
+   const video = figure.querySelector('video');
+   const caption = figure.querySelector('figcaption');
    
-   vid.poster = event.poster;
+   video.poster = message.poster;
    
-   vid.onended = function() {
+   video.onended = function() {
       main.querySelector('figure').remove();
       // Revoke the Blob URL to free up memory once the video is done
-      if (vid.src.startsWith('blob:')) {
-         URL.revokeObjectURL(vid.src);
+      if (video.src.startsWith('blob:')) {
+         URL.revokeObjectURL(video.src);
       }
-      const nextVid = main.querySelector('video');
-      if (nextVid !== null) {
-         nextVid.play();
+      const next = main.querySelector('video');
+      if (next !== null) {
+         next.play();
       }
    };
 
-   if (event.src !== '') {
+   if (message.src !== '') {
       // Only apply the multithreaded Blob builder to YouTube URLs
-      if (event.src.includes('googlevideo.com')) {
-         caption.textContent = event.title + ' (Downloading...)';
+      if (message.src.includes('googlevideo.com')) {
+         caption.textContent = message.title + ' (Downloading...)';
          try {
-            const blob = await fastDownload(event.src);
-            vid.src = URL.createObjectURL(blob);
-            caption.textContent = event.title;
+            const blob = await download(message.src);
+            video.src = URL.createObjectURL(blob);
+            caption.textContent = message.title;
          } catch (error) {
-            caption.textContent = event.title + ' (Download failed)';
+            caption.textContent = message.title + ' (Download failed)';
          }
       } else {
          // Bandcamp and SoundCloud don't throttle or expire like YouTube
-         vid.src = event.src;
-         caption.textContent = event.title;
+         video.src = message.src;
+         caption.textContent = message.title;
       }
    } else {
-      caption.textContent = event.title;
+      caption.textContent = message.title;
    }
 });

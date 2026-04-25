@@ -2,140 +2,146 @@
 
 /* --- BANDCAMP --- */
 async function bandcamp() {
-   const fig = this.closest('figure');
-   const a = fig.querySelector('a');
-   let ref = new URL('https://bandcamp.com/api/mobile/24/tralbum_details');
-   // bandcamp.com/EmbeddedPlayer/track=4023025438
-   let ind = a.href.indexOf('=');
-   let param = new URLSearchParams({
+   const figure = this.closest('figure');
+   const link = figure.querySelector('a');
+   const endpoint = new URL('https://bandcamp.com/api/mobile/24/tralbum_details');
+   const index = link.href.indexOf('=');
+   const query = new URLSearchParams({
       band_id: 1,
-      tralbum_id: a.href.slice(ind + 1),
+      tralbum_id: link.href.slice(index + 1),
       tralbum_type: 't'
    });
-   ref.search = String(param);
-   let resp = await fetch(ref);
-   let media = await resp.json();
+   endpoint.search = String(query);
+   const response = await fetch(endpoint);
+   const data = await response.json();
+   
    browser.runtime.sendMessage({
-      poster: a.querySelector('img').src,
-      src: media.tracks[0].streaming_url['mp3-128'],
-      title: fig.querySelector('thead td').textContent
+      poster: link.querySelector('img').src,
+      src: data.tracks[0].streaming_url['mp3-128'],
+      title: figure.querySelector('thead td').textContent
    });
 }
 
 /* --- SOUNDCLOUD --- */
-const client_id = 'KKzJxmw11tYpCs6T24P4uUYhqmjalG6M';
+const token = 'KKzJxmw11tYpCs6T24P4uUYhqmjalG6M';
 
-async function soundcloud_track(id) {
-   const track = new URL('https://api-v2.soundcloud.com/tracks/' + id);
-   const param = new URLSearchParams({client_id: client_id});
-   track.search = String(param);
-   const resp = await fetch(track);
-   return resp.json();
+async function getTrack(id) {
+   const endpoint = new URL('https://api-v2.soundcloud.com/tracks/' + id);
+   const query = new URLSearchParams({ client_id: token });
+   endpoint.search = String(query);
+   const response = await fetch(endpoint);
+   return response.json();
 }
 
-async function soundcloud_media(track) {
-   for (const code of track.media.transcodings) {
-      if (code.format.protocol == 'progressive') {
-         const media = new URL(code.url);
-         const param = new URLSearchParams({client_id: client_id});
-         media.search = String(param);
-         const resp = await fetch(media);
-         return resp.json();
+async function getMedia(track) {
+   for (const format of track.media.transcodings) {
+      if (format.format.protocol == 'progressive') {
+         const endpoint = new URL(format.url);
+         const query = new URLSearchParams({ client_id: token });
+         endpoint.search = String(query);
+         const response = await fetch(endpoint);
+         return response.json();
       }
    }
-   return {url: ''};
+   return { url: '' };
 }
 
-async function soundCloud() {
-   const fig = this.closest('figure');
-   const a = fig.querySelector('a');
-   const url = new URL(a.href);
-   const id = url.searchParams.get('url').split('/').slice(-1);
-   const track = await soundcloud_track(id);
-   const media = await soundcloud_media(track);
+async function soundcloud() {
+   const figure = this.closest('figure');
+   const link = figure.querySelector('a');
+   const parsed = new URL(link.href);
+   const id = parsed.searchParams.get('url').split('/').slice(-1);
+   const track = await getTrack(id);
+   const media = await getMedia(track);
+   
    browser.runtime.sendMessage({
       src: media.url,
-      poster: a.querySelector('img').src,
-      title: fig.querySelector('thead td').textContent
+      poster: link.querySelector('img').src,
+      title: figure.querySelector('thead td').textContent
    });
 }
 
 /* --- YOUTUBE --- */
-async function youTube() {
-   const fig = this.closest('figure');
-   const a = fig.querySelector('a');
-   const ref = new URL(a.href);
-   const req = {};
-   const body = {};
-   body.videoId = ref.searchParams.get('v');
-   body.context = {};
-   body.context.client = {};
-   req.headers = {};
+async function youtube() {
+   const figure = this.closest('figure');
+   const link = figure.querySelector('a');
+   const parsed = new URL(link.href);
+   const request = {};
+   const payload = {};
+   
+   payload.videoId = parsed.searchParams.get('v');
+   payload.context = {};
+   payload.context.client = {};
+   request.headers = {};
+   
    //////////////////////////////////////////////////////////////////////////////
-   req.headers['X-Goog-Visitor-Id'] = 'Cgt5TEMyT0p5NzNzVSjDou_LBjIKCgJVUxIEGgAgGA==';
-   body.context.client.clientName = 'ANDROID_VR';
-   body.context.client.clientVersion = '1.71.26';
+   request.headers['X-Goog-Visitor-Id'] = 'Cgt5TEMyT0p5NzNzVSjDou_LBjIKCgJVUxIEGgAgGA==';
+   payload.context.client.clientName = 'ANDROID_VR';
+   payload.context.client.clientVersion = '1.71.26';
    //////////////////////////////////////////////////////////////////////////////
-   req.body = JSON.stringify(body);
-   req.method = 'POST';
-   const resp = await fetch('https://www.youtube.com/youtubei/v1/player', req);
-   const play = await resp.json();
-   const msg = {
-      poster: a.querySelector('img').src,
-      title: play.videoDetails.author + ' - ' + play.videoDetails.title
+   
+   request.body = JSON.stringify(payload);
+   request.method = 'POST';
+   
+   const response = await fetch('https://www.youtube.com/youtubei/v1/player', request);
+   const player = await response.json();
+   const message = {
+      poster: link.querySelector('img').src,
+      title: player.videoDetails.author + ' - ' + player.videoDetails.title
    };
-   if (play.playabilityStatus.status == 'OK') {
-      play.streamingData.adaptiveFormats.sort(
+   
+   if (player.playabilityStatus.status == 'OK') {
+      player.streamingData.adaptiveFormats.sort(
          (a, b) => b.bitrate - a.bitrate
       );
-      for (const form of play.streamingData.adaptiveFormats) {
+      for (const format of player.streamingData.adaptiveFormats) {
          // some videos do not offer WebM: 6_lMeEMMbyY
-         if (form.audioQuality == 'AUDIO_QUALITY_MEDIUM') {
-            msg.src = form.url;
+         if (format.audioQuality == 'AUDIO_QUALITY_MEDIUM') {
+            message.src = format.url;
             break;
          }
       }
    } else {
-      msg.src = '';
-      msg.title += ' - ' + play.playabilityStatus.reason;
+      message.src = '';
+      message.title += ' - ' + player.playabilityStatus.reason;
    }
-   browser.runtime.sendMessage(msg);
+   browser.runtime.sendMessage(message);
 }
 
 /* --- DELAY / MAIN --- */
-const time = 99;
-const count = 99;
+const interval = 99;
+let retries = 99;
 
-function delay(callback, time, count) {
-   const id = setInterval(function() {
-      const ok = callback();
-      count--;
-      if (ok || count == 0) {
-         clearInterval(id);
+function delay(callback, interval, retries) {
+   const timer = setInterval(function() {
+      const ready = callback();
+      retries--;
+      if (ready || retries == 0) {
+         clearInterval(timer);
       }
-   }, time);
+   }, interval);
 }
 
 delay(function() {
-   const ups = document.querySelectorAll('.up');
-   if (ups.length == 0) {
+   const upvotes = document.querySelectorAll('.up');
+   if (upvotes.length == 0) {
       return false;
    }
-   for (const up of ups) {
-      const a = up.closest('figure').querySelector('a');
+   for (const upvote of upvotes) {
+      const link = upvote.closest('figure').querySelector('a');
       switch (true) {
-      case a.host == 'bandcamp.com':
-         up.addEventListener('click', bandcamp);
+      case link.host == 'bandcamp.com':
+         upvote.addEventListener('click', bandcamp);
          break;
-      case a.host == 'w.soundcloud.com':
-         up.addEventListener('click', soundCloud);
+      case link.host == 'w.soundcloud.com':
+         upvote.addEventListener('click', soundcloud);
          break;
-      case a.host == 'www.youtube.com':
-         up.addEventListener('click', youTube);
+      case link.host == 'www.youtube.com':
+         upvote.addEventListener('click', youtube);
          break;
       default:
          continue;
       }
    }
    return true;
-}, time, count);
+}, interval, retries);
