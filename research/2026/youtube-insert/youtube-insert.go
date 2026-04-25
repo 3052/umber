@@ -11,11 +11,54 @@ import (
    "net/url"
    "os"
    "slices"
-   "strconv"
    "strings"
    "time"
 )
 
+func do_video_id(video_id, name string) error {
+   // 1 player
+   play, err := fetch_player(video_id)
+   if err != nil {
+      return err
+   }
+   fmt.Println(play.VideoDetails.ShortDescription)
+   
+   // 2 image
+   image, err := get_image(video_id)
+   if err != nil {
+      return err
+   }
+   
+   // 3 values & song data
+   song_data := map[string]any{
+      "A": time.Now().Unix(),
+      "B": video_id,
+      "T": play.VideoDetails.Author + " - " + play.VideoDetails.Title,
+      "Y": play.Microformat.PlayerMicroformatRenderer.PublishDate.Year(),
+   }
+   if image != "" {
+      song_data["C"] = image
+   }
+   // Note: 'P' is intentionally omitted because 'youtube' is the default in the frontend.
+   
+   // 4 songs
+   songs, err := read_songs(name)
+   if err != nil {
+      return err
+   }
+   songs = slices.Insert(songs, 0, song_data)
+   
+   var buf bytes.Buffer
+   enc := json.NewEncoder(&buf)
+   enc.SetEscapeHTML(false)
+   enc.SetIndent("", " ")
+   err = enc.Encode(songs)
+   if err != nil {
+      return err
+   }
+   
+   return write_file(name, buf.Bytes())
+}
 var yt_imgs = []string{
    0:  "sddefault.webp",
    1:  "sddefault.jpg",
@@ -149,17 +192,12 @@ func write_file(name string, data []byte) error {
    return os.WriteFile(name, data, os.ModePerm)
 }
 
-type song struct {
-   Q string
-   S string
-}
-
-func read_songs(name string) ([]song, error) {
+func read_songs(name string) ([]map[string]any, error) {
    data, err := os.ReadFile(name)
    if err != nil {
       return nil, err
    }
-   var songs []song
+   var songs []map[string]any
    err = json.Unmarshal(data, &songs)
    if err != nil {
       return nil, err
@@ -174,12 +212,12 @@ func main() {
    flag.Parse()
    
    if *video_url != "" {
-      u, err := url.Parse(*video_url)
+      url_data, err := url.Parse(*video_url)
       if err != nil {
          log.Fatal("Invalid URL:", err)
       }
 
-      video_id := u.Query().Get("v")
+      video_id := url_data.Query().Get("v")
       if video_id == "" {
          log.Fatal("Could not extract 'v' parameter from URL")
       }
@@ -191,48 +229,4 @@ func main() {
    } else {
       flag.Usage()
    }
-}
-
-func do_video_id(video_id, name string) error {
-   // 1 player
-   play, err := fetch_player(video_id)
-   if err != nil {
-      return err
-   }
-   fmt.Println(play.VideoDetails.ShortDescription)
-   // 2 image
-   image, err := get_image(video_id)
-   if err != nil {
-      return err
-   }
-   // 3 values
-   values := url.Values{}
-   values.Set("a", strconv.FormatInt(time.Now().Unix(), 36))
-   values.Set("b", video_id)
-   if image != "" {
-      values.Set("c", image)
-   }
-   values.Set("p", "y")
-   values.Set("y", strconv.Itoa(
-      play.Microformat.PlayerMicroformatRenderer.PublishDate.Year(),
-   ))
-   // 4 song
-   var song_data song
-   song_data.Q = values.Encode()
-   song_data.S = play.VideoDetails.Author + " - " + play.VideoDetails.Title
-   // 5 songs
-   songs, err := read_songs(name)
-   if err != nil {
-      return err
-   }
-   songs = slices.Insert(songs, 0, song_data)
-   var buf bytes.Buffer
-   enc := json.NewEncoder(&buf)
-   enc.SetEscapeHTML(false)
-   enc.SetIndent("", " ")
-   err = enc.Encode(songs)
-   if err != nil {
-      return err
-   }
-   return write_file(name, buf.Bytes())
 }

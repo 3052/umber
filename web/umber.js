@@ -31,7 +31,7 @@ function build(row) {
    image.src = media.src;
    
    const title = clone.querySelector('thead td');
-   title.textContent = row.S;
+   title.textContent = 'T' in row ? row.T : '';
    
    const release = clone.querySelector('.release');
    release.textContent = 'Y' in row ? row.Y.toString(10) : '';
@@ -89,11 +89,11 @@ async function main() {
    
    let records = JSON.parse(text);
 
-   if (query.has('s')) {
-      const searchParam = query.get('s');
+   if (query.has('t')) {
+      const searchParam = query.get('t');
       if (searchParam !== null) {
          const pattern = new RegExp(searchParam, 'i');
-         records = records.filter(row => pattern.test(row.S));
+         records = records.filter(row => pattern.test(row.T));
       }
    }
 
@@ -113,7 +113,7 @@ async function main() {
          row,
          url,
          score,
-         time: row.A // Passed natively as a Number
+         time: row.A
       };
    });
 
