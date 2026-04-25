@@ -1,151 +1,156 @@
 'use strict';
 
 import {
-   date_format,
-   new_bandcamp,
-   new_http,
-   new_soundcloud,
-   new_youtube
+   date,
+   bandcamp,
+   http,
+   soundcloud,
+   youtube
 } from '/umber/platform.js';
 
-const temp = document.querySelector('template');
-const per_page = 25;
+const template = document.querySelector('template');
+const limit = 25;
 
-function figure(row) {
-   const param = new URLSearchParams(row.Q);
-   const clone = temp.content.cloneNode(true);
-   const attr = href_src(param);
-   const anc = clone.querySelector('a');
-   anc.target = '_blank';
-   anc.href = attr.href;
-   const img = clone.querySelector('img');
-   img.src = attr.src;
-   const thead = clone.querySelector('thead td');
-   thead.textContent = row.S;
-   const rel = clone.querySelector('.release');
-   rel.textContent = param.get('y');
-   const post = clone.querySelector('.post');
-   post.textContent = date_format(param.get('a'));
+function build(row) {
+   const query = new URLSearchParams(row.Q);
+   const clone = template.content.cloneNode(true);
+   const media = resolve(query);
    
-   const span_count = clone.querySelector('.count');
-   const view = localStorage.getItem(anc.href);
-   if (view !== null) {
-      span_count.textContent = view;
+   const link = clone.querySelector('a');
+   link.target = '_blank';
+   link.href = media.href;
+   
+   const image = clone.querySelector('img');
+   image.src = media.src;
+   
+   const title = clone.querySelector('thead td');
+   title.textContent = row.S;
+   
+   const release = clone.querySelector('.release');
+   release.textContent = query.get('y');
+   
+   const posted = clone.querySelector('.post');
+   posted.textContent = date(query.get('a'));
+   
+   const counter = clone.querySelector('.count');
+   const saved = localStorage.getItem(link.href);
+   if (saved !== null) {
+      counter.textContent = saved;
    }
    
-   const btn_up = clone.querySelector('.up');
-   const btn_down = clone.querySelector('.down');
+   const upvote = clone.querySelector('.up');
+   const downvote = clone.querySelector('.down');
 
-   btn_up.addEventListener('click', () => {
-      const count = Number(localStorage.getItem(anc.href)) + 1;
-      if (count === 0) {
-         localStorage.removeItem(anc.href);
-         span_count.textContent = '';
+   upvote.addEventListener('click', () => {
+      const score = Number(localStorage.getItem(link.href)) + 1;
+      if (score === 0) {
+         localStorage.removeItem(link.href);
+         counter.textContent = '';
       } else {
-         localStorage.setItem(anc.href, count);
-         span_count.textContent = count;
+         localStorage.setItem(link.href, score);
+         counter.textContent = score;
       }
    });
 
-   btn_down.addEventListener('click', () => {
-      const count = Number(localStorage.getItem(anc.href)) - 1;
-      if (count === 0) {
-         localStorage.removeItem(anc.href);
-         span_count.textContent = '';
+   downvote.addEventListener('click', () => {
+      const score = Number(localStorage.getItem(link.href)) - 1;
+      if (score === 0) {
+         localStorage.removeItem(link.href);
+         counter.textContent = '';
       } else {
-         localStorage.setItem(anc.href, count);
-         span_count.textContent = count;
+         localStorage.setItem(link.href, score);
+         counter.textContent = score;
       }
    });
 
    return clone;
 }
 
-const platforms = {
-   b: new_bandcamp,
-   h: new_http,
-   s: new_soundcloud,
-   y: new_youtube
+const sources = {
+   b: bandcamp,
+   h: http,
+   s: soundcloud,
+   y: youtube
 };
 
-function href_src(query) {
-   return platforms[query.get('p')](query);
+function resolve(query) {
+   return sources[query.get('p')](query);
 }
 
 async function main() {
    if (location.search === '' || localStorage.getItem('umber') === null) {
-      const resp = await fetch('/umber/umber.json');
-      const text = await resp.text();
+      const response = await fetch('/umber/umber.json');
+      const text = await response.text();
       localStorage.setItem('umber', text);
    }
    const text = localStorage.getItem('umber');
-   let table = JSON.parse(text);
+   let records = JSON.parse(text);
 
-   if (search.has('s')) {
-      const re = new RegExp(search.get('s'), 'i');
-      table = table.filter(row => re.test(row.S));
+   if (query.has('s')) {
+      const pattern = new RegExp(query.get('s'), 'i');
+      records = records.filter(row => pattern.test(row.S));
    }
 
-   let min_view = Infinity;
+   let minimum = Infinity;
 
-   table = table.map(row => {
-      const q = new URLSearchParams(row.Q);
-      const href = href_src(q).href;
-      const raw_view = localStorage.getItem(href);
-      const views = raw_view !== null ? Number(raw_view) : 0;
+   records = records.map(row => {
+      const params = new URLSearchParams(row.Q);
+      const url = resolve(params).href;
+      const stored = localStorage.getItem(url);
+      const score = stored !== null ? Number(stored) : 0;
       
-      if (Math.abs(views) < min_view) {
-         min_view = Math.abs(views);
+      if (Math.abs(score) < minimum) {
+         minimum = Math.abs(score);
       }
       
       return {
-         row: row,
-         href: href,
-         views: views,
-         date: parseInt(q.get('a'), 36)
+         row,
+         url,
+         score,
+         time: parseInt(params.get('a'), 36)
       };
    });
 
-   if (min_view > 0 && table.length > 0) {
-      for (const item of table) {
-         localStorage.removeItem(item.href);
-         item.views = 0;
+   if (minimum > 0 && records.length > 0) {
+      for (const item of records) {
+         localStorage.removeItem(item.url);
+         item.score = 0;
       }
    }
 
-   table.sort((x, y) => {
-      const xAbs = Math.abs(x.views);
-      const yAbs = Math.abs(y.views);
-      if (xAbs !== yAbs) {
-         return xAbs - yAbs;
+   records.sort((x, y) => {
+      const left = Math.abs(x.score);
+      const right = Math.abs(y.score);
+      if (left !== right) {
+         return left - right;
       }
-      return y.date - x.date;
+      return y.time - x.time;
    });
 
-   table = table.map(item => item.row);
+   records = records.map(item => item.row);
 
-   const page = search.has('page') ? parseInt(search.get('page'), 10) : 1;
-   const begin = (page - 1) * per_page;
+   const page = query.has('page') ? parseInt(query.get('page'), 10) : 1;
+   const start = (page - 1) * limit;
 
    if (page > 1) {
       document.title = 'Umber - Page ' + page;
    }
 
-   const slice = table.slice(begin, begin + per_page);
-   document.getElementById('figures').append(...slice.map(figure));
+   const chunk = records.slice(start, start + limit);
+   document.getElementById('figures').append(...chunk.map(build));
 
    const older = document.getElementById('older');
-   if (begin + per_page < table.length) {
-      search.set('page', page + 1);
-      older.href = '?' + search.toString();
+   if (start + limit < records.length) {
+      query.set('page', page + 1);
+      older.href = '?' + query.toString();
    } else {
       older.remove();
    }
 
    const newer = document.getElementById('newer');
    if (page > 1) {
-      search.set('page', page - 1);
-      newer.href = '?' + search.toString();
+      query.set('page', page - 1);
+      newer.href = '?' + query.toString();
    } else {
       newer.remove();
    }
@@ -158,5 +163,5 @@ document.querySelector('form').onsubmit = function() {
    return false;
 };
 
-const search = new URLSearchParams(location.search);
+const query = new URLSearchParams(location.search);
 main();
