@@ -9,7 +9,7 @@ import {
 } from '/umber/platform.js';
 
 const temp = document.querySelector('template');
-const per_page = 30;
+const per_page = 25;
 
 function figure(row) {
    const param = new URLSearchParams(row.Q);
@@ -68,25 +68,38 @@ async function main() {
    const text = localStorage.getItem('umber');
    let table = JSON.parse(text);
 
-   // Filter first to avoid unnecessary sorting work
    if (search.has('s')) {
       const re = new RegExp(search.get('s'), 'i');
       table = table.filter(row => re.test(row.S));
    }
 
-   // Decorate: Calculate sort values once per row
+   let min_view = Infinity;
+
    table = table.map(row => {
       const q = new URLSearchParams(row.Q);
       const href = href_src(q).href;
       const raw_view = localStorage.getItem(href);
+      const views = raw_view !== null ? Number(raw_view) : 0;
+      
+      if (views < min_view) {
+         min_view = views;
+      }
+      
       return {
          row: row,
-         views: raw_view !== null ? Number(raw_view) : 0,
+         href: href,
+         views: views,
          date: parseInt(q.get('a'), 36)
       };
    });
 
-   // Sort using pre-calculated raw numbers
+   if (min_view > 0 && table.length > 0) {
+      for (const item of table) {
+         localStorage.removeItem(item.href);
+         item.views = 0;
+      }
+   }
+
    table.sort((x, y) => {
       if (x.views !== y.views) {
          return x.views - y.views;
@@ -94,7 +107,6 @@ async function main() {
       return y.date - x.date;
    });
 
-   // Undecorate: Restore the original row objects
    table = table.map(item => item.row);
 
    const page = search.has('page') ? parseInt(search.get('page'), 10) : 1;
@@ -122,6 +134,19 @@ async function main() {
    } else {
       newer.remove();
    }
+
+   const fresh = document.getElementById('fresh');
+   if (fresh !== null) {
+      fresh.addEventListener('click', () => {
+         for (const row of slice) {
+            const q = new URLSearchParams(row.Q);
+            const href = href_src(q).href;
+            const count = Number(localStorage.getItem(href)) + 1;
+            localStorage.setItem(href, count);
+         }
+         location.reload();
+      });
+   }
 }
 
 document.querySelector('form').onsubmit = function() {
@@ -132,5 +157,4 @@ document.querySelector('form').onsubmit = function() {
 };
 
 const search = new URLSearchParams(location.search);
-search.delete('a'); // Clean up legacy pagination parameter if present
 main();
