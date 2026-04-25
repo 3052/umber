@@ -11,10 +11,17 @@ import {
 const template = document.querySelector('template');
 const limit = 25;
 
+const sources = {
+   'bandcamp': bandcamp,
+   'http': http,
+   'soundcloud': soundcloud,
+   'youtube': youtube
+};
+
 function build(row) {
-   const query = new URLSearchParams(row.Q);
    const clone = template.content.cloneNode(true);
-   const media = resolve(query);
+   const platform = 'P' in row ? row.P : 'youtube';
+   const media = sources[platform](row);
    
    const link = clone.querySelector('a');
    link.target = '_blank';
@@ -27,13 +34,14 @@ function build(row) {
    title.textContent = row.S;
    
    const release = clone.querySelector('.release');
-   release.textContent = query.get('y');
+   release.textContent = 'Y' in row ? row.Y.toString(10) : '';
    
    const posted = clone.querySelector('.post');
-   posted.textContent = date(query.get('a'));
+   posted.textContent = date(row.A);
    
    const counter = clone.querySelector('.count');
    const saved = localStorage.getItem(link.href);
+   
    if (saved !== null) {
       counter.textContent = saved;
    }
@@ -42,60 +50,58 @@ function build(row) {
    const downvote = clone.querySelector('.down');
 
    upvote.addEventListener('click', () => {
-      const score = Number(localStorage.getItem(link.href)) + 1;
+      const stored = localStorage.getItem(link.href);
+      const score = (stored === null ? 0 : Number(stored)) + 1;
+      
       if (score === 0) {
          localStorage.removeItem(link.href);
          counter.textContent = '';
       } else {
-         localStorage.setItem(link.href, score);
-         counter.textContent = score;
+         localStorage.setItem(link.href, score.toString(10));
+         counter.textContent = score.toString(10);
       }
    });
 
    downvote.addEventListener('click', () => {
-      const score = Number(localStorage.getItem(link.href)) - 1;
+      const stored = localStorage.getItem(link.href);
+      const score = (stored === null ? 0 : Number(stored)) - 1;
+      
       if (score === 0) {
          localStorage.removeItem(link.href);
          counter.textContent = '';
       } else {
-         localStorage.setItem(link.href, score);
-         counter.textContent = score;
+         localStorage.setItem(link.href, score.toString(10));
+         counter.textContent = score.toString(10);
       }
    });
 
    return clone;
 }
 
-const sources = {
-   b: bandcamp,
-   h: http,
-   s: soundcloud,
-   y: youtube
-};
-
-function resolve(query) {
-   return sources[query.get('p')](query);
-}
-
 async function main() {
-   if (location.search === '' || localStorage.getItem('umber') === null) {
+   let text = localStorage.getItem('umber');
+   
+   if (text === null) {
       const response = await fetch('/umber/umber.json');
-      const text = await response.text();
+      text = await response.text();
       localStorage.setItem('umber', text);
    }
-   const text = localStorage.getItem('umber');
+   
    let records = JSON.parse(text);
 
    if (query.has('s')) {
-      const pattern = new RegExp(query.get('s'), 'i');
-      records = records.filter(row => pattern.test(row.S));
+      const searchParam = query.get('s');
+      if (searchParam !== null) {
+         const pattern = new RegExp(searchParam, 'i');
+         records = records.filter(row => pattern.test(row.S));
+      }
    }
 
-   let minimum = Infinity;
+   let minimum = Number.POSITIVE_INFINITY;
 
    records = records.map(row => {
-      const params = new URLSearchParams(row.Q);
-      const url = resolve(params).href;
+      const platform = 'P' in row ? row.P : 'youtube';
+      const url = sources[platform](row).href;
       const stored = localStorage.getItem(url);
       const score = stored !== null ? Number(stored) : 0;
       
@@ -107,7 +113,7 @@ async function main() {
          row,
          url,
          score,
-         time: parseInt(params.get('a'), 36)
+         time: row.A // Passed natively as a Number
       };
    });
 
@@ -129,11 +135,12 @@ async function main() {
 
    records = records.map(item => item.row);
 
-   const page = query.has('page') ? parseInt(query.get('page'), 10) : 1;
+   const pageParam = query.get('page');
+   const page = pageParam !== null ? parseInt(pageParam, 10) : 1;
    const start = (page - 1) * limit;
 
    if (page > 1) {
-      document.title = 'Umber - Page ' + page;
+      document.title = 'Umber - Page ' + page.toString(10);
    }
 
    const chunk = records.slice(start, start + limit);
@@ -141,7 +148,7 @@ async function main() {
 
    const older = document.getElementById('older');
    if (start + limit < records.length) {
-      query.set('page', page + 1);
+      query.set('page', (page + 1).toString(10));
       older.href = '?' + query.toString();
    } else {
       older.remove();
@@ -149,7 +156,7 @@ async function main() {
 
    const newer = document.getElementById('newer');
    if (page > 1) {
-      query.set('page', page - 1);
+      query.set('page', (page - 1).toString(10));
       newer.href = '?' + query.toString();
    } else {
       newer.remove();

@@ -1,9 +1,9 @@
 'use strict';
 
-export function http(query) {
+export function http(row) {
    return {
-      href: query.get('b'),
-      src: query.get('c')
+      href: row.B,
+      src: row.C
    };
 }
 
@@ -12,7 +12,8 @@ const formatter = new Intl.DateTimeFormat('en', {
 });
 
 export function date(timestamp) {
-   const time = new Date(parseInt(timestamp, 36) * 1000);
+   // Timestamp is now natively a base10 Number
+   const time = new Date(timestamp * 1000);
    
    return formatter.formatToParts(time)
       .filter(part => part.type !== 'literal')
@@ -20,30 +21,29 @@ export function date(timestamp) {
       .join(' ');
 }
 
-export function bandcamp(query) {
+export function bandcamp(row) {
    return {
-      href: 'https://bandcamp.com/EmbeddedPlayer/track=' + query.get('b'),
-      // 350 x 350
-      src: 'https://f4.bcbits.com/img/a' + query.get('c') + '_2'
+      href: 'https://bandcamp.com/EmbeddedPlayer/track=' + row.B,
+      src: 'https://f4.bcbits.com/img/a' + row.C + '_2'
    };
 }
 
-export function soundcloud(query) {
-   const params = new URLSearchParams({
-      url: 'api.soundcloud.com/tracks/' + query.get('b'),
-   });
-   return {
-      href: 'https://w.soundcloud.com/player?' + params.toString(),
-      src: 'https://i1.sndcdn.com/' + query.get('c')
-   };
-}
-
-export function youtube(query) {
-   const image = query.has('c') ? query.get('c') : 'sddefault.webp';
-   const path = query.get('b') + '/' + image;
+export function soundcloud(row) {
+   const params = new URLSearchParams();
+   params.set('url', 'api.soundcloud.com/tracks/' + row.B);
    
    return {
-      href: 'https://www.youtube.com/watch?v=' + query.get('b'),
+      href: 'https://w.soundcloud.com/player?' + params.toString(),
+      src: 'https://i1.sndcdn.com/' + row.C
+   };
+}
+
+export function youtube(row) {
+   const image = 'C' in row ? row.C : 'sddefault.webp';
+   const path = row.B + '/' + image;
+   
+   return {
+      href: 'https://www.youtube.com/watch?v=' + row.B,
       src: image.endsWith('.webp') ? 'https://i.ytimg.com/vi_webp/' + path : 'https://i.ytimg.com/vi/' + path
    };
 }
