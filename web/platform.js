@@ -2,8 +2,8 @@
 
 export function http(row) {
    return {
-      href: row.B,
-      src: row.C
+      href: row.I,
+      src: row.A
    };
 }
 
@@ -12,7 +12,6 @@ const formatter = new Intl.DateTimeFormat('en', {
 });
 
 export function date(timestamp) {
-   // Timestamp is now natively a base10 Number
    const time = new Date(timestamp * 1000);
    
    return formatter.formatToParts(time)
@@ -23,27 +22,27 @@ export function date(timestamp) {
 
 export function bandcamp(row) {
    return {
-      href: 'https://bandcamp.com/EmbeddedPlayer/track=' + row.B,
-      src: 'https://f4.bcbits.com/img/a' + row.C + '_2'
+      href: 'https://bandcamp.com/EmbeddedPlayer/track=' + row.I,
+      src: 'https://f4.bcbits.com/img/a' + row.A + '_2'
    };
 }
 
 export function soundcloud(row) {
    const params = new URLSearchParams();
-   params.set('url', 'api.soundcloud.com/tracks/' + row.B);
+   params.set('url', 'api.soundcloud.com/tracks/' + row.I);
    
    return {
       href: 'https://w.soundcloud.com/player?' + params.toString(),
-      src: 'https://i1.sndcdn.com/' + row.C
+      src: 'https://i1.sndcdn.com/' + row.A
    };
 }
 
 export function youtube(row) {
-   const image = 'C' in row ? row.C : 'sddefault.webp';
-   const path = row.B + '/' + image;
+   const image = 'A' in row ? row.A : 'sddefault.webp';
+   const path = row.I + '/' + image;
    
    return {
-      href: 'https://www.youtube.com/watch?v=' + row.B,
+      href: 'https://www.youtube.com/watch?v=' + row.I,
       src: image.endsWith('.webp') ? 'https://i.ytimg.com/vi_webp/' + path : 'https://i.ytimg.com/vi/' + path
    };
 }

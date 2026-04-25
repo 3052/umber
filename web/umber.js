@@ -37,7 +37,7 @@ function build(row) {
    release.textContent = 'Y' in row ? row.Y.toString(10) : '';
    
    const posted = clone.querySelector('.post');
-   posted.textContent = date(row.A);
+   posted.textContent = date(row.D);
    
    const counter = clone.querySelector('.count');
    const saved = localStorage.getItem(link.href);
@@ -113,7 +113,7 @@ async function main() {
          row,
          url,
          score,
-         time: row.A
+         time: row.D
       };
    });
 

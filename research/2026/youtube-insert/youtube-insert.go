@@ -15,51 +15,8 @@ import (
    "time"
 )
 
-func do_video_id(video_id, name string) error {
-   // 1 player
-   play, err := fetch_player(video_id)
-   if err != nil {
-      return err
-   }
-   fmt.Println(play.VideoDetails.ShortDescription)
-   
-   // 2 image
-   image, err := get_image(video_id)
-   if err != nil {
-      return err
-   }
-   
-   // 3 values & song data
-   song_data := map[string]any{
-      "A": time.Now().Unix(),
-      "B": video_id,
-      "T": play.VideoDetails.Author + " - " + play.VideoDetails.Title,
-      "Y": play.Microformat.PlayerMicroformatRenderer.PublishDate.Year(),
-   }
-   if image != "" {
-      song_data["C"] = image
-   }
-   // Note: 'P' is intentionally omitted because 'youtube' is the default in the frontend.
-   
-   // 4 songs
-   songs, err := read_songs(name)
-   if err != nil {
-      return err
-   }
-   songs = slices.Insert(songs, 0, song_data)
-   
-   var buf bytes.Buffer
-   enc := json.NewEncoder(&buf)
-   enc.SetEscapeHTML(false)
-   enc.SetIndent("", " ")
-   err = enc.Encode(songs)
-   if err != nil {
-      return err
-   }
-   
-   return write_file(name, buf.Bytes())
-}
 var yt_imgs = []string{
+   // ... (keep all 34 elements exactly as they were) ...
    0:  "sddefault.webp",
    1:  "sddefault.jpg",
    2:  "sd1.webp",
@@ -212,12 +169,12 @@ func main() {
    flag.Parse()
    
    if *video_url != "" {
-      url_data, err := url.Parse(*video_url)
+      u, err := url.Parse(*video_url)
       if err != nil {
          log.Fatal("Invalid URL:", err)
       }
 
-      video_id := url_data.Query().Get("v")
+      video_id := u.Query().Get("v")
       if video_id == "" {
          log.Fatal("Could not extract 'v' parameter from URL")
       }
@@ -229,4 +186,45 @@ func main() {
    } else {
       flag.Usage()
    }
+}
+
+func do_video_id(video_id, name string) error {
+   play, err := fetch_player(video_id)
+   if err != nil {
+      return err
+   }
+   fmt.Println(play.VideoDetails.ShortDescription)
+   
+   image, err := get_image(video_id)
+   if err != nil {
+      return err
+   }
+   
+   // Insert native map data
+   song_data := map[string]any{
+      "D": time.Now().Unix(),
+      "I": video_id,
+      "T": play.VideoDetails.Author + " - " + play.VideoDetails.Title,
+      "Y": play.Microformat.PlayerMicroformatRenderer.PublishDate.Year(),
+   }
+   if image != "" {
+      song_data["A"] = image
+   }
+   
+   songs, err := read_songs(name)
+   if err != nil {
+      return err
+   }
+   songs = slices.Insert(songs, 0, song_data)
+   
+   var buf bytes.Buffer
+   enc := json.NewEncoder(&buf)
+   enc.SetEscapeHTML(false)
+   enc.SetIndent("", " ")
+   err = enc.Encode(songs)
+   if err != nil {
+      return err
+   }
+   
+   return write_file(name, buf.Bytes())
 }
