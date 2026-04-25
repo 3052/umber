@@ -9,7 +9,7 @@ import {
 } from '/umber/platform.js';
 
 const temp = document.querySelector('template');
-const per_page = 30;
+const per_page = 25;
 
 function figure(row) {
    const param = new URLSearchParams(row.Q);
@@ -26,25 +26,38 @@ function figure(row) {
    rel.textContent = param.get('y');
    const post = clone.querySelector('.post');
    post.textContent = date_format(param.get('a'));
-   const td_view = clone.querySelector('td.view');
-   const th_view = clone.querySelector('th.view');
+   
+   const span_count = clone.querySelector('.count');
    const view = localStorage.getItem(anc.href);
    if (view !== null) {
-      td_view.textContent = view;
-   } else {
-      th_view.style.display = 'none';
+      span_count.textContent = view;
    }
    
-   const views = () => {
+   const btn_up = clone.querySelector('.up');
+   const btn_down = clone.querySelector('.down');
+
+   btn_up.addEventListener('click', () => {
       const count = Number(localStorage.getItem(anc.href)) + 1;
-      localStorage.setItem(anc.href, count);
-      th_view.style.display = td_view.style.display = '';
-      td_view.textContent = count;
-   };
-   // web
-   anc.addEventListener('click', views);
-   // mobile
-   anc.addEventListener('contextmenu', views);
+      if (count === 0) {
+         localStorage.removeItem(anc.href);
+         span_count.textContent = '';
+      } else {
+         localStorage.setItem(anc.href, count);
+         span_count.textContent = count;
+      }
+   });
+
+   btn_down.addEventListener('click', () => {
+      const count = Number(localStorage.getItem(anc.href)) - 1;
+      if (count === 0) {
+         localStorage.removeItem(anc.href);
+         span_count.textContent = '';
+      } else {
+         localStorage.setItem(anc.href, count);
+         span_count.textContent = count;
+      }
+   });
+
    return clone;
 }
 
@@ -68,33 +81,47 @@ async function main() {
    const text = localStorage.getItem('umber');
    let table = JSON.parse(text);
 
-   // Filter first to avoid unnecessary sorting work
    if (search.has('s')) {
       const re = new RegExp(search.get('s'), 'i');
       table = table.filter(row => re.test(row.S));
    }
 
-   // Decorate: Calculate sort values once per row
+   let min_view = Infinity;
+
    table = table.map(row => {
       const q = new URLSearchParams(row.Q);
       const href = href_src(q).href;
       const raw_view = localStorage.getItem(href);
+      const views = raw_view !== null ? Number(raw_view) : 0;
+      
+      if (Math.abs(views) < min_view) {
+         min_view = Math.abs(views);
+      }
+      
       return {
          row: row,
-         views: raw_view !== null ? Number(raw_view) : 0,
+         href: href,
+         views: views,
          date: parseInt(q.get('a'), 36)
       };
    });
 
-   // Sort using pre-calculated raw numbers
+   if (min_view > 0 && table.length > 0) {
+      for (const item of table) {
+         localStorage.removeItem(item.href);
+         item.views = 0;
+      }
+   }
+
    table.sort((x, y) => {
-      if (x.views !== y.views) {
-         return x.views - y.views;
+      const xAbs = Math.abs(x.views);
+      const yAbs = Math.abs(y.views);
+      if (xAbs !== yAbs) {
+         return xAbs - yAbs;
       }
       return y.date - x.date;
    });
 
-   // Undecorate: Restore the original row objects
    table = table.map(item => item.row);
 
    const page = search.has('page') ? parseInt(search.get('page'), 10) : 1;
@@ -132,5 +159,4 @@ document.querySelector('form').onsubmit = function() {
 };
 
 const search = new URLSearchParams(location.search);
-search.delete('a'); // Clean up legacy pagination parameter if present
 main();

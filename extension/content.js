@@ -2,21 +2,23 @@
 
 /* --- BANDCAMP --- */
 async function bandcamp() {
+   const fig = this.closest('figure');
+   const a = fig.querySelector('a');
    let ref = new URL('https://bandcamp.com/api/mobile/24/tralbum_details');
    // bandcamp.com/EmbeddedPlayer/track=4023025438
-   let ind = this.href.indexOf('=');
+   let ind = a.href.indexOf('=');
    let param = new URLSearchParams({
       band_id: 1,
-      tralbum_id: this.href.slice(ind + 1),
+      tralbum_id: a.href.slice(ind + 1),
       tralbum_type: 't'
    });
    ref.search = String(param);
    let resp = await fetch(ref);
    let media = await resp.json();
    browser.runtime.sendMessage({
-      poster: this.querySelector('img').src,
+      poster: a.querySelector('img').src,
       src: media.tracks[0].streaming_url['mp3-128'],
-      title: this.parentNode.querySelector('td').textContent
+      title: fig.querySelector('thead td').textContent
    });
 }
 
@@ -45,20 +47,24 @@ async function soundcloud_media(track) {
 }
 
 async function soundCloud() {
-   const url = new URL(this.href);
+   const fig = this.closest('figure');
+   const a = fig.querySelector('a');
+   const url = new URL(a.href);
    const id = url.searchParams.get('url').split('/').slice(-1);
    const track = await soundcloud_track(id);
    const media = await soundcloud_media(track);
    browser.runtime.sendMessage({
       src: media.url,
-      poster: this.querySelector('img').src,
-      title: this.parentNode.querySelector('td').textContent
+      poster: a.querySelector('img').src,
+      title: fig.querySelector('thead td').textContent
    });
 }
 
 /* --- YOUTUBE --- */
 async function youTube() {
-   const ref = new URL(this.href);
+   const fig = this.closest('figure');
+   const a = fig.querySelector('a');
+   const ref = new URL(a.href);
    const req = {};
    const body = {};
    body.videoId = ref.searchParams.get('v');
@@ -75,7 +81,7 @@ async function youTube() {
    const resp = await fetch('https://www.youtube.com/youtubei/v1/player', req);
    const play = await resp.json();
    const msg = {
-      poster: this.querySelector('img').src,
+      poster: a.querySelector('img').src,
       title: play.videoDetails.author + ' - ' + play.videoDetails.title
    };
    if (play.playabilityStatus.status == 'OK') {
@@ -111,27 +117,25 @@ function delay(callback, time, count) {
 }
 
 delay(function() {
-   const as = document.getElementsByTagName('a');
-   if (as.length == 0) {
+   const ups = document.querySelectorAll('.up');
+   if (ups.length == 0) {
       return false;
    }
-   for (const a of as) {
-      // We already have an event for localStorage, so use addEventListener so
-      // we dont clobber that.
+   for (const up of ups) {
+      const a = up.closest('figure').querySelector('a');
       switch (true) {
       case a.host == 'bandcamp.com':
-         a.addEventListener('contextmenu', bandcamp);
+         up.addEventListener('click', bandcamp);
          break;
       case a.host == 'w.soundcloud.com':
-         a.addEventListener('contextmenu', soundCloud);
+         up.addEventListener('click', soundCloud);
          break;
       case a.host == 'www.youtube.com':
-         a.addEventListener('contextmenu', youTube);
+         up.addEventListener('click', youTube);
          break;
       default:
          continue;
       }
-      a.style.borderTop = '2px solid red';
    }
    return true;
 }, time, count);

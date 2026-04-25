@@ -14,6 +14,9 @@ h1 > a {
 footer a {
    color: #c82121;
 }
+footer a {
+   cursor: pointer;
+}
 figure > a,
 footer,
 header,
