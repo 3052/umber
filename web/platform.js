@@ -8,7 +8,10 @@ export function http(row) {
 }
 
 const formatter = new Intl.DateTimeFormat('en', {
-   weekday: 'short', month: 'short', day: 'numeric', year: 'numeric'
+   weekday: 'short', 
+   month: 'short', 
+   day: 'numeric', 
+   year: 'numeric'
 });
 
 export function date(timestamp) {
@@ -38,7 +41,7 @@ export function soundcloud(row) {
 }
 
 export function youtube(row) {
-   const image = 'A' in row ? row.A : 'sddefault.webp';
+   const image = row.A !== undefined ? row.A : 'sddefault.webp';
    const path = row.I + '/' + image;
    
    return {

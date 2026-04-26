@@ -12,15 +12,15 @@ const template = document.querySelector('template');
 const limit = 25;
 
 const sources = {
-   'bandcamp': bandcamp,
-   'http': http,
-   'soundcloud': soundcloud,
-   'youtube': youtube
+   bandcamp: bandcamp,
+   http: http,
+   soundcloud: soundcloud,
+   youtube: youtube
 };
 
 function build(row) {
    const clone = template.content.cloneNode(true);
-   const platform = 'P' in row ? row.P : 'youtube';
+   const platform = row.P !== undefined ? row.P : 'youtube';
    const media = sources[platform](row);
    
    const link = clone.querySelector('a');
@@ -31,10 +31,10 @@ function build(row) {
    image.src = media.src;
    
    const title = clone.querySelector('thead td');
-   title.textContent = 'T' in row ? row.T : '';
+   title.textContent = row.T !== undefined ? row.T : '';
    
    const release = clone.querySelector('.release');
-   release.textContent = 'Y' in row ? row.Y.toString(10) : '';
+   release.textContent = row.Y !== undefined ? row.Y.toString(10) : '';
    
    const posted = clone.querySelector('.post');
    posted.textContent = date(row.D);
@@ -97,32 +97,19 @@ async function main() {
       }
    }
 
-   let minimum = Number.POSITIVE_INFINITY;
-
    records = records.map(row => {
-      const platform = 'P' in row ? row.P : 'youtube';
+      const platform = row.P !== undefined ? row.P : 'youtube';
       const url = sources[platform](row).href;
       const stored = localStorage.getItem(url);
       const score = stored !== null ? Number(stored) : 0;
       
-      if (Math.abs(score) < minimum) {
-         minimum = Math.abs(score);
-      }
-      
       return {
-         row,
-         url,
-         score,
+         row: row,
+         url: url,
+         score: score,
          time: row.D
       };
    });
-
-   if (minimum > 0 && records.length > 0) {
-      for (const item of records) {
-         localStorage.removeItem(item.url);
-         item.score = 0;
-      }
-   }
 
    records.sort((x, y) => {
       const left = Math.abs(x.score);
