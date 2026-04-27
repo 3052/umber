@@ -79,15 +79,8 @@ function build(row) {
 }
 
 async function main() {
-   let text = localStorage.getItem('umber');
-   
-   if (text === null) {
-      const response = await fetch('/umber/umber.json');
-      text = await response.text();
-      localStorage.setItem('umber', text);
-   }
-   
-   let records = JSON.parse(text);
+   const response = await fetch('/umber/umber.json');
+   let records = await response.json();
 
    if (query.has('t')) {
       const searchParam = query.get('t');
