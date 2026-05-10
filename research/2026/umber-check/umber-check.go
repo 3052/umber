@@ -8,12 +8,11 @@ import (
    "fmt"
    "log"
    "net/http"
-   "net/url"
    "os"
    "time"
 )
 
-func fetch_player(visitor_id, video_id string) (*player, error) {
+func fetch_player(video_id string) (*player, error) {
    data, err := json.Marshal(map[string]any{
       "contentCheckOk": true,
       "context": map[string]any{
@@ -35,7 +34,6 @@ func fetch_player(visitor_id, video_id string) (*player, error) {
    if err != nil {
       return nil, err
    }
-   req.Header.Set("x-goog-visitor-id", visitor_id)
    resp, err := http.DefaultClient.Do(req)
    if err != nil {
       return nil, err
@@ -53,12 +51,11 @@ func fetch_player(visitor_id, video_id string) (*player, error) {
 }
 
 func main() {
-   visitor_id := flag.String("v", "", "visitor ID")
    name := flag.String("n", "umber.json", "name")
-   start := flag.Int("s", 0, "start")
+   start := flag.Int("s", -1, "start")
    flag.Parse()
-   if *visitor_id != "" {
-      err := do_check(*visitor_id, *name, *start)
+   if *start >= 0 {
+      err := do_check(*name, *start)
       if err != nil {
          log.Fatal(err)
       }
@@ -67,33 +64,41 @@ func main() {
    }
 }
 
-func do_check(visitor_id, name string, start int) error {
+func do_check(name string, start int) error {
    file, err := os.Open(name)
    if err != nil {
       return err
    }
    defer file.Close()
+
+   // Updated struct to match the new JSON format
    var songs []struct {
-      Q string
-      S string
+      D int64  `json:"D"`
+      I string `json:"I"`
+      T string `json:"T"`
+      Y int    `json:"Y"`
+      A string `json:"A,omitempty"`
+      P string `json:"P,omitempty"`
    }
+
    err = json.NewDecoder(file).Decode(&songs)
    if err != nil {
       return err
    }
+
    for i, song := range songs {
       if i >= start {
-         query, err := url.ParseQuery(song.Q)
-         if err != nil {
-            return err
-         }
-         if query.Get("p") == "y" {
-            video_id := query.Get("b")
-            play, err := fetch_player(visitor_id, video_id)
+         // If P is missing (empty string), then it's YouTube
+         if song.P == "" {
+            video_id := song.I // The ID is now stored in 'I'
+            play, err := fetch_player(video_id)
             if err != nil {
                return err
             }
-            fmt.Println(i, len(songs)-i, video_id, song.S)
+
+            // Output using the new title variable 'song.T'
+            fmt.Println(i, len(songs)-i, video_id, song.T)
+
             if play.PlayabilityStatus.Status != "OK" {
                fmt.Printf("%+v\n", play.PlayabilityStatus)
                break

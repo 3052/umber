@@ -11,15 +11,30 @@ import (
    "os"
 )
 
-func do() error {
-   req := http.Request{
-      URL: &url.URL{
-         Scheme: "https",
-         Host:   "www.youtube.com",
-      },
-      Header: http.Header{},
+func main() {
+   log.SetFlags(log.Ltime)
+   err := do()
+   if err != nil {
+      log.Fatal(err)
    }
-   resp, err := http.DefaultClient.Do(&req)
+}
+
+func Get(targetUrl *url.URL, headers map[string]string) (*http.Response, error) {
+   reqHeader := make(http.Header)
+   for key, value := range headers {
+      reqHeader.Set(key, value)
+   }
+   req := &http.Request{
+      Method: http.MethodGet,
+      URL:    targetUrl,
+      Header: reqHeader,
+   }
+   log.Println(req.Method, req.URL)
+   return http.DefaultClient.Do(req)
+}
+
+func do() error {
+   resp, err := Get(&url.URL{Scheme: "https", Host: "www.youtube.com"}, nil)
    if err != nil {
       return err
    }
@@ -116,10 +131,3 @@ type yt_cfg struct {
 }
 
 const sep = "\nytcfg.set("
-
-func main() {
-   err := do()
-   if err != nil {
-      log.Fatal(err)
-   }
-}
