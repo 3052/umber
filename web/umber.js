@@ -22,37 +22,37 @@ function build(row) {
    const clone = template.content.cloneNode(true);
    const platform = row.P !== undefined ? row.P : 'youtube';
    const media = sources[platform](row);
-   
+
    const link = clone.querySelector('a');
    link.target = '_blank';
    link.href = media.href;
-   
+
    const image = clone.querySelector('img');
    image.src = media.src;
-   
+
    const title = clone.querySelector('thead td');
    title.textContent = row.T !== undefined ? row.T : '';
-   
+
    const release = clone.querySelector('.release');
    release.textContent = row.Y !== undefined ? row.Y.toString(10) : '';
-   
+
    const posted = clone.querySelector('.post');
    posted.textContent = date(row.D);
-   
+
    const counter = clone.querySelector('.count');
    const saved = localStorage.getItem(link.href);
-   
+
    if (saved !== null) {
       counter.textContent = saved;
    }
-   
+
    const upvote = clone.querySelector('.up');
    const downvote = clone.querySelector('.down');
 
-   upvote.addEventListener('click', () => {
+   const increaseScore = () => {
       const stored = localStorage.getItem(link.href);
       const score = (stored === null ? 0 : Number(stored)) + 1;
-      
+
       if (score === 0) {
          localStorage.removeItem(link.href);
          counter.textContent = '';
@@ -60,12 +60,15 @@ function build(row) {
          localStorage.setItem(link.href, score.toString(10));
          counter.textContent = score.toString(10);
       }
-   });
+   };
+
+   link.addEventListener('click', increaseScore);
+   upvote.addEventListener('click', increaseScore);
 
    downvote.addEventListener('click', () => {
       const stored = localStorage.getItem(link.href);
       const score = (stored === null ? 0 : Number(stored)) - 1;
-      
+
       if (score === 0) {
          localStorage.removeItem(link.href);
          counter.textContent = '';
@@ -95,7 +98,7 @@ async function main() {
       const url = sources[platform](row).href;
       const stored = localStorage.getItem(url);
       const score = stored !== null ? Number(stored) : 0;
-      
+
       return {
          row: row,
          url: url,
