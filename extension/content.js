@@ -1,66 +1,5 @@
 'use strict';
 
-/* --- BANDCAMP --- */
-async function bandcamp() {
-   const figure = this.closest('figure');
-   const link = figure.querySelector('a');
-   const endpoint = new URL('https://bandcamp.com/api/mobile/24/tralbum_details');
-   const index = link.href.indexOf('=');
-   const query = new URLSearchParams({
-      band_id: 1,
-      tralbum_id: link.href.slice(index + 1),
-      tralbum_type: 't'
-   });
-   endpoint.search = String(query);
-   const response = await fetch(endpoint);
-   const data = await response.json();
-   
-   browser.runtime.sendMessage({
-      poster: link.querySelector('img').src,
-      src: data.tracks[0].streaming_url['mp3-128'],
-      title: figure.querySelector('thead td').textContent
-   });
-}
-
-/* --- SOUNDCLOUD --- */
-const token = 'KKzJxmw11tYpCs6T24P4uUYhqmjalG6M';
-
-async function getTrack(id) {
-   const endpoint = new URL('https://api-v2.soundcloud.com/tracks/' + id);
-   const query = new URLSearchParams({ client_id: token });
-   endpoint.search = String(query);
-   const response = await fetch(endpoint);
-   return response.json();
-}
-
-async function getMedia(track) {
-   for (const format of track.media.transcodings) {
-      if (format.format.protocol == 'progressive') {
-         const endpoint = new URL(format.url);
-         const query = new URLSearchParams({ client_id: token });
-         endpoint.search = String(query);
-         const response = await fetch(endpoint);
-         return response.json();
-      }
-   }
-   return { url: '' };
-}
-
-async function soundcloud() {
-   const figure = this.closest('figure');
-   const link = figure.querySelector('a');
-   const parsed = new URL(link.href);
-   const id = parsed.searchParams.get('url').split('/').slice(-1);
-   const track = await getTrack(id);
-   const media = await getMedia(track);
-   
-   browser.runtime.sendMessage({
-      src: media.url,
-      poster: link.querySelector('img').src,
-      title: figure.querySelector('thead td').textContent
-   });
-}
-
 /* --- YOUTUBE --- */
 async function youtube() {
    const figure = this.closest('figure');
@@ -77,7 +16,7 @@ async function youtube() {
    //////////////////////////////////////////////////////////////////////////////
    request.headers['X-Goog-Visitor-Id'] = 'Cgt5TEMyT0p5NzNzVSjDou_LBjIKCgJVUxIEGgAgGA==';
    payload.context.client.clientName = 'ANDROID_VR';
-   payload.context.client.clientVersion = '1.71.26';
+   payload.context.client.clientVersion = '1.65.10';
    //////////////////////////////////////////////////////////////////////////////
    
    request.body = JSON.stringify(payload);
@@ -145,3 +84,64 @@ delay(function() {
    }
    return true;
 }, interval, retries);
+/* --- BANDCAMP --- */
+async function bandcamp() {
+   const figure = this.closest('figure');
+   const link = figure.querySelector('a');
+   const endpoint = new URL('https://bandcamp.com/api/mobile/24/tralbum_details');
+   const index = link.href.indexOf('=');
+   const query = new URLSearchParams({
+      band_id: 1,
+      tralbum_id: link.href.slice(index + 1),
+      tralbum_type: 't'
+   });
+   endpoint.search = String(query);
+   const response = await fetch(endpoint);
+   const data = await response.json();
+   
+   browser.runtime.sendMessage({
+      poster: link.querySelector('img').src,
+      src: data.tracks[0].streaming_url['mp3-128'],
+      title: figure.querySelector('thead td').textContent
+   });
+}
+
+/* --- SOUNDCLOUD --- */
+const token = 'KKzJxmw11tYpCs6T24P4uUYhqmjalG6M';
+
+async function getTrack(id) {
+   const endpoint = new URL('https://api-v2.soundcloud.com/tracks/' + id);
+   const query = new URLSearchParams({ client_id: token });
+   endpoint.search = String(query);
+   const response = await fetch(endpoint);
+   return response.json();
+}
+
+async function getMedia(track) {
+   for (const format of track.media.transcodings) {
+      if (format.format.protocol == 'progressive') {
+         const endpoint = new URL(format.url);
+         const query = new URLSearchParams({ client_id: token });
+         endpoint.search = String(query);
+         const response = await fetch(endpoint);
+         return response.json();
+      }
+   }
+   return { url: '' };
+}
+
+async function soundcloud() {
+   const figure = this.closest('figure');
+   const link = figure.querySelector('a');
+   const parsed = new URL(link.href);
+   const id = parsed.searchParams.get('url').split('/').slice(-1);
+   const track = await getTrack(id);
+   const media = await getMedia(track);
+   
+   browser.runtime.sendMessage({
+      src: media.url,
+      poster: link.querySelector('img').src,
+      title: figure.querySelector('thead td').textContent
+   });
+}
+
