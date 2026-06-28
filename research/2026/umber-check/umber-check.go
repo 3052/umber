@@ -12,58 +12,6 @@ import (
    "time"
 )
 
-func fetch_player(video_id string) (*player, error) {
-   data, err := json.Marshal(map[string]any{
-      "contentCheckOk": true,
-      "context": map[string]any{
-         "client": map[string]string{
-            "clientName":    "IOS",
-            "clientVersion": "20.03.02",
-         },
-      },
-      "racyCheckOk": true,
-      "videoId":     video_id,
-   })
-   if err != nil {
-      return nil, err
-   }
-   req, err := http.NewRequest(
-      "POST", "https://www.youtube.com/youtubei/v1/player",
-      bytes.NewReader(data),
-   )
-   if err != nil {
-      return nil, err
-   }
-   resp, err := http.DefaultClient.Do(req)
-   if err != nil {
-      return nil, err
-   }
-   defer resp.Body.Close()
-   if resp.StatusCode != http.StatusOK {
-      return nil, errors.New(resp.Status)
-   }
-   result := &player{}
-   err = json.NewDecoder(resp.Body).Decode(result)
-   if err != nil {
-      return nil, err
-   }
-   return result, nil
-}
-
-func main() {
-   name := flag.String("n", "umber.json", "name")
-   start := flag.Int("s", -1, "start")
-   flag.Parse()
-   if *start >= 0 {
-      err := do_check(*name, *start)
-      if err != nil {
-         log.Fatal(err)
-      }
-   } else {
-      flag.Usage()
-   }
-}
-
 func do_check(name string, start int) error {
    file, err := os.Open(name)
    if err != nil {
@@ -110,6 +58,20 @@ func do_check(name string, start int) error {
    return nil
 }
 
+func main() {
+   name := flag.String("n", "umber.json", "name")
+   start := flag.Int("s", -1, "start")
+   flag.Parse()
+   if *start >= 0 {
+      err := do_check(*name, *start)
+      if err != nil {
+         log.Fatal(err)
+      }
+   } else {
+      flag.Usage()
+   }
+}
+
 type player struct {
    PlayabilityStatus struct {
       Status string
@@ -123,4 +85,42 @@ type player struct {
       VideoId          string
       ViewCount        int64 `json:",string"`
    }
+}
+
+func fetch_player(video_id string) (*player, error) {
+   data, err := json.Marshal(map[string]any{
+      "contentCheckOk": true,
+      "context": map[string]any{
+         "client": map[string]string{
+            "clientName":    "IOS",
+            "clientVersion": "20.03.02",
+         },
+      },
+      "racyCheckOk": true,
+      "videoId":     video_id,
+   })
+   if err != nil {
+      return nil, err
+   }
+   req, err := http.NewRequest(
+      "POST", "https://www.youtube.com/youtubei/v1/player",
+      bytes.NewReader(data),
+   )
+   if err != nil {
+      return nil, err
+   }
+   resp, err := http.DefaultClient.Do(req)
+   if err != nil {
+      return nil, err
+   }
+   defer resp.Body.Close()
+   if resp.StatusCode != http.StatusOK {
+      return nil, errors.New(resp.Status)
+   }
+   result := &player{}
+   err = json.NewDecoder(resp.Body).Decode(result)
+   if err != nil {
+      return nil, err
+   }
+   return result, nil
 }

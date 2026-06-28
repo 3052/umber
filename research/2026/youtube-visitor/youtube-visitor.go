@@ -11,13 +11,7 @@ import (
    "os"
 )
 
-func main() {
-   log.SetFlags(log.Ltime)
-   err := do()
-   if err != nil {
-      log.Fatal(err)
-   }
-}
+const sep = "\nytcfg.set("
 
 func Get(targetUrl *url.URL, headers map[string]string) (*http.Response, error) {
    reqHeader := make(http.Header)
@@ -107,6 +101,14 @@ func extractJSON(content []byte, prefix []byte) ([]byte, error) {
    return nil, fmt.Errorf("could not find the matching closing brace for the JSON object")
 }
 
+func main() {
+   log.SetFlags(log.Ltime)
+   err := do()
+   if err != nil {
+      log.Fatal(err)
+   }
+}
+
 type visitor_data string
 
 func (v *visitor_data) UnmarshalText(data []byte) error {
@@ -129,5 +131,3 @@ type yt_cfg struct {
    InnertubeContextClientName    int    `json:"INNERTUBE_CONTEXT_CLIENT_NAME"`
    InnertubeContextClientVersion string `json:"INNERTUBE_CONTEXT_CLIENT_VERSION"`
 }
-
-const sep = "\nytcfg.set("
