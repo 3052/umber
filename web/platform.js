@@ -32,7 +32,7 @@ export function bandcamp(row) {
 
 export function soundcloud(row) {
    const params = new URLSearchParams();
-   params.set('url', 'api.soundcloud.com/tracks/' + row.I);
+   params.set('url', 'https://api.soundcloud.com/tracks/' + row.I);
    
    return {
       href: 'https://w.soundcloud.com/player?' + params.toString(),
