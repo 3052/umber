@@ -71,9 +71,10 @@ func do_bandcamp(address, name string) error {
    }
 
    song_data := Song{
+      A: strconv.FormatInt(detail.ArtId, 10),
       D: time.Now().Unix(),
       I: tralbum_id,
-      P: "b",
+      P: "bandcamp",
       T: detail.TralbumArtist + " - " + detail.Title,
       Y: detail.Time().Year(),
    }

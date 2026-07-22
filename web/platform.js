@@ -1,5 +1,12 @@
 'use strict';
 
+export function bandcamp(row) {
+   return {
+      href: 'https://bandcamp.com/EmbeddedPlayer/track=' + row.I,
+      src: 'https://f4.bcbits.com/img/a' + row.A + '_2'
+   };
+}
+
 export function http(row) {
    return {
       href: row.I,
@@ -21,13 +28,6 @@ export function date(timestamp) {
       .filter(part => part.type !== 'literal')
       .map(part => part.value)
       .join(' ');
-}
-
-export function bandcamp(row) {
-   return {
-      href: 'https://bandcamp.com/EmbeddedPlayer/track=' + row.I,
-      src: 'https://f4.bcbits.com/img/a' + row.A + '_2'
-   };
 }
 
 export function soundcloud(row) {
