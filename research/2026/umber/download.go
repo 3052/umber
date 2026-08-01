@@ -2,6 +2,7 @@ package main
 
 import (
    "bytes"
+   "context"
    "encoding/json"
    "fmt"
    "io"
@@ -19,12 +20,16 @@ import (
 // visitor ID has expired rather than the video being unavailable.
 const visitorExpiredReason = "This content isn't available, try again later."
 
+// errETASkipped is returned when the ETA exceeds the maximum allowed.
+var errETASkipped = fmt.Errorf("skipped due to ETA")
+
 // errVisitorExpired is returned when the visitor ID has expired and needs refresh.
 var errVisitorExpired = fmt.Errorf("visitor ID expired")
 
-// downloadFile fetches the audio stream using 2 parallel connections
+// downloadFile fetches the audio stream using multiple parallel connections
 // to bypass YouTube's 1x speed throttle, logging progress once per second.
-func downloadFile(url, filename string) error {
+// If the ETA exceeds maxETA, the download is cancelled.
+func downloadFile(url, filename string, threads int, maxETA time.Duration) error {
    // Probe with a 1-byte range request to get total size.
    probeReq, err := http.NewRequest("GET", url, nil)
    if err != nil {
@@ -43,21 +48,20 @@ func downloadFile(url, filename string) error {
 
    // If server doesn't support Range, fall back to single-threaded download.
    if contentRange == "" {
-      return downloadFileSingle(url, filename)
+      return downloadFileSingle(url, filename, maxETA)
    }
 
    // Parse total size from "bytes 0-0/1234567"
    parts := strings.Split(contentRange, "/")
    if len(parts) != 2 {
-      return downloadFileSingle(url, filename)
+      return downloadFileSingle(url, filename, maxETA)
    }
    var total int64
    if _, err := fmt.Sscanf(parts[1], "%d", &total); err != nil {
-      return downloadFileSingle(url, filename)
+      return downloadFileSingle(url, filename, maxETA)
    }
 
-   const threads = 2
-   chunkSize := (total + threads - 1) / threads // ceil division
+   chunkSize := (total + int64(threads) - 1) / int64(threads) // ceil division
 
    type result struct {
       data []byte
@@ -66,10 +70,14 @@ func downloadFile(url, filename string) error {
    results := make([]result, threads)
    var wg sync.WaitGroup
 
+   ctx, cancel := context.WithCancel(context.Background())
+   defer cancel()
+
    start := time.Now()
    lastLog := time.Now()
    var downloaded int64
    var mu sync.Mutex
+   var skipped bool
 
    logProgress := func() {
       now := time.Now()
@@ -77,7 +85,7 @@ func downloadFile(url, filename string) error {
          return
       }
       elapsed := now.Sub(start).Round(time.Millisecond)
-      eta := "unknown"
+      var etaDuration time.Duration
       if downloaded > 0 {
          speed := float64(downloaded) / elapsed.Seconds()
          if speed > 0 {
@@ -86,17 +94,27 @@ func downloadFile(url, filename string) error {
                remaining = 0
             }
             etaSec := remaining / speed
-            eta = (time.Duration(etaSec * float64(time.Second))).Round(time.Millisecond).String()
+            etaDuration = time.Duration(etaSec * float64(time.Second))
          }
+      }
+      etaStr := "unknown"
+      if etaDuration > 0 {
+         etaStr = etaDuration.Round(time.Millisecond).String()
       }
       log.Printf("%s  %s / %s  elapsed %s  eta %s",
          filepath.Base(filename),
          formatBytes(downloaded),
          formatBytes(total),
          elapsed.String(),
-         eta,
+         etaStr,
       )
       lastLog = now
+
+      // Check ETA — only after 2 seconds to avoid false positives at start
+      if etaDuration > maxETA && now.Sub(start) > 2*time.Second {
+         skipped = true
+         cancel()
+      }
    }
 
    for i := 0; i < threads; i++ {
@@ -112,7 +130,7 @@ func downloadFile(url, filename string) error {
             return // no work for this thread
          }
 
-         chunkReq, err := http.NewRequest("GET", url, nil)
+         chunkReq, err := http.NewRequestWithContext(ctx, "GET", url, nil)
          if err != nil {
             results[idx].err = err
             return
@@ -154,6 +172,10 @@ func downloadFile(url, filename string) error {
 
    wg.Wait()
 
+   if skipped {
+      return fmt.Errorf("%w: ETA exceeds max %s", errETASkipped, maxETA)
+   }
+
    // Check for errors
    for i := range results {
       if results[i].err != nil {
@@ -181,7 +203,7 @@ func downloadFile(url, filename string) error {
 }
 
 // downloadFileSingle is the fallback when Range requests aren't supported.
-func downloadFileSingle(url, filename string) error {
+func downloadFileSingle(url, filename string, maxETA time.Duration) error {
    resp, err := http.Get(url)
    if err != nil {
       return fmt.Errorf("download request: %w", err)
@@ -215,7 +237,7 @@ func downloadFileSingle(url, filename string) error {
          now := time.Now()
          if now.Sub(lastLog) >= time.Second {
             elapsed := now.Sub(start).Round(time.Millisecond)
-            eta := "unknown"
+            var etaDuration time.Duration
             if total > 0 && downloaded > 0 {
                speed := float64(downloaded) / elapsed.Seconds()
                if speed > 0 {
@@ -224,17 +246,26 @@ func downloadFileSingle(url, filename string) error {
                      remaining = 0
                   }
                   etaSec := remaining / speed
-                  eta = (time.Duration(etaSec * float64(time.Second))).Round(time.Millisecond).String()
+                  etaDuration = time.Duration(etaSec * float64(time.Second))
                }
+            }
+            etaStr := "unknown"
+            if etaDuration > 0 {
+               etaStr = etaDuration.Round(time.Millisecond).String()
             }
             log.Printf("%s  %s / %s  elapsed %s  eta %s",
                strings.TrimSuffix(filepath.Base(filename), ".tmp"),
                formatBytes(downloaded),
                formatBytes(total),
                elapsed.String(),
-               eta,
+               etaStr,
             )
             lastLog = now
+
+            // Check ETA — only after 2 seconds to avoid false positives at start
+            if etaDuration > maxETA && now.Sub(start) > 2*time.Second {
+               return fmt.Errorf("%w: ETA %s exceeds max %s", errETASkipped, etaDuration.Round(time.Millisecond), maxETA)
+            }
          }
       }
       if err == io.EOF {
@@ -251,7 +282,7 @@ func downloadFileSingle(url, filename string) error {
 
 // downloadVideo calls the YouTube Inner Player API, picks the audio stream,
 // and saves it to the output directory named by the title.
-func downloadVideo(videoID, title, visitorID, outputDir string) error {
+func downloadVideo(videoID, title, visitorID, outputDir string, threads int, maxETA time.Duration) error {
    payload := PlayerRequest{
       VideoId: videoID,
       Context: PlayerContext{
@@ -320,7 +351,7 @@ func downloadVideo(videoID, title, visitorID, outputDir string) error {
    ext := getExtension(mimeType)
    finalPath := filepath.Join(outputDir, sanitizeFilename(title)+ext)
    tmpPath := finalPath + ".tmp"
-   if err := downloadFile(audioURL, tmpPath); err != nil {
+   if err := downloadFile(audioURL, tmpPath, threads, maxETA); err != nil {
       os.Remove(tmpPath)
       return err
    }

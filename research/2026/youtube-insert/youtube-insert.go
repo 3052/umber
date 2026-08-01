@@ -1,4 +1,3 @@
-// youtube-insert.go
 package main
 
 import (
@@ -11,6 +10,7 @@ import (
    "net/http"
    "net/url"
    "os"
+   "path/filepath"
    "slices"
    "strings"
    "time"
@@ -53,7 +53,7 @@ var yt_imgs = []string{
    33: "3.jpg",
 }
 
-func do_video_id(video_id, name string) error {
+func do_video_id(video_id, name, visitorID string) error {
    raw_songs, err := read_songs(name)
    if err != nil {
       return err
@@ -89,7 +89,7 @@ func do_video_id(video_id, name string) error {
       return fmt.Errorf("duplicate found: video ID '%s' already exists in %s", video_id, name)
    }
 
-   play, err := fetch_player(video_id)
+   play, err := fetch_player(video_id, visitorID)
    if err != nil {
       return err
    }
@@ -151,9 +151,49 @@ func head(address string) (int, error) {
 
 func main() {
    log.SetFlags(log.Ltime)
-   name := flag.String("n", "umber.json", "name")
+   name := flag.String("n", "", "input JSON file path (required on first run)")
    video_url := flag.String("u", "", "video URL")
    flag.Parse()
+
+   // ── Config ───────────────────────────────────────────────────────
+
+   configDir, err := os.UserConfigDir()
+   if err != nil {
+      log.Fatalf("cannot determine config dir: %v", err)
+   }
+   configPath := filepath.Join(configDir, "umber", "umber.json")
+
+   var cfg Config
+   if data, err := os.ReadFile(configPath); err == nil {
+      if err := json.Unmarshal(data, &cfg); err != nil {
+         log.Fatalf("cannot parse config: %v", err)
+      }
+   }
+
+   // ── Visitor ID ──────────────────────────────────────────────────
+
+   if cfg.VisitorID == "" {
+      visitorId, err := fetchVisitorID()
+      if err != nil {
+         log.Fatalf("cannot fetch visitor ID: %v", err)
+      }
+      cfg.VisitorID = visitorId
+      log.Printf("visitor ID fetched")
+      saveConfig(configPath, cfg)
+   }
+
+   // ── Input file ──────────────────────────────────────────────────
+
+   var inputPath string
+   if *name != "" {
+      inputPath = *name
+      cfg.InputFile = inputPath
+      saveConfig(configPath, cfg)
+   } else if cfg.InputFile != "" {
+      inputPath = cfg.InputFile
+   } else {
+      log.Fatal("-n is required on first run")
+   }
 
    if *video_url != "" {
       u, err := url.Parse(*video_url)
@@ -166,7 +206,7 @@ func main() {
          log.Fatal("Could not extract 'v' parameter from URL")
       }
 
-      err = do_video_id(video_id, *name)
+      err = do_video_id(video_id, inputPath, cfg.VisitorID)
       if err != nil {
          log.Fatal(err)
       }
@@ -188,6 +228,20 @@ func read_songs(name string) ([]map[string]any, error) {
    return songs, nil
 }
 
+// saveConfig writes the config to disk.
+func saveConfig(configPath string, cfg Config) {
+   if err := os.MkdirAll(filepath.Dir(configPath), 0755); err != nil {
+      log.Fatalf("cannot create config dir: %v", err)
+   }
+   data, err := json.MarshalIndent(cfg, "", "  ")
+   if err != nil {
+      log.Fatalf("cannot marshal config: %v", err)
+   }
+   if err := os.WriteFile(configPath, data, 0644); err != nil {
+      log.Fatalf("cannot write config: %v", err)
+   }
+}
+
 func write_file(name string, data []byte) error {
    log.Println("WriteFile", name)
    return os.WriteFile(name, data, os.ModePerm)
@@ -204,6 +258,12 @@ func write_songs(name string, songs []map[string]any) error {
       return err
    }
    return write_file(name, buf.Bytes())
+}
+
+// Config is persisted to os.UserConfigDir()/umber/umber.json.
+type Config struct {
+   VisitorID string `json:"visitor_id"`
+   InputFile string `json:"input_file"`
 }
 
 type player struct {
@@ -226,13 +286,13 @@ type player struct {
    }
 }
 
-func fetch_player(video_id string) (*player, error) {
+func fetch_player(video_id, visitorID string) (*player, error) {
    data, err := json.Marshal(map[string]any{
       "contentCheckOk": true,
       "context": map[string]any{
          "client": map[string]string{
-            "clientName":    "WEB",
-            "clientVersion": "2.20231219.04.00",
+            "clientName":    "ANDROID_VR",
+            "clientVersion": "1.65.10",
          },
       },
       "racyCheckOk": true,
@@ -248,7 +308,7 @@ func fetch_player(video_id string) (*player, error) {
    if err != nil {
       return nil, err
    }
-   req.Header.Set("x-goog-visitor-id", "CgtJeU1qSXlNakl5TQ")
+   req.Header.Set("X-Goog-Visitor-Id", visitorID)
    resp, err := http.DefaultClient.Do(req)
    if err != nil {
       return nil, err
@@ -264,3 +324,5 @@ func fetch_player(video_id string) (*player, error) {
    }
    return result, nil
 }
+
+// youtube-insert.go

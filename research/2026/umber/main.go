@@ -8,6 +8,7 @@ import (
    "os"
    "path/filepath"
    "strings"
+   "time"
 )
 
 // cleanupTmpFiles removes any leftover .tmp files from interrupted downloads.
@@ -35,7 +36,13 @@ func main() {
    log.SetFlags(log.Ltime)
 
    inputFile := flag.String("input", "", "input JSON file path (required on first run)")
+   threads := flag.Int("threads", 2, "number of download threads per item")
+   maxETA := flag.Duration("max-eta", time.Minute, "maximum ETA; items exceeding this are skipped")
    flag.Parse()
+
+   if *threads < 1 {
+      log.Fatal("-threads must be at least 1")
+   }
 
    // ── Output directory ─────────────────────────────────────────────
 
@@ -129,7 +136,7 @@ func main() {
       }
       name := entry.Name()
       if strings.HasSuffix(name, ".tmp") {
-         continue // tmp files are cleaned up separately
+         continue
       }
       ext := filepath.Ext(name)
       base := strings.TrimSuffix(name, ext)
@@ -156,13 +163,13 @@ func main() {
       }
    }
 
-   // ── Download missing / empty files ────────────────────────────────
+   // ── Download missing / empty files (sequential) ───────────────────
 
    for title, videoID := range titleToVideoID {
       if nonEmpty[title] {
          continue
       }
-      err := downloadVideo(videoID, title, cfg.VisitorID, outputDir)
+      err := downloadVideo(videoID, title, cfg.VisitorID, outputDir, *threads, *maxETA)
       if err != nil {
          if errors.Is(err, errVisitorExpired) {
             log.Printf("visitor ID expired, clearing from config: %v", err)
