@@ -15,6 +15,13 @@ import (
    "time"
 )
 
+// visitorExpiredReason is the specific reason text that indicates the
+// visitor ID has expired rather than the video being unavailable.
+const visitorExpiredReason = "This content isn't available, try again later."
+
+// errVisitorExpired is returned when the visitor ID has expired and needs refresh.
+var errVisitorExpired = fmt.Errorf("visitor ID expired")
+
 // downloadFile fetches the audio stream using 2 parallel connections
 // to bypass YouTube's 1x speed throttle, logging progress once per second.
 func downloadFile(url, filename string) error {
@@ -64,6 +71,34 @@ func downloadFile(url, filename string) error {
    var downloaded int64
    var mu sync.Mutex
 
+   logProgress := func() {
+      now := time.Now()
+      if now.Sub(lastLog) < time.Second {
+         return
+      }
+      elapsed := now.Sub(start).Round(time.Millisecond)
+      eta := "unknown"
+      if downloaded > 0 {
+         speed := float64(downloaded) / elapsed.Seconds()
+         if speed > 0 {
+            remaining := float64(total - downloaded)
+            if remaining < 0 {
+               remaining = 0
+            }
+            etaSec := remaining / speed
+            eta = (time.Duration(etaSec * float64(time.Second))).Round(time.Millisecond).String()
+         }
+      }
+      log.Printf("%s  %s / %s  elapsed %s  eta %s",
+         filepath.Base(filename),
+         formatBytes(downloaded),
+         formatBytes(total),
+         elapsed.String(),
+         eta,
+      )
+      lastLog = now
+   }
+
    for i := 0; i < threads; i++ {
       wg.Add(1)
       go func(idx int) {
@@ -96,40 +131,24 @@ func downloadFile(url, filename string) error {
             return
          }
 
-         data, err := io.ReadAll(chunkResp.Body)
-         if err != nil {
-            results[idx].err = err
-            return
-         }
-         results[idx].data = data
-
-         mu.Lock()
-         downloaded += int64(len(data))
-         now := time.Now()
-         if now.Sub(lastLog) >= time.Second {
-            elapsed := now.Sub(start)
-            eta := "unknown"
-            if downloaded > 0 {
-               speed := float64(downloaded) / elapsed.Seconds()
-               if speed > 0 {
-                  remaining := float64(total - downloaded)
-                  if remaining < 0 {
-                     remaining = 0
-                  }
-                  etaSec := remaining / speed
-                  eta = formatDuration(time.Duration(etaSec * float64(time.Second)))
-               }
+         buf := make([]byte, 32*1024)
+         for {
+            n, rerr := chunkResp.Body.Read(buf)
+            if n > 0 {
+               results[idx].data = append(results[idx].data, buf[:n]...)
+               mu.Lock()
+               downloaded += int64(n)
+               logProgress()
+               mu.Unlock()
             }
-            log.Printf("%s  %s / %s  elapsed %s  eta %s",
-               filepath.Base(filename),
-               formatBytes(downloaded),
-               formatBytes(total),
-               formatDuration(elapsed),
-               eta,
-            )
-            lastLog = now
+            if rerr == io.EOF {
+               break
+            }
+            if rerr != nil {
+               results[idx].err = rerr
+               return
+            }
          }
-         mu.Unlock()
       }(i)
    }
 
@@ -157,7 +176,7 @@ func downloadFile(url, filename string) error {
       }
    }
 
-   log.Printf("%s  done  %s in %s", filepath.Base(filename), formatBytes(total), formatDuration(time.Since(start)))
+   log.Printf("%s  done  %s in %s", strings.TrimSuffix(filepath.Base(filename), ".tmp"), formatBytes(total), time.Since(start).Round(time.Millisecond).String())
    return nil
 }
 
@@ -195,7 +214,7 @@ func downloadFileSingle(url, filename string) error {
 
          now := time.Now()
          if now.Sub(lastLog) >= time.Second {
-            elapsed := now.Sub(start)
+            elapsed := now.Sub(start).Round(time.Millisecond)
             eta := "unknown"
             if total > 0 && downloaded > 0 {
                speed := float64(downloaded) / elapsed.Seconds()
@@ -205,14 +224,14 @@ func downloadFileSingle(url, filename string) error {
                      remaining = 0
                   }
                   etaSec := remaining / speed
-                  eta = formatDuration(time.Duration(etaSec * float64(time.Second)))
+                  eta = (time.Duration(etaSec * float64(time.Second))).Round(time.Millisecond).String()
                }
             }
             log.Printf("%s  %s / %s  elapsed %s  eta %s",
-               filepath.Base(filename),
+               strings.TrimSuffix(filepath.Base(filename), ".tmp"),
                formatBytes(downloaded),
                formatBytes(total),
-               formatDuration(elapsed),
+               elapsed.String(),
                eta,
             )
             lastLog = now
@@ -226,13 +245,13 @@ func downloadFileSingle(url, filename string) error {
       }
    }
 
-   log.Printf("%s  done  %s in %s", filepath.Base(filename), formatBytes(downloaded), formatDuration(time.Since(start)))
+   log.Printf("%s  done  %s in %s", strings.TrimSuffix(filepath.Base(filename), ".tmp"), formatBytes(downloaded), time.Since(start).Round(time.Millisecond).String())
    return nil
 }
 
 // downloadVideo calls the YouTube Inner Player API, picks the audio stream,
-// and saves it to the output directory named by video ID.
-func downloadVideo(videoID, visitorID, outputDir string) error {
+// and saves it to the output directory named by the title.
+func downloadVideo(videoID, title, visitorID, outputDir string) error {
    payload := PlayerRequest{
       VideoId: videoID,
       Context: PlayerContext{
@@ -273,6 +292,9 @@ func downloadVideo(videoID, visitorID, outputDir string) error {
    }
 
    if player.PlayabilityStatus.Status != "OK" {
+      if player.PlayabilityStatus.Status == "UNPLAYABLE" && player.PlayabilityStatus.Reason == visitorExpiredReason {
+         return fmt.Errorf("%w: %s — %s", errVisitorExpired, player.PlayabilityStatus.Status, player.PlayabilityStatus.Reason)
+      }
       return fmt.Errorf("playability: %s — %s", player.PlayabilityStatus.Status, player.PlayabilityStatus.Reason)
    }
 
@@ -296,8 +318,13 @@ func downloadVideo(videoID, visitorID, outputDir string) error {
    }
 
    ext := getExtension(mimeType)
-   filename := filepath.Join(outputDir, videoID+ext)
-   return downloadFile(audioURL, filename)
+   finalPath := filepath.Join(outputDir, sanitizeFilename(title)+ext)
+   tmpPath := finalPath + ".tmp"
+   if err := downloadFile(audioURL, tmpPath); err != nil {
+      os.Remove(tmpPath)
+      return err
+   }
+   return os.Rename(tmpPath, finalPath)
 }
 
 func formatBytes(b int64) string {
@@ -316,24 +343,6 @@ func formatBytes(b int64) string {
    return fmt.Sprintf("%.1f %ciB", float64(b)/float64(div), "KMGTPE"[exp])
 }
 
-func formatDuration(d time.Duration) string {
-   if d < 0 {
-      return "?"
-   }
-   s := int(d.Seconds())
-   if s < 60 {
-      return fmt.Sprintf("%ds", s)
-   }
-   m := s / 60
-   s %= 60
-   if m < 60 {
-      return fmt.Sprintf("%dm%02ds", m, s)
-   }
-   h := m / 60
-   m %= 60
-   return fmt.Sprintf("%dh%02dm%02ds", h, m, s)
-}
-
 // getExtension derives a file extension from the MIME type.
 func getExtension(mimeType string) string {
    parts := strings.Split(mimeType, ";")
@@ -348,6 +357,20 @@ func getExtension(mimeType string) string {
    default:
       return ".bin"
    }
+}
+
+// sanitizeFilename replaces characters invalid in filenames with underscores.
+func sanitizeFilename(s string) string {
+   invalid := `\/:*?"<>|`
+   var b strings.Builder
+   for _, c := range s {
+      if strings.ContainsRune(invalid, c) {
+         b.WriteByte('_')
+      } else {
+         b.WriteRune(c)
+      }
+   }
+   return strings.TrimRight(b.String(), ". ")
 }
 
 type AdaptiveFormat struct {

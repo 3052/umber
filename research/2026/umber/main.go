@@ -2,12 +2,34 @@ package main
 
 import (
    "encoding/json"
+   "errors"
    "flag"
    "log"
    "os"
    "path/filepath"
    "strings"
 )
+
+// cleanupTmpFiles removes any leftover .tmp files from interrupted downloads.
+func cleanupTmpFiles(outputDir string) {
+   entries, err := os.ReadDir(outputDir)
+   if err != nil {
+      return
+   }
+   for _, entry := range entries {
+      if entry.IsDir() {
+         continue
+      }
+      if strings.HasSuffix(entry.Name(), ".tmp") {
+         path := filepath.Join(outputDir, entry.Name())
+         if err := os.Remove(path); err != nil {
+            log.Printf("cannot remove tmp file %s: %v", path, err)
+         } else {
+            log.Printf("removed tmp file %s", path)
+         }
+      }
+   }
+}
 
 func main() {
    log.SetFlags(log.Ltime)
@@ -21,6 +43,10 @@ func main() {
    if err := os.MkdirAll(outputDir, 0755); err != nil {
       log.Fatalf("cannot create output dir: %v", err)
    }
+
+   // ── Clean up leftover .tmp files from interrupted downloads ───────
+
+   cleanupTmpFiles(outputDir)
 
    // ── Config ───────────────────────────────────────────────────────
 
@@ -75,15 +101,15 @@ func main() {
       log.Fatalf("cannot parse input JSON: %v", err)
    }
 
-   // ── Collect video IDs (records without P) ──────────────────────
+   // ── Collect sanitized title -> videoID (records without P) ────
 
-   videoIDs := make(map[string]bool)
+   titleToVideoID := make(map[string]string)
    for _, r := range records {
       if r.P != "" {
          continue
       }
-      if r.I != "" {
-         videoIDs[r.I] = true
+      if r.I != "" && r.T != "" {
+         titleToVideoID[sanitizeFilename(r.T)] = r.I
       }
    }
 
@@ -94,14 +120,17 @@ func main() {
       log.Fatalf("cannot read output directory: %v", err)
    }
 
-   allFiles := make(map[string]string) // videoID -> filename
-   nonEmpty := make(map[string]bool)   // videoIDs with non-empty files
+   allFiles := make(map[string]string) // sanitized title -> filename
+   nonEmpty := make(map[string]bool)   // sanitized titles with non-empty files
 
    for _, entry := range entries {
       if entry.IsDir() {
          continue
       }
       name := entry.Name()
+      if strings.HasSuffix(name, ".tmp") {
+         continue // tmp files are cleaned up separately
+      }
       ext := filepath.Ext(name)
       base := strings.TrimSuffix(name, ext)
       allFiles[base] = name
@@ -116,8 +145,8 @@ func main() {
 
    // ── Delete files not in input ─────────────────────────────────────
 
-   for vid, filename := range allFiles {
-      if !videoIDs[vid] {
+   for title, filename := range allFiles {
+      if _, exists := titleToVideoID[title]; !exists {
          path := filepath.Join(outputDir, filename)
          if err := os.Remove(path); err != nil {
             log.Printf("cannot remove %s: %v", path, err)
@@ -129,12 +158,19 @@ func main() {
 
    // ── Download missing / empty files ────────────────────────────────
 
-   for vid := range videoIDs {
-      if nonEmpty[vid] {
+   for title, videoID := range titleToVideoID {
+      if nonEmpty[title] {
          continue
       }
-      if err := downloadVideo(vid, cfg.VisitorID, outputDir); err != nil {
-         log.Printf("error downloading %s: %v", vid, err)
+      err := downloadVideo(videoID, title, cfg.VisitorID, outputDir)
+      if err != nil {
+         if errors.Is(err, errVisitorExpired) {
+            log.Printf("visitor ID expired, clearing from config: %v", err)
+            cfg.VisitorID = ""
+            saveConfig(configPath, cfg)
+            return
+         }
+         log.Printf("error downloading %s: %v", title, err)
       }
    }
 }
