@@ -11,12 +11,158 @@ import (
    "path/filepath"
    "sort"
    "strings"
+   "sync"
    "time"
 )
 
-// downloadFile fetches the audio stream and writes it to filename,
-// logging progress once per second with elapsed time and ETA.
+// downloadFile fetches the audio stream using 2 parallel connections
+// to bypass YouTube's 1x speed throttle, logging progress once per second.
 func downloadFile(url, filename string) error {
+   // Probe with a 1-byte range request to get total size.
+   probeReq, err := http.NewRequest("GET", url, nil)
+   if err != nil {
+      return fmt.Errorf("create probe request: %w", err)
+   }
+   probeReq.Header.Set("Range", "bytes=0-0")
+
+   probeResp, err := http.DefaultClient.Do(probeReq)
+   if err != nil {
+      return fmt.Errorf("probe request: %w", err)
+   }
+
+   contentRange := probeResp.Header.Get("Content-Range")
+   io.Copy(io.Discard, probeResp.Body)
+   probeResp.Body.Close()
+
+   // If server doesn't support Range, fall back to single-threaded download.
+   if contentRange == "" {
+      return downloadFileSingle(url, filename)
+   }
+
+   // Parse total size from "bytes 0-0/1234567"
+   parts := strings.Split(contentRange, "/")
+   if len(parts) != 2 {
+      return downloadFileSingle(url, filename)
+   }
+   var total int64
+   if _, err := fmt.Sscanf(parts[1], "%d", &total); err != nil {
+      return downloadFileSingle(url, filename)
+   }
+
+   const threads = 2
+   chunkSize := (total + threads - 1) / threads // ceil division
+
+   type result struct {
+      data []byte
+      err  error
+   }
+   results := make([]result, threads)
+   var wg sync.WaitGroup
+
+   start := time.Now()
+   lastLog := time.Now()
+   var downloaded int64
+   var mu sync.Mutex
+
+   for i := 0; i < threads; i++ {
+      wg.Add(1)
+      go func(idx int) {
+         defer wg.Done()
+         startByte := int64(idx) * chunkSize
+         endByte := startByte + chunkSize - 1
+         if endByte > total-1 {
+            endByte = total - 1
+         }
+         if startByte > endByte {
+            return // no work for this thread
+         }
+
+         chunkReq, err := http.NewRequest("GET", url, nil)
+         if err != nil {
+            results[idx].err = err
+            return
+         }
+         chunkReq.Header.Set("Range", fmt.Sprintf("bytes=%d-%d", startByte, endByte))
+
+         chunkResp, err := http.DefaultClient.Do(chunkReq)
+         if err != nil {
+            results[idx].err = err
+            return
+         }
+         defer chunkResp.Body.Close()
+
+         if chunkResp.StatusCode != http.StatusOK && chunkResp.StatusCode != http.StatusPartialContent {
+            results[idx].err = fmt.Errorf("chunk %d returned status %d", idx, chunkResp.StatusCode)
+            return
+         }
+
+         data, err := io.ReadAll(chunkResp.Body)
+         if err != nil {
+            results[idx].err = err
+            return
+         }
+         results[idx].data = data
+
+         mu.Lock()
+         downloaded += int64(len(data))
+         now := time.Now()
+         if now.Sub(lastLog) >= time.Second {
+            elapsed := now.Sub(start)
+            eta := "unknown"
+            if downloaded > 0 {
+               speed := float64(downloaded) / elapsed.Seconds()
+               if speed > 0 {
+                  remaining := float64(total - downloaded)
+                  if remaining < 0 {
+                     remaining = 0
+                  }
+                  etaSec := remaining / speed
+                  eta = formatDuration(time.Duration(etaSec * float64(time.Second)))
+               }
+            }
+            log.Printf("%s  %s / %s  elapsed %s  eta %s",
+               filepath.Base(filename),
+               formatBytes(downloaded),
+               formatBytes(total),
+               formatDuration(elapsed),
+               eta,
+            )
+            lastLog = now
+         }
+         mu.Unlock()
+      }(i)
+   }
+
+   wg.Wait()
+
+   // Check for errors
+   for i := range results {
+      if results[i].err != nil {
+         return fmt.Errorf("thread %d: %w", i, results[i].err)
+      }
+   }
+
+   // Reassemble in order
+   out, err := os.Create(filename)
+   if err != nil {
+      return fmt.Errorf("create file: %w", err)
+   }
+   defer out.Close()
+
+   for i := range results {
+      if len(results[i].data) > 0 {
+         if _, err := out.Write(results[i].data); err != nil {
+            return fmt.Errorf("write file: %w", err)
+         }
+      }
+   }
+
+   log.Printf("%s  done  %s in %s", filepath.Base(filename), formatBytes(total), formatDuration(time.Since(start)))
+   return nil
+}
+
+// downloadFileSingle is the fallback when Range requests aren't supported.
+func downloadFileSingle(url, filename string) error {
    resp, err := http.Get(url)
    if err != nil {
       return fmt.Errorf("download request: %w", err)
