@@ -16,21 +16,7 @@ import (
    "time"
 )
 
-// visitorExpiredReason is the specific reason text that indicates the
-// visitor ID has expired rather than the video being unavailable.
-const visitorExpiredReason = "This content isn't available, try again later."
-
-// errETASkipped is returned when the ETA exceeds the maximum allowed.
-var errETASkipped = fmt.Errorf("skipped due to ETA")
-
-// errVisitorExpired is returned when the visitor ID has expired and needs refresh.
-var errVisitorExpired = fmt.Errorf("visitor ID expired")
-
-// downloadFile fetches the audio stream using multiple parallel connections
-// to bypass YouTube's 1x speed throttle, logging progress once per second.
-// If the ETA exceeds maxETA, the download is cancelled.
 func downloadFile(url, filename string, threads int, maxETA time.Duration) error {
-   // Probe with a 1-byte range request to get total size.
    probeReq, err := http.NewRequest("GET", url, nil)
    if err != nil {
       return fmt.Errorf("create probe request: %w", err)
@@ -41,17 +27,14 @@ func downloadFile(url, filename string, threads int, maxETA time.Duration) error
    if err != nil {
       return fmt.Errorf("probe request: %w", err)
    }
-
    contentRange := probeResp.Header.Get("Content-Range")
    io.Copy(io.Discard, probeResp.Body)
    probeResp.Body.Close()
 
-   // If server doesn't support Range, fall back to single-threaded download.
    if contentRange == "" {
       return downloadFileSingle(url, filename, maxETA)
    }
 
-   // Parse total size from "bytes 0-0/1234567"
    parts := strings.Split(contentRange, "/")
    if len(parts) != 2 {
       return downloadFileSingle(url, filename, maxETA)
@@ -61,8 +44,7 @@ func downloadFile(url, filename string, threads int, maxETA time.Duration) error
       return downloadFileSingle(url, filename, maxETA)
    }
 
-   chunkSize := (total + int64(threads) - 1) / int64(threads) // ceil division
-
+   chunkSize := (total + int64(threads) - 1) / int64(threads)
    type result struct {
       data []byte
       err  error
@@ -93,8 +75,7 @@ func downloadFile(url, filename string, threads int, maxETA time.Duration) error
             if remaining < 0 {
                remaining = 0
             }
-            etaSec := remaining / speed
-            etaDuration = time.Duration(etaSec * float64(time.Second))
+            etaDuration = time.Duration(remaining / speed * float64(time.Second))
          }
       }
       etaStr := "unknown"
@@ -102,15 +83,8 @@ func downloadFile(url, filename string, threads int, maxETA time.Duration) error
          etaStr = etaDuration.Round(time.Millisecond).String()
       }
       log.Printf("%s  %s / %s  elapsed %s  eta %s",
-         filepath.Base(filename),
-         formatBytes(downloaded),
-         formatBytes(total),
-         elapsed.String(),
-         etaStr,
-      )
+         filepath.Base(filename), formatBytes(downloaded), formatBytes(total), elapsed.String(), etaStr)
       lastLog = now
-
-      // Check ETA — only after 2 seconds to avoid false positives at start
       if etaDuration > maxETA && now.Sub(start) > 2*time.Second {
          skipped = true
          cancel()
@@ -127,28 +101,24 @@ func downloadFile(url, filename string, threads int, maxETA time.Duration) error
             endByte = total - 1
          }
          if startByte > endByte {
-            return // no work for this thread
+            return
          }
-
          chunkReq, err := http.NewRequestWithContext(ctx, "GET", url, nil)
          if err != nil {
             results[idx].err = err
             return
          }
          chunkReq.Header.Set("Range", fmt.Sprintf("bytes=%d-%d", startByte, endByte))
-
          chunkResp, err := http.DefaultClient.Do(chunkReq)
          if err != nil {
             results[idx].err = err
             return
          }
          defer chunkResp.Body.Close()
-
          if chunkResp.StatusCode != http.StatusOK && chunkResp.StatusCode != http.StatusPartialContent {
             results[idx].err = fmt.Errorf("chunk %d returned status %d", idx, chunkResp.StatusCode)
             return
          }
-
          buf := make([]byte, 32*1024)
          for {
             n, rerr := chunkResp.Body.Read(buf)
@@ -169,27 +139,22 @@ func downloadFile(url, filename string, threads int, maxETA time.Duration) error
          }
       }(i)
    }
-
    wg.Wait()
 
    if skipped {
       return fmt.Errorf("%w: ETA exceeds max %s", errETASkipped, maxETA)
    }
-
-   // Check for errors
    for i := range results {
       if results[i].err != nil {
          return fmt.Errorf("thread %d: %w", i, results[i].err)
       }
    }
 
-   // Reassemble in order
    out, err := os.Create(filename)
    if err != nil {
       return fmt.Errorf("create file: %w", err)
    }
    defer out.Close()
-
    for i := range results {
       if len(results[i].data) > 0 {
          if _, err := out.Write(results[i].data); err != nil {
@@ -197,19 +162,16 @@ func downloadFile(url, filename string, threads int, maxETA time.Duration) error
          }
       }
    }
-
    log.Printf("%s  done  %s in %s", strings.TrimSuffix(filepath.Base(filename), ".tmp"), formatBytes(total), time.Since(start).Round(time.Millisecond).String())
    return nil
 }
 
-// downloadFileSingle is the fallback when Range requests aren't supported.
 func downloadFileSingle(url, filename string, maxETA time.Duration) error {
    resp, err := http.Get(url)
    if err != nil {
       return fmt.Errorf("download request: %w", err)
    }
    defer resp.Body.Close()
-
    if resp.StatusCode != http.StatusOK {
       return fmt.Errorf("download returned status %d", resp.StatusCode)
    }
@@ -233,7 +195,6 @@ func downloadFileSingle(url, filename string, maxETA time.Duration) error {
             return fmt.Errorf("write file: %w", werr)
          }
          downloaded += int64(n)
-
          now := time.Now()
          if now.Sub(lastLog) >= time.Second {
             elapsed := now.Sub(start).Round(time.Millisecond)
@@ -245,8 +206,7 @@ func downloadFileSingle(url, filename string, maxETA time.Duration) error {
                   if remaining < 0 {
                      remaining = 0
                   }
-                  etaSec := remaining / speed
-                  etaDuration = time.Duration(etaSec * float64(time.Second))
+                  etaDuration = time.Duration(remaining / speed * float64(time.Second))
                }
             }
             etaStr := "unknown"
@@ -254,15 +214,8 @@ func downloadFileSingle(url, filename string, maxETA time.Duration) error {
                etaStr = etaDuration.Round(time.Millisecond).String()
             }
             log.Printf("%s  %s / %s  elapsed %s  eta %s",
-               strings.TrimSuffix(filepath.Base(filename), ".tmp"),
-               formatBytes(downloaded),
-               formatBytes(total),
-               elapsed.String(),
-               etaStr,
-            )
+               strings.TrimSuffix(filepath.Base(filename), ".tmp"), formatBytes(downloaded), formatBytes(total), elapsed.String(), etaStr)
             lastLog = now
-
-            // Check ETA — only after 2 seconds to avoid false positives at start
             if etaDuration > maxETA && now.Sub(start) > 2*time.Second {
                return fmt.Errorf("%w: ETA %s exceeds max %s", errETASkipped, etaDuration.Round(time.Millisecond), maxETA)
             }
@@ -275,13 +228,10 @@ func downloadFileSingle(url, filename string, maxETA time.Duration) error {
          return fmt.Errorf("read body: %w", err)
       }
    }
-
    log.Printf("%s  done  %s in %s", strings.TrimSuffix(filepath.Base(filename), ".tmp"), formatBytes(downloaded), time.Since(start).Round(time.Millisecond).String())
    return nil
 }
 
-// downloadVideo calls the YouTube Inner Player API, picks the audio stream,
-// and saves it to the output directory named by the title.
 func downloadVideo(videoID, title, visitorID, outputDir string, threads int, maxETA time.Duration) error {
    payload := PlayerRequest{
       VideoId: videoID,
@@ -302,12 +252,10 @@ func downloadVideo(videoID, title, visitorID, outputDir string, threads int, max
    if err != nil {
       return fmt.Errorf("create request: %w", err)
    }
-
    req.Header.Set("Content-Type", "application/json")
    req.Header.Set("X-Goog-Visitor-Id", visitorID)
 
-   client := &http.Client{}
-   resp, err := client.Do(req)
+   resp, err := http.DefaultClient.Do(req)
    if err != nil {
       return fmt.Errorf("api request: %w", err)
    }
@@ -329,7 +277,6 @@ func downloadVideo(videoID, title, visitorID, outputDir string, threads int, max
       return fmt.Errorf("playability: %s — %s", player.PlayabilityStatus.Status, player.PlayabilityStatus.Reason)
    }
 
-   // Sort adaptiveFormats by bitrate descending (replicate JS logic).
    formats := player.StreamingData.AdaptiveFormats
    sort.Slice(formats, func(i, j int) bool {
       return formats[i].Bitrate > formats[j].Bitrate
@@ -343,7 +290,6 @@ func downloadVideo(videoID, title, visitorID, outputDir string, threads int, max
          break
       }
    }
-
    if audioURL == "" {
       return fmt.Errorf("no AUDIO_QUALITY_MEDIUM format found")
    }
@@ -356,89 +302,6 @@ func downloadVideo(videoID, title, visitorID, outputDir string, threads int, max
       return err
    }
    return os.Rename(tmpPath, finalPath)
-}
-
-func formatBytes(b int64) string {
-   if b < 0 {
-      return "?"
-   }
-   if b < 1024 {
-      return fmt.Sprintf("%d B", b)
-   }
-   const unit = 1024
-   div, exp := int64(unit), 0
-   for n := b / unit; n >= unit; n /= unit {
-      div *= unit
-      exp++
-   }
-   return fmt.Sprintf("%.1f %ciB", float64(b)/float64(div), "KMGTPE"[exp])
-}
-
-// getExtension derives a file extension from the MIME type.
-func getExtension(mimeType string) string {
-   parts := strings.Split(mimeType, ";")
-   main := strings.TrimSpace(parts[0])
-   switch main {
-   case "audio/webm":
-      return ".webm"
-   case "audio/mp4":
-      return ".m4a"
-   case "audio/ogg":
-      return ".ogg"
-   default:
-      return ".bin"
-   }
-}
-
-// sanitizeFilename replaces characters invalid in filenames with underscores.
-func sanitizeFilename(s string) string {
-   invalid := `\/:*?"<>|`
-   var b strings.Builder
-   for _, c := range s {
-      if strings.ContainsRune(invalid, c) {
-         b.WriteByte('_')
-      } else {
-         b.WriteRune(c)
-      }
-   }
-   return strings.TrimRight(b.String(), ". ")
-}
-
-type AdaptiveFormat struct {
-   Bitrate      int    `json:"bitrate"`
-   AudioQuality string `json:"audioQuality"`
-   URL          string `json:"url"`
-   MimeType     string `json:"mimeType"`
-}
-
-type PlayerClient struct {
-   ClientName    string `json:"clientName"`
-   ClientVersion string `json:"clientVersion"`
-}
-
-type PlayerContext struct {
-   Client PlayerClient `json:"client"`
-}
-
-// PlayerRequest is the payload sent to the YouTube Inner Player API.
-type PlayerRequest struct {
-   VideoId string        `json:"videoId"`
-   Context PlayerContext `json:"context"`
-}
-
-// PlayerResponse is the relevant subset of the API response.
-type PlayerResponse struct {
-   VideoDetails struct {
-      Author string `json:"author"`
-      Title  string `json:"title"`
-   } `json:"videoDetails"`
-   PlayabilityStatus struct {
-      Status string `json:"status"`
-      Reason string `json:"reason"`
-   } `json:"playabilityStatus"`
-   StreamingData struct {
-      AdaptiveFormats []AdaptiveFormat `json:"adaptiveFormats"`
-   } `json:"streamingData"`
 }
 
 // download.go

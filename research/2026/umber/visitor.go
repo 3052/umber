@@ -12,8 +12,6 @@ import (
 
 const sep = "\nytcfg.set("
 
-// extractJSON isolates the JSON payload by balancing curly braces
-// directly on a byte slice to avoid memory allocations.
 func extractJSON(content []byte, prefix []byte) ([]byte, error) {
    _, after, found := bytes.Cut(content, prefix)
    if !found {
@@ -55,8 +53,6 @@ func extractJSON(content []byte, prefix []byte) ([]byte, error) {
    return nil, fmt.Errorf("could not find the matching closing brace for the JSON object")
 }
 
-// fetchVisitorID retrieves the X-Goog-Visitor-Id from YouTube's homepage
-// by parsing the ytcfg JSON embedded in the HTML.
 func fetchVisitorID() (string, error) {
    targetUrl := &url.URL{Scheme: "https", Host: "www.youtube.com"}
    req := &http.Request{
