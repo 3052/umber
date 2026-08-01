@@ -8,6 +8,7 @@ import (
    "log"
    "net/http"
    "os"
+   "path/filepath"
    "sort"
    "strings"
    "time"
@@ -22,7 +23,7 @@ func downloadFile(url, filename string) error {
    }
    defer resp.Body.Close()
 
-   if resp.StatusCode != 200 {
+   if resp.StatusCode != http.StatusOK {
       return fmt.Errorf("download returned status %d", resp.StatusCode)
    }
 
@@ -62,7 +63,7 @@ func downloadFile(url, filename string) error {
                }
             }
             log.Printf("%s  %s / %s  elapsed %s  eta %s",
-               filename,
+               filepath.Base(filename),
                formatBytes(downloaded),
                formatBytes(total),
                formatDuration(elapsed),
@@ -79,13 +80,13 @@ func downloadFile(url, filename string) error {
       }
    }
 
-   log.Printf("%s  done  %s in %s", filename, formatBytes(downloaded), formatDuration(time.Since(start)))
+   log.Printf("%s  done  %s in %s", filepath.Base(filename), formatBytes(downloaded), formatDuration(time.Since(start)))
    return nil
 }
 
 // downloadVideo calls the YouTube Inner Player API, picks the audio stream,
-// and saves it to the current directory named by video ID.
-func downloadVideo(videoID, visitorID string) error {
+// and saves it to the output directory named by video ID.
+func downloadVideo(videoID, visitorID, outputDir string) error {
    payload := PlayerRequest{
       VideoId: videoID,
       Context: PlayerContext{
@@ -116,7 +117,7 @@ func downloadVideo(videoID, visitorID string) error {
    }
    defer resp.Body.Close()
 
-   if resp.StatusCode != 200 {
+   if resp.StatusCode != http.StatusOK {
       return fmt.Errorf("api returned status %d", resp.StatusCode)
    }
 
@@ -149,7 +150,7 @@ func downloadVideo(videoID, visitorID string) error {
    }
 
    ext := getExtension(mimeType)
-   filename := videoID + ext
+   filename := filepath.Join(outputDir, videoID+ext)
    return downloadFile(audioURL, filename)
 }
 

@@ -6,22 +6,23 @@ import (
    "log"
    "os"
    "path/filepath"
-   "regexp"
    "strings"
 )
 
-var videoIDPattern = regexp.MustCompile(`^[A-Za-z0-9_-]{11}$`)
-
 func main() {
-   inputFile := flag.String("input", "", "input JSON file path")
-   visitorID := flag.String("visitor-id", "", "X-Goog-Visitor-Id value (required on first run)")
+   log.SetFlags(log.Ltime)
+
+   inputFile := flag.String("input", "", "input JSON file path (required on first run)")
    flag.Parse()
 
-   if *inputFile == "" {
-      log.Fatal("-input is required")
+   // ── Output directory ─────────────────────────────────────────────
+
+   outputDir := filepath.Join(".", "umber")
+   if err := os.MkdirAll(outputDir, 0755); err != nil {
+      log.Fatalf("cannot create output dir: %v", err)
    }
 
-   // ── Visitor ID / Config ───────────────────────────────────────────
+   // ── Config ───────────────────────────────────────────────────────
 
    configDir, err := os.UserConfigDir()
    if err != nil {
@@ -29,50 +30,52 @@ func main() {
    }
    configPath := filepath.Join(configDir, "umber", "umber.json")
 
-   var visitorId string
-
-   if *visitorID != "" {
-      visitorId = *visitorID
-      if err := os.MkdirAll(filepath.Dir(configPath), 0755); err != nil {
-         log.Fatalf("cannot create config dir: %v", err)
-      }
-      cfg := Config{VisitorID: visitorId}
-      data, err := json.MarshalIndent(cfg, "", "  ")
-      if err != nil {
-         log.Fatalf("cannot marshal config: %v", err)
-      }
-      if err := os.WriteFile(configPath, data, 0644); err != nil {
-         log.Fatalf("cannot write config: %v", err)
-      }
-      log.Printf("visitor ID saved to %s", configPath)
-   } else {
-      data, err := os.ReadFile(configPath)
-      if err != nil {
-         log.Fatalf("cannot read config (%s) — provide -visitor-id on first run: %v", configPath, err)
-      }
-      var cfg Config
+   // Load existing config if it exists
+   var cfg Config
+   if data, err := os.ReadFile(configPath); err == nil {
       if err := json.Unmarshal(data, &cfg); err != nil {
          log.Fatalf("cannot parse config: %v", err)
       }
-      if cfg.VisitorID == "" {
-         log.Fatal("visitor_id is empty in config — provide -visitor-id flag")
-      }
-      visitorId = cfg.VisitorID
    }
 
-   // ── Read input ────────────────────────────────────────────────────
+   // ── Visitor ID ──────────────────────────────────────────────────
 
-   data, err := os.ReadFile(*inputFile)
+   if cfg.VisitorID == "" {
+      visitorId, err := fetchVisitorID()
+      if err != nil {
+         log.Fatalf("cannot fetch visitor ID: %v", err)
+      }
+      cfg.VisitorID = visitorId
+      log.Printf("visitor ID fetched")
+      saveConfig(configPath, cfg)
+   }
+
+   // ── Input file ──────────────────────────────────────────────────
+
+   var inputPath string
+   if *inputFile != "" {
+      inputPath = *inputFile
+      cfg.InputFile = inputPath
+      saveConfig(configPath, cfg)
+   } else if cfg.InputFile != "" {
+      inputPath = cfg.InputFile
+   } else {
+      log.Fatal("-input is required on first run")
+   }
+
+   // ── Read input ──────────────────────────────────────────────────
+
+   fileData, err := os.ReadFile(inputPath)
    if err != nil {
       log.Fatalf("cannot read input file: %v", err)
    }
 
    var records []Record
-   if err := json.Unmarshal(data, &records); err != nil {
+   if err := json.Unmarshal(fileData, &records); err != nil {
       log.Fatalf("cannot parse input JSON: %v", err)
    }
 
-   // ── Collect video IDs (records without P) ────────────────────────
+   // ── Collect video IDs (records without P) ──────────────────────
 
    videoIDs := make(map[string]bool)
    for _, r := range records {
@@ -84,11 +87,11 @@ func main() {
       }
    }
 
-   // ── Scan current directory for existing audio files ───────────────
+   // ── Scan output directory for existing audio files ───────────────
 
-   entries, err := os.ReadDir(".")
+   entries, err := os.ReadDir(outputDir)
    if err != nil {
-      log.Fatalf("cannot read current directory: %v", err)
+      log.Fatalf("cannot read output directory: %v", err)
    }
 
    allFiles := make(map[string]string) // videoID -> filename
@@ -101,9 +104,6 @@ func main() {
       name := entry.Name()
       ext := filepath.Ext(name)
       base := strings.TrimSuffix(name, ext)
-      if !videoIDPattern.MatchString(base) {
-         continue
-      }
       allFiles[base] = name
       info, err := entry.Info()
       if err != nil {
@@ -118,10 +118,11 @@ func main() {
 
    for vid, filename := range allFiles {
       if !videoIDs[vid] {
-         if err := os.Remove(filename); err != nil {
-            log.Printf("cannot remove %s: %v", filename, err)
+         path := filepath.Join(outputDir, filename)
+         if err := os.Remove(path); err != nil {
+            log.Printf("cannot remove %s: %v", path, err)
          } else {
-            log.Printf("removed %s", filename)
+            log.Printf("removed %s", path)
          }
       }
    }
@@ -132,15 +133,30 @@ func main() {
       if nonEmpty[vid] {
          continue
       }
-      if err := downloadVideo(vid, visitorId); err != nil {
+      if err := downloadVideo(vid, cfg.VisitorID, outputDir); err != nil {
          log.Printf("error downloading %s: %v", vid, err)
       }
+   }
+}
+
+// saveConfig writes the config to disk.
+func saveConfig(configPath string, cfg Config) {
+   if err := os.MkdirAll(filepath.Dir(configPath), 0755); err != nil {
+      log.Fatalf("cannot create config dir: %v", err)
+   }
+   data, err := json.MarshalIndent(cfg, "", "  ")
+   if err != nil {
+      log.Fatalf("cannot marshal config: %v", err)
+   }
+   if err := os.WriteFile(configPath, data, 0644); err != nil {
+      log.Fatalf("cannot write config: %v", err)
    }
 }
 
 // Config is persisted to os.UserConfigDir()/umber/umber.json.
 type Config struct {
    VisitorID string `json:"visitor_id"`
+   InputFile string `json:"input_file"`
 }
 
 // Record represents one entry in the input JSON.

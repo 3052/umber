@@ -8,48 +8,9 @@ import (
    "log"
    "net/http"
    "net/url"
-   "os"
 )
 
 const sep = "\nytcfg.set("
-
-func Get(targetUrl *url.URL, headers map[string]string) (*http.Response, error) {
-   reqHeader := make(http.Header)
-   for key, value := range headers {
-      reqHeader.Set(key, value)
-   }
-   req := &http.Request{
-      Method: http.MethodGet,
-      URL:    targetUrl,
-      Header: reqHeader,
-   }
-   log.Println(req.Method, req.URL)
-   return http.DefaultClient.Do(req)
-}
-
-func do() error {
-   resp, err := Get(&url.URL{Scheme: "https", Host: "www.youtube.com"}, nil)
-   if err != nil {
-      return err
-   }
-   defer resp.Body.Close()
-   data, err := io.ReadAll(resp.Body)
-   if err != nil {
-      return err
-   }
-   data, err = extractJSON(data, []byte(sep))
-   if err != nil {
-      return err
-   }
-   var result yt_cfg
-   err = json.Unmarshal(data, &result)
-   if err != nil {
-      return err
-   }
-   encode := json.NewEncoder(os.Stdout)
-   encode.SetIndent("", " ")
-   return encode.Encode(result)
-}
 
 // extractJSON isolates the JSON payload by balancing curly braces
 // directly on a byte slice to avoid memory allocations.
@@ -67,10 +28,7 @@ func extractJSON(content []byte, prefix []byte) ([]byte, error) {
    openBraces := 0
    inString := false
    escapeNext := false
-   // Parse through the bytes to find the exact end of the JSON object.
-   // We can use a clean range loop now that we are looking exclusively at the 'after' slice.
    for i, char := range after {
-      // Handle escaped characters (e.g., \")
       if escapeNext {
          escapeNext = false
          continue
@@ -79,20 +37,16 @@ func extractJSON(content []byte, prefix []byte) ([]byte, error) {
          escapeNext = true
          continue
       }
-      // Toggle string state to ignore braces inside strings
       if char == '"' {
          inString = !inString
          continue
       }
-      // If we are not inside a string literal, count braces
       if !inString {
          if char == '{' {
             openBraces++
          } else if char == '}' {
             openBraces--
-            // When the count goes back to 0, we've found the end of the JSON body
             if openBraces == 0 {
-               // Return the exact slice of bytes representing the JSON object
                return after[:i+1], nil
             }
          }
@@ -101,33 +55,60 @@ func extractJSON(content []byte, prefix []byte) ([]byte, error) {
    return nil, fmt.Errorf("could not find the matching closing brace for the JSON object")
 }
 
-func main() {
-   log.SetFlags(log.Ltime)
-   err := do()
-   if err != nil {
-      log.Fatal(err)
+// fetchVisitorID retrieves the X-Goog-Visitor-Id from YouTube's homepage
+// by parsing the ytcfg JSON embedded in the HTML.
+func fetchVisitorID() (string, error) {
+   targetUrl := &url.URL{Scheme: "https", Host: "www.youtube.com"}
+   req := &http.Request{
+      Method: http.MethodGet,
+      URL:    targetUrl,
    }
+   log.Println("fetching visitor ID from", req.URL)
+   resp, err := http.DefaultClient.Do(req)
+   if err != nil {
+      return "", err
+   }
+   defer resp.Body.Close()
+
+   data, err := io.ReadAll(resp.Body)
+   if err != nil {
+      return "", err
+   }
+
+   data, err = extractJSON(data, []byte(sep))
+   if err != nil {
+      return "", err
+   }
+
+   var result ytCfg
+   if err := json.Unmarshal(data, &result); err != nil {
+      return "", err
+   }
+
+   return string(result.InnertubeContext.Client.VisitorData), nil
 }
 
-type visitor_data string
+type visitorData string
 
-func (v *visitor_data) UnmarshalText(data []byte) error {
+func (v *visitorData) UnmarshalText(data []byte) error {
    visitor, err := url.PathUnescape(string(data))
    if err != nil {
       return err
    }
-   *v = visitor_data(visitor)
+   *v = visitorData(visitor)
    return nil
 }
 
-type yt_cfg struct {
+type ytCfg struct {
    InnertubeClientName    string `json:"INNERTUBE_CLIENT_NAME"`
    InnertubeClientVersion string `json:"INNERTUBE_CLIENT_VERSION"`
    InnertubeContext       struct {
       Client struct {
-         VisitorData visitor_data
+         VisitorData visitorData
       }
    } `json:"INNERTUBE_CONTEXT"`
    InnertubeContextClientName    int    `json:"INNERTUBE_CONTEXT_CLIENT_NAME"`
    InnertubeContextClientVersion string `json:"INNERTUBE_CONTEXT_CLIENT_VERSION"`
 }
+
+// visitor.go
