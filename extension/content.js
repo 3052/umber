@@ -14,8 +14,6 @@ async function youtube() {
    request.headers = {};
    
    //////////////////////////////////////////////////////////////////////////////
-   //request.headers['X-Goog-Visitor-Id'] = 'Cgt5TEMyT0p5NzNzVSjDou_LBjIKCgJVUxIEGgAgGA==';
-   
    request.headers['X-Goog-Visitor-Id'] = 'CgtpRmlLOFdEaHZVRSji5a_TBjIKCgJVUxIEGgAgHmLfAgrcAjIwLllUPWo1MnJ3V2t2YU5iMXotRHNSVUF4WHVlYjhIUXg1V3Qxdkg4Q1NRTWQ0cWdPRHdPM2x1eVlkdGgzQzVxYmljZDI3Y3lyNUdOV2pxZTQ0X3RCNkhIdkhUWmM0b2RRMnNLSTlHaWpGWHRyX2ptdmFxckVVQzR1cHJrX2ZqRDh2c01NQ0ltblpTbGtwVndHdEMtTk5jTi10OUZub1N0RnctNTdJbUZ3UTNua3dYbDhlRG9yUEUwMlVQNjVZdGc3cGwtRjhKM3ZjVGhEWVZrME5CUEZtQWg5dmpUbmtHd054ZG1pNHA0ZWxTSkNHODgzMWQwSFpYT1NKSkpDM2lmaXFYVllYRk5fWUJXRW1KSlhuVFBCS0xwMGxiRDVHUnNnYXA4Q3FjTmZUbUlVVWdTbW94T2FZV21ocW1KRjZPdk91Q0EyelJkdFhLOHFhREhBa0twd1Q5aUhBUQ==';
    payload.context.client.clientName = 'ANDROID_VR';
    payload.context.client.clientVersion = '1.65.10';
