@@ -84,6 +84,7 @@ delay(function() {
    }
    return true;
 }, interval, retries);
+
 /* --- BANDCAMP --- */
 async function bandcamp() {
    const figure = this.closest('figure');
@@ -144,4 +145,3 @@ async function soundcloud() {
       title: figure.querySelector('thead td').textContent
    });
 }
-
