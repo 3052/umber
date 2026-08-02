@@ -13,8 +13,10 @@ import (
    "time"
 )
 
-func cleanupTmpFiles(outputDir string) {
-   entries, err := os.ReadDir(outputDir)
+const m3uFileName = "_playlist.m3u"
+
+func cleanupTmpFiles(audioDir string) {
+   entries, err := os.ReadDir(audioDir)
    if err != nil {
       return
    }
@@ -22,7 +24,7 @@ func cleanupTmpFiles(outputDir string) {
       if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".tmp") {
          continue
       }
-      path := filepath.Join(outputDir, entry.Name())
+      path := filepath.Join(audioDir, entry.Name())
       if err := os.Remove(path); err != nil {
          log.Printf("cannot remove tmp file %s: %v", path, err)
       } else {
@@ -31,7 +33,7 @@ func cleanupTmpFiles(outputDir string) {
    }
 }
 
-func generateCue(outputDir string, records []Record) error {
+func generateM3U(outputDir, audioDir string, records []Record) error {
    var items []Record
    for _, r := range records {
       if r.P != "" || r.I == "" || r.T == "" {
@@ -44,9 +46,9 @@ func generateCue(outputDir string, records []Record) error {
       return items[i].D > items[j].D
    })
 
-   entries, err := os.ReadDir(outputDir)
+   entries, err := os.ReadDir(audioDir)
    if err != nil {
-      return fmt.Errorf("read output dir: %w", err)
+      return fmt.Errorf("read audio dir: %w", err)
    }
    titleToFile := make(map[string]string)
    for _, entry := range entries {
@@ -54,19 +56,21 @@ func generateCue(outputDir string, records []Record) error {
          continue
       }
       name := entry.Name()
-      if strings.HasSuffix(name, ".tmp") || strings.HasSuffix(name, ".cue") {
+      if strings.HasSuffix(name, ".tmp") || strings.HasSuffix(name, ".m3u") {
          continue
       }
       base := strings.TrimSuffix(name, filepath.Ext(name))
       titleToFile[base] = name
    }
 
-   cuePath := filepath.Join(outputDir, "umber.cue")
-   out, err := os.Create(cuePath)
+   m3uPath := filepath.Join(outputDir, m3uFileName)
+   out, err := os.Create(m3uPath)
    if err != nil {
-      return fmt.Errorf("create cue file: %w", err)
+      return fmt.Errorf("create m3u file: %w", err)
    }
    defer out.Close()
+
+   fmt.Fprintln(out, "#EXTM3U")
 
    trackNum := 0
    for _, item := range items {
@@ -75,13 +79,11 @@ func generateCue(outputDir string, records []Record) error {
          continue
       }
       trackNum++
-      fmt.Fprintf(out, "FILE %q WAVE\n", filename)
-      fmt.Fprintf(out, "  TRACK %02d AUDIO\n", trackNum)
-      fmt.Fprintf(out, "    TITLE %q\n", item.T)
-      fmt.Fprintf(out, "    INDEX 01 00:00:00\n")
+      fmt.Fprintf(out, "#EXTINF:0,%s\n", item.T)
+      fmt.Fprintf(out, "audio/%s\n", filename)
    }
 
-   log.Printf("CUE file generated: %s (%d tracks)", cuePath, trackNum)
+   log.Printf("M3U file generated: %s (%d tracks)", m3uPath, trackNum)
    return nil
 }
 
@@ -99,11 +101,13 @@ func main() {
       return
    }
 
-   if err := os.MkdirAll(*outputDir, 0755); err != nil {
-      log.Fatalf("cannot create output dir: %v", err)
+   audioDir := filepath.Join(*outputDir, "audio")
+
+   if err := os.MkdirAll(audioDir, 0755); err != nil {
+      log.Fatalf("cannot create audio dir: %v", err)
    }
 
-   cleanupTmpFiles(*outputDir)
+   cleanupTmpFiles(audioDir)
 
    configDir, err := os.UserConfigDir()
    if err != nil {
@@ -158,15 +162,17 @@ func main() {
       titleToVideoID[sanitizeFilename(r.T)] = r.I
    }
 
-   entries, err := os.ReadDir(*outputDir)
+   // ── Delete files not in input (audio directory only) ──────────────
+
+   audioEntries, err := os.ReadDir(audioDir)
    if err != nil {
-      log.Fatalf("cannot read output directory: %v", err)
+      log.Fatalf("cannot read audio directory: %v", err)
    }
 
    allFiles := make(map[string]string)
    nonEmpty := make(map[string]bool)
 
-   for _, entry := range entries {
+   for _, entry := range audioEntries {
       if entry.IsDir() || strings.HasSuffix(entry.Name(), ".tmp") {
          continue
       }
@@ -180,7 +186,7 @@ func main() {
 
    for title, filename := range allFiles {
       if _, exists := titleToVideoID[title]; !exists {
-         path := filepath.Join(*outputDir, filename)
+         path := filepath.Join(audioDir, filename)
          if err := os.Remove(path); err != nil {
             log.Printf("cannot remove %s: %v", path, err)
          } else {
@@ -189,11 +195,13 @@ func main() {
       }
    }
 
+   // ── Download missing / empty files ────────────────────────────────
+
    for title, videoID := range titleToVideoID {
       if nonEmpty[title] {
          continue
       }
-      err := downloadVideo(videoID, title, cfg.VisitorID, *outputDir, *threads, *maxETA)
+      err := downloadVideo(videoID, title, cfg.VisitorID, audioDir, *threads, *maxETA)
       if err != nil {
          if errors.Is(err, errVisitorExpired) {
             log.Printf("visitor ID expired, clearing from config: %v", err)
@@ -205,8 +213,8 @@ func main() {
       }
    }
 
-   if err := generateCue(*outputDir, records); err != nil {
-      log.Printf("error generating CUE file: %v", err)
+   if err := generateM3U(*outputDir, audioDir, records); err != nil {
+      log.Printf("error generating M3U file: %v", err)
    }
 }
 
