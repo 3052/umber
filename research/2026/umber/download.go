@@ -9,6 +9,7 @@ import (
    "log"
    "net/http"
    "os"
+   "os/exec"
    "path/filepath"
    "sort"
    "strings"
@@ -28,8 +29,13 @@ func downloadFile(url, filename string, threads int, maxETA time.Duration) error
       return fmt.Errorf("probe request: %w", err)
    }
    contentRange := probeResp.Header.Get("Content-Range")
-   io.Copy(io.Discard, probeResp.Body)
-   probeResp.Body.Close()
+   if _, err := io.Copy(io.Discard, probeResp.Body); err != nil {
+      probeResp.Body.Close()
+      return fmt.Errorf("drain probe body: %w", err)
+   }
+   if err := probeResp.Body.Close(); err != nil {
+      return fmt.Errorf("close probe body: %w", err)
+   }
 
    if contentRange == "" {
       return downloadFileSingle(url, filename, maxETA)
@@ -274,6 +280,9 @@ func downloadVideo(videoID, title, visitorID, outputDir string, threads int, max
       if player.PlayabilityStatus.Status == "UNPLAYABLE" && player.PlayabilityStatus.Reason == visitorExpiredReason {
          return fmt.Errorf("%w: %s — %s", errVisitorExpired, player.PlayabilityStatus.Status, player.PlayabilityStatus.Reason)
       }
+      if player.PlayabilityStatus.Status == "LOGIN_REQUIRED" {
+         return fmt.Errorf("%w: %s — %s", errVisitorExpired, player.PlayabilityStatus.Status, player.PlayabilityStatus.Reason)
+      }
       return fmt.Errorf("playability: %s — %s", player.PlayabilityStatus.Status, player.PlayabilityStatus.Reason)
    }
 
@@ -295,13 +304,40 @@ func downloadVideo(videoID, title, visitorID, outputDir string, threads int, max
    }
 
    ext := getExtension(mimeType)
-   finalPath := filepath.Join(outputDir, sanitizeFilename(title)+ext)
-   tmpPath := finalPath + ".tmp"
-   if err := downloadFile(audioURL, tmpPath, threads, maxETA); err != nil {
-      os.Remove(tmpPath)
+   finalPath := filepath.Join(outputDir, sanitizeFilename(title)+".mp3")
+   dlPath := filepath.Join(outputDir, sanitizeFilename(title)+ext+".tmp")
+   mp3Tmp := finalPath + ".tmp"
+
+   if err := downloadFile(audioURL, dlPath, threads, maxETA); err != nil {
+      if err := os.Remove(dlPath); err != nil && !os.IsNotExist(err) {
+         return fmt.Errorf("remove download tmp: %w", err)
+      }
       return err
    }
-   return os.Rename(tmpPath, finalPath)
+
+   cmd := exec.Command("ffmpeg", "-y", "-i", dlPath, "-q:a", "0", "-f", "mp3", mp3Tmp)
+   var stderr bytes.Buffer
+   cmd.Stderr = &stderr
+   if err := cmd.Run(); err != nil {
+      if err := os.Remove(dlPath); err != nil && !os.IsNotExist(err) {
+         return fmt.Errorf("remove download tmp: %w", err)
+      }
+      if err := os.Remove(mp3Tmp); err != nil && !os.IsNotExist(err) {
+         return fmt.Errorf("remove mp3 tmp: %w", err)
+      }
+      return fmt.Errorf("ffmpeg conversion: %w\n%s", err, stderr.String())
+   }
+   if err := os.Remove(dlPath); err != nil && !os.IsNotExist(err) {
+      return fmt.Errorf("remove download tmp: %w", err)
+   }
+   if err := os.Rename(mp3Tmp, finalPath); err != nil {
+      if err := os.Remove(mp3Tmp); err != nil && !os.IsNotExist(err) {
+         return fmt.Errorf("remove mp3 tmp after rename fail: %w", err)
+      }
+      return fmt.Errorf("rename mp3: %w", err)
+   }
+   log.Printf("%s  converted", filepath.Base(finalPath))
+   return nil
 }
 
 // download.go
