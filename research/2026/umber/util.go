@@ -27,7 +27,41 @@ func formatBytes(b int64) string {
    return fmt.Sprintf("%.1f %ciB", float64(b)/float64(div), "KMGTPE"[exp])
 }
 
-func getExtension(mimeType string) string {
+// getFFmpegFormat returns the FFmpeg format name (-f) for the output file
+// based on the MIME type. This is needed because the temp file extension
+// (.tmp) is not recognized by FFmpeg's format auto-detection.
+func getFFmpegFormat(mimeType string) string {
+   parts := strings.Split(mimeType, ";")
+   main := strings.TrimSpace(parts[0])
+   switch main {
+   case "audio/webm":
+      return "ogg"
+   case "audio/mp4":
+      return "ipod"
+   default:
+      return "ipod"
+   }
+}
+
+// getOutputExt returns the file extension for the FFmpeg remuxed output based
+// on the container format from the MIME type. Only .opus and .m4a are
+// produced.
+func getOutputExt(mimeType string) string {
+   parts := strings.Split(mimeType, ";")
+   main := strings.TrimSpace(parts[0])
+   switch main {
+   case "audio/webm":
+      return ".opus"
+   case "audio/mp4":
+      return ".m4a"
+   default:
+      return ".m4a"
+   }
+}
+
+// getSourceExt returns the file extension for the downloaded file based on
+// the container format from the MIME type.
+func getSourceExt(mimeType string) string {
    parts := strings.Split(mimeType, ";")
    main := strings.TrimSpace(parts[0])
    switch main {
@@ -35,8 +69,6 @@ func getExtension(mimeType string) string {
       return ".webm"
    case "audio/mp4":
       return ".m4a"
-   case "audio/ogg":
-      return ".ogg"
    default:
       return ".bin"
    }
@@ -86,7 +118,7 @@ type PlayerResponse struct {
       Reason string `json:"reason"`
    } `json:"playabilityStatus"`
    StreamingData struct {
-      AdaptiveFormats []AdaptiveFormat `json:"adaptiveFormats"`
+      AdaptiveFormats []*AdaptiveFormat `json:"adaptiveFormats"`
    } `json:"streamingData"`
 }
 

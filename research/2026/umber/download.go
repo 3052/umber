@@ -2,6 +2,7 @@ package main
 
 import (
    "bytes"
+   "cmp"
    "context"
    "encoding/json"
    "fmt"
@@ -11,7 +12,7 @@ import (
    "os"
    "os/exec"
    "path/filepath"
-   "sort"
+   "slices"
    "strings"
    "sync"
    "time"
@@ -287,8 +288,8 @@ func downloadVideo(videoID, title, visitorID, outputDir string, threads int, max
    }
 
    formats := player.StreamingData.AdaptiveFormats
-   sort.Slice(formats, func(i, j int) bool {
-      return formats[i].Bitrate > formats[j].Bitrate
+   slices.SortFunc(formats, func(a, b *AdaptiveFormat) int {
+      return cmp.Compare(b.Bitrate, a.Bitrate)
    })
 
    var audioURL, mimeType string
@@ -303,10 +304,12 @@ func downloadVideo(videoID, title, visitorID, outputDir string, threads int, max
       return fmt.Errorf("no AUDIO_QUALITY_MEDIUM format found")
    }
 
-   ext := getExtension(mimeType)
-   finalPath := filepath.Join(outputDir, sanitizeFilename(title)+".mp3")
-   dlPath := filepath.Join(outputDir, sanitizeFilename(title)+ext+".tmp")
-   mp3Tmp := finalPath + ".tmp"
+   srcExt := getSourceExt(mimeType)
+   outExt := getOutputExt(mimeType)
+   ffFormat := getFFmpegFormat(mimeType)
+   finalPath := filepath.Join(outputDir, sanitizeFilename(title)+outExt)
+   dlPath := filepath.Join(outputDir, sanitizeFilename(title)+srcExt+".tmp")
+   ffTmp := filepath.Join(outputDir, sanitizeFilename(title)+outExt+".ff.tmp")
 
    if err := downloadFile(audioURL, dlPath, threads, maxETA); err != nil {
       if err := os.Remove(dlPath); err != nil && !os.IsNotExist(err) {
@@ -315,28 +318,29 @@ func downloadVideo(videoID, title, visitorID, outputDir string, threads int, max
       return err
    }
 
-   cmd := exec.Command("ffmpeg", "-y", "-i", dlPath, "-q:a", "0", "-f", "mp3", mp3Tmp)
+   cmd := exec.Command("ffmpeg", "-y", "-i", dlPath, "-c", "copy", "-f", ffFormat, ffTmp)
    var stderr bytes.Buffer
    cmd.Stderr = &stderr
    if err := cmd.Run(); err != nil {
       if err := os.Remove(dlPath); err != nil && !os.IsNotExist(err) {
          return fmt.Errorf("remove download tmp: %w", err)
       }
-      if err := os.Remove(mp3Tmp); err != nil && !os.IsNotExist(err) {
-         return fmt.Errorf("remove mp3 tmp: %w", err)
+      if err := os.Remove(ffTmp); err != nil && !os.IsNotExist(err) {
+         return fmt.Errorf("remove ff tmp: %w", err)
       }
-      return fmt.Errorf("ffmpeg conversion: %w\n%s", err, stderr.String())
+      return fmt.Errorf("ffmpeg remux: %w\n%s", err, stderr.String())
    }
    if err := os.Remove(dlPath); err != nil && !os.IsNotExist(err) {
       return fmt.Errorf("remove download tmp: %w", err)
    }
-   if err := os.Rename(mp3Tmp, finalPath); err != nil {
-      if err := os.Remove(mp3Tmp); err != nil && !os.IsNotExist(err) {
-         return fmt.Errorf("remove mp3 tmp after rename fail: %w", err)
+   if err := os.Rename(ffTmp, finalPath); err != nil {
+      if err := os.Remove(ffTmp); err != nil && !os.IsNotExist(err) {
+         return fmt.Errorf("remove ff tmp after rename fail: %w", err)
       }
-      return fmt.Errorf("rename mp3: %w", err)
+      return fmt.Errorf("rename file: %w", err)
    }
-   log.Printf("%s  converted", filepath.Base(finalPath))
+
+   log.Printf("%s  remuxed", filepath.Base(finalPath))
    return nil
 }
 

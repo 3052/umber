@@ -1,6 +1,7 @@
 package main
 
 import (
+   "cmp"
    "encoding/json"
    "errors"
    "flag"
@@ -8,12 +9,18 @@ import (
    "log"
    "os"
    "path/filepath"
-   "sort"
+   "slices"
    "strings"
    "time"
 )
 
 const m3uFileName = "_playlist.m3u"
+
+// validExts are the audio file extensions this program produces.
+var validExts = map[string]bool{
+   ".opus": true,
+   ".m4a":  true,
+}
 
 func cleanupTmpFiles(outputDir string) {
    entries, err := os.ReadDir(outputDir)
@@ -34,16 +41,16 @@ func cleanupTmpFiles(outputDir string) {
 }
 
 func generateM3U(outputDir string, records []Record) error {
-   var items []Record
-   for _, r := range records {
+   var items []*Record
+   for i, r := range records {
       if r.P != "" || r.I == "" || r.T == "" {
          continue
       }
-      items = append(items, r)
+      items = append(items, &records[i])
    }
 
-   sort.Slice(items, func(i, j int) bool {
-      return items[i].D > items[j].D
+   slices.SortFunc(items, func(a, b *Record) int {
+      return cmp.Compare(b.D, a.D)
    })
 
    entries, err := os.ReadDir(outputDir)
@@ -163,12 +170,16 @@ func main() {
          continue
       }
       name := entry.Name()
-      if !strings.HasSuffix(name, ".mp3") {
+      if name == m3uFileName {
+         continue
+      }
+      ext := strings.ToLower(filepath.Ext(name))
+      if !validExts[ext] {
          path := filepath.Join(*outputDir, name)
          if err := os.Remove(path); err != nil {
-            log.Printf("cannot remove non-mp3 file %s: %v", path, err)
+            log.Printf("cannot remove non-audio file %s: %v", path, err)
          } else {
-            log.Printf("removed non-mp3 file %s", path)
+            log.Printf("removed non-audio file %s", path)
          }
          continue
       }
