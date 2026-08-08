@@ -14,7 +14,7 @@ import (
    "time"
 )
 
-const m3uFileName = "_playlist.m3u"
+const m3uFileName = "!playlist.m3u"
 
 // validExts are the audio file extensions this program produces.
 var validExts = map[string]bool{
