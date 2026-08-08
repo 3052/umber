@@ -4,26 +4,42 @@
 # Reference: https://github.com/Rockbox/rockbox/blob/master/apps/action.h
 #            (list of available contexts and actions)
 # Related bug report: https://rockbox.org/tracker/task/13975
+#            (each action may only be used ONCE per context —
+#             KBD_* actions are used as unique no-op swallows)
 # ============================================================
 
 # ============================================================
 # Context: CONTEXT_WPS — the Now Playing screen
 # ============================================================
 CONTEXT_WPS = {
-    # Long VOL_UP: play/pause once (first repeat only)
-    {ACTION_WPS_PLAY, BUTTON_VOL_UP | BUTTON_REPEAT, BUTTON_VOL_UP},
-    # Swallow: subsequent VOL_UP repeats (stops volume rising while held)
-    {ACTION_KBD_UP, BUTTON_VOL_UP | BUTTON_REPEAT, BUTTON_VOL_UP | BUTTON_REPEAT},
-    # Swallow: VOL_UP release after hold (stops stray volume step on release)
-    {ACTION_KBD_LEFT, BUTTON_VOL_UP | BUTTON_REL, BUTTON_VOL_UP | BUTTON_REPEAT},
-    # Long VOL_DOWN: menu once (first repeat only)
-    {ACTION_WPS_MENU, BUTTON_VOL_DOWN | BUTTON_REPEAT, BUTTON_VOL_DOWN},
-    # Swallow: subsequent VOL_DOWN repeats
-    {ACTION_KBD_DOWN, BUTTON_VOL_DOWN | BUTTON_REPEAT, BUTTON_VOL_DOWN | BUTTON_REPEAT},
+    # Swallow: VOL_UP press (blocks default volume-up)
+    {ACTION_KBD_UP, BUTTON_VOL_UP, BUTTON_NONE},
+    # Swallow: first VOL_UP repeat
+    {ACTION_KBD_LEFT, BUTTON_VOL_UP | BUTTON_REPEAT, BUTTON_VOL_UP},
+    # Swallow: subsequent VOL_UP repeats while held
+    {ACTION_KBD_DONE, BUTTON_VOL_UP | BUTTON_REPEAT, BUTTON_VOL_UP | BUTTON_REPEAT},
+    # Swallow: VOL_UP release after hold (blocks default volume step)
+    {ACTION_KBD_CURSOR_LEFT, BUTTON_VOL_UP | BUTTON_REL, BUTTON_VOL_UP | BUTTON_REPEAT},
+    # Short VOL_UP: play/pause (on release)
+    {ACTION_WPS_PLAY, BUTTON_VOL_UP | BUTTON_REL, BUTTON_VOL_UP},
+    # Swallow: VOL_DOWN press (blocks default volume-down)
+    {ACTION_KBD_DOWN, BUTTON_VOL_DOWN, BUTTON_NONE},
+    # Swallow: first VOL_DOWN repeat
+    {ACTION_KBD_RIGHT, BUTTON_VOL_DOWN | BUTTON_REPEAT, BUTTON_VOL_DOWN},
+    # Swallow: subsequent VOL_DOWN repeats while held
+    {ACTION_KBD_ABORT, BUTTON_VOL_DOWN | BUTTON_REPEAT, BUTTON_VOL_DOWN | BUTTON_REPEAT},
     # Swallow: VOL_DOWN release after hold
-    {ACTION_KBD_RIGHT, BUTTON_VOL_DOWN | BUTTON_REL, BUTTON_VOL_DOWN | BUTTON_REPEAT},
-    # Short PLAY: previous track
-    {ACTION_WPS_SKIPPREV, BUTTON_PLAY | BUTTON_REL, BUTTON_PLAY},
+    {ACTION_KBD_CURSOR_RIGHT, BUTTON_VOL_DOWN | BUTTON_REL, BUTTON_VOL_DOWN | BUTTON_REPEAT},
+    # Short VOL_DOWN: menu (on release)
+    {ACTION_WPS_MENU, BUTTON_VOL_DOWN | BUTTON_REL, BUTTON_VOL_DOWN},
+    # PLAY press: previous track (fires on down, like next)
+    {ACTION_WPS_SKIPPREV, BUTTON_PLAY, BUTTON_NONE},
+    # Long PLAY: rewind while held
+    {ACTION_WPS_SEEKBACK, BUTTON_PLAY | BUTTON_REPEAT, BUTTON_NONE},
+    # Release after hold: stop seeking cleanly
+    {ACTION_WPS_STOPSEEK, BUTTON_PLAY | BUTTON_REL, BUTTON_PLAY | BUTTON_REPEAT},
+    # Swallow: PLAY release after tap (blocks default play/pause toggle)
+    {ACTION_KBD_SELECT, BUTTON_PLAY | BUTTON_REL, BUTTON_PLAY},
     # Short POWER: keylock
     {ACTION_STD_KEYLOCK, BUTTON_POWER | BUTTON_REL, BUTTON_POWER},
 }
@@ -39,7 +55,11 @@ CONTEXT_MAINMENU = {
     {ACTION_STD_CANCEL, BUTTON_VOL_DOWN | BUTTON_REPEAT, BUTTON_VOL_DOWN},
     {ACTION_KBD_DOWN, BUTTON_VOL_DOWN | BUTTON_REPEAT, BUTTON_VOL_DOWN | BUTTON_REPEAT},
     {ACTION_KBD_RIGHT, BUTTON_VOL_DOWN | BUTTON_REL, BUTTON_VOL_DOWN | BUTTON_REPEAT},
-    {ACTION_STD_PREV, BUTTON_PLAY | BUTTON_REL, BUTTON_PLAY},
+    # PLAY: up one item on press, keep scrolling while held
+    {ACTION_STD_PREV, BUTTON_PLAY, BUTTON_NONE},
+    {ACTION_STD_PREVREPEAT, BUTTON_PLAY | BUTTON_REPEAT, BUTTON_NONE},
+    # Swallow: PLAY release after tap (blocks default STD_OK select)
+    {ACTION_KBD_SELECT, BUTTON_PLAY | BUTTON_REL, BUTTON_PLAY},
     {ACTION_STD_KEYLOCK, BUTTON_POWER | BUTTON_REL, BUTTON_POWER},
 }
 
@@ -54,7 +74,11 @@ CONTEXT_TREE = {
     {ACTION_STD_CANCEL, BUTTON_VOL_DOWN | BUTTON_REPEAT, BUTTON_VOL_DOWN},
     {ACTION_KBD_DOWN, BUTTON_VOL_DOWN | BUTTON_REPEAT, BUTTON_VOL_DOWN | BUTTON_REPEAT},
     {ACTION_KBD_RIGHT, BUTTON_VOL_DOWN | BUTTON_REL, BUTTON_VOL_DOWN | BUTTON_REPEAT},
-    {ACTION_STD_PREV, BUTTON_PLAY | BUTTON_REL, BUTTON_PLAY},
+    # PLAY: up one item on press, keep scrolling while held
+    {ACTION_STD_PREV, BUTTON_PLAY, BUTTON_NONE},
+    {ACTION_STD_PREVREPEAT, BUTTON_PLAY | BUTTON_REPEAT, BUTTON_NONE},
+    # Swallow: PLAY release after tap (blocks default STD_OK select)
+    {ACTION_KBD_SELECT, BUTTON_PLAY | BUTTON_REL, BUTTON_PLAY},
     {ACTION_STD_KEYLOCK, BUTTON_POWER | BUTTON_REL, BUTTON_POWER},
 }
 
@@ -69,6 +93,10 @@ CONTEXT_LIST = {
     {ACTION_STD_CANCEL, BUTTON_VOL_DOWN | BUTTON_REPEAT, BUTTON_VOL_DOWN},
     {ACTION_KBD_DOWN, BUTTON_VOL_DOWN | BUTTON_REPEAT, BUTTON_VOL_DOWN | BUTTON_REPEAT},
     {ACTION_KBD_RIGHT, BUTTON_VOL_DOWN | BUTTON_REL, BUTTON_VOL_DOWN | BUTTON_REPEAT},
-    {ACTION_STD_PREV, BUTTON_PLAY | BUTTON_REL, BUTTON_PLAY},
+    # PLAY: up one item on press, keep scrolling while held
+    {ACTION_STD_PREV, BUTTON_PLAY, BUTTON_NONE},
+    {ACTION_STD_PREVREPEAT, BUTTON_PLAY | BUTTON_REPEAT, BUTTON_NONE},
+    # Swallow: PLAY release after tap (blocks default STD_OK select)
+    {ACTION_KBD_SELECT, BUTTON_PLAY | BUTTON_REL, BUTTON_PLAY},
     {ACTION_STD_KEYLOCK, BUTTON_POWER | BUTTON_REL, BUTTON_POWER},
 }
