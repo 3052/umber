@@ -18,6 +18,16 @@ import (
    "time"
 )
 
+// VISIONOS client constants, matching what current yt-dlp sends (verified
+// against a mitmproxy capture of yt-dlp 2026.08). The user agent is sent both
+// in the client context and as the HTTP User-Agent header.
+const (
+   visionOSClientName    = "VISIONOS"
+   visionOSClientVersion = "1.02"
+   visionOSClientID      = "101"
+   visionOSUserAgent     = "Mozilla/5.0 (Macintosh; Intel Mac OS X 15_7_3) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Safari/605.1.15"
+)
+
 func downloadFile(url, filename string, threads int, maxETA time.Duration) error {
    probeReq, err := http.NewRequest("GET", url, nil)
    if err != nil {
@@ -240,14 +250,41 @@ func downloadFileSingle(url, filename string, maxETA time.Duration) error {
 }
 
 func downloadVideo(videoID, title, visitorID, outputDir string, threads int, maxETA time.Duration) error {
+   wc, err := fetchWatchConfig(videoID)
+   if err != nil {
+      return fmt.Errorf("watch config: %w", err)
+   }
+   if wc.VisitorData != "" {
+      visitorID = string(wc.VisitorData)
+   }
+
+   sts, err := signatureTimestamp(wc.PlayerJSURL)
+   if err != nil {
+      return fmt.Errorf("signature timestamp: %w", err)
+   }
+
+   pc := &PlaybackContext{}
+   pc.ContentPlaybackContext.Html5Preference = "HTML5_PREF_WANTS"
+   pc.ContentPlaybackContext.SignatureTimestamp = sts
+
    payload := PlayerRequest{
       VideoId: videoID,
       Context: PlayerContext{
          Client: PlayerClient{
-            ClientName:    "ANDROID_VR",
-            ClientVersion: "1.65.10",
+            ClientName:    visionOSClientName,
+            ClientVersion: visionOSClientVersion,
+            DeviceMake:    "Apple",
+            DeviceModel:   "RealityDevice17,1",
+            UserAgent:     visionOSUserAgent,
+            OsName:        "visionOS",
+            OsVersion:     "26.5.23O471",
+            Hl:            "en",
+            TimeZone:      "UTC",
          },
       },
+      PlaybackContext: pc,
+      ContentCheckOk:  true,
+      RacyCheckOk:     true,
    }
 
    body, err := json.Marshal(payload)
@@ -255,12 +292,16 @@ func downloadVideo(videoID, title, visitorID, outputDir string, threads int, max
       return fmt.Errorf("marshal payload: %w", err)
    }
 
-   req, err := http.NewRequest("POST", "https://www.youtube.com/youtubei/v1/player", bytes.NewReader(body))
+   req, err := http.NewRequest("POST", "https://www.youtube.com/youtubei/v1/player?prettyPrint=false", bytes.NewReader(body))
    if err != nil {
       return fmt.Errorf("create request: %w", err)
    }
    req.Header.Set("Content-Type", "application/json")
    req.Header.Set("X-Goog-Visitor-Id", visitorID)
+   req.Header.Set("X-Youtube-Client-Name", visionOSClientID)
+   req.Header.Set("X-Youtube-Client-Version", visionOSClientVersion)
+   req.Header.Set("User-Agent", visionOSUserAgent)
+   req.Header.Set("Origin", "https://www.youtube.com")
 
    resp, err := http.DefaultClient.Do(req)
    if err != nil {

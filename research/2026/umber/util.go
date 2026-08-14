@@ -94,9 +94,24 @@ type AdaptiveFormat struct {
    MimeType     string `json:"mimeType"`
 }
 
+type PlaybackContext struct {
+   ContentPlaybackContext struct {
+      Html5Preference    string `json:"html5Preference,omitempty"`
+      SignatureTimestamp int    `json:"signatureTimestamp,omitempty"`
+   } `json:"contentPlaybackContext"`
+}
+
 type PlayerClient struct {
-   ClientName    string `json:"clientName"`
-   ClientVersion string `json:"clientVersion"`
+   ClientName       string `json:"clientName"`
+   ClientVersion    string `json:"clientVersion"`
+   DeviceMake       string `json:"deviceMake,omitempty"`
+   DeviceModel      string `json:"deviceModel,omitempty"`
+   UserAgent        string `json:"userAgent,omitempty"`
+   OsName           string `json:"osName,omitempty"`
+   OsVersion        string `json:"osVersion,omitempty"`
+   Hl               string `json:"hl,omitempty"`
+   TimeZone         string `json:"timeZone,omitempty"`
+   UtcOffsetMinutes int    `json:"utcOffsetMinutes"`
 }
 
 type PlayerContext struct {
@@ -104,8 +119,11 @@ type PlayerContext struct {
 }
 
 type PlayerRequest struct {
-   VideoId string        `json:"videoId"`
-   Context PlayerContext `json:"context"`
+   VideoId         string           `json:"videoId"`
+   Context         PlayerContext    `json:"context"`
+   PlaybackContext *PlaybackContext `json:"playbackContext,omitempty"`
+   ContentCheckOk  bool             `json:"contentCheckOk"`
+   RacyCheckOk     bool             `json:"racyCheckOk"`
 }
 
 type PlayerResponse struct {
@@ -119,6 +137,7 @@ type PlayerResponse struct {
    } `json:"playabilityStatus"`
    StreamingData struct {
       AdaptiveFormats []*AdaptiveFormat `json:"adaptiveFormats"`
+      HlsManifestURL  string            `json:"hlsManifestUrl"`
    } `json:"streamingData"`
 }
 
