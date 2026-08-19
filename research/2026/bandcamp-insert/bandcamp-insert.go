@@ -1,4 +1,3 @@
-// bandcamp-insert.go
 package main
 
 import (
@@ -211,3 +210,5 @@ type TralbumDetails struct {
 func (t *TralbumDetails) Time() time.Time {
    return time.Unix(t.ReleaseDate, 0)
 }
+
+// bandcamp-insert.go
