@@ -36,11 +36,11 @@ main {
 }
 @font-face {
    font-family: "Miller Display Italic";
-   src: url("/umber/assets/miller-display-italic.woff2");
+   src: url("/umber/miller-display-italic.woff2");
 }
 @font-face {
    font-family: "Overpass";
-   src: url("/umber/assets/overpass.woff2");
+   src: url("/umber/overpass.woff2");
 }
 h1 {
    font-family: "Miller Display Italic";

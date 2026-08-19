@@ -20,6 +20,7 @@ const m3uFileName = "!playlist.m3u"
 var validExts = map[string]bool{
    ".opus": true,
    ".m4a":  true,
+   ".mp3":  true,
 }
 
 func cleanupTmpFiles(outputDir string) {
@@ -43,7 +44,7 @@ func cleanupTmpFiles(outputDir string) {
 func generateM3U(outputDir string, records []Record) error {
    var items []*Record
    for i, r := range records {
-      if r.P != "" || r.I == "" || r.T == "" {
+      if (r.P != "" && r.P != "bandcamp") || r.I == "" || r.T == "" {
          continue
       }
       items = append(items, &records[i])
@@ -147,12 +148,12 @@ func main() {
       log.Fatalf("cannot parse input JSON: %v", err)
    }
 
-   titleToVideoID := make(map[string]string)
+   titleToRecord := make(map[string]Record)
    for _, r := range records {
-      if r.P != "" || r.I == "" || r.T == "" {
+      if (r.P != "" && r.P != "bandcamp") || r.I == "" || r.T == "" {
          continue
       }
-      titleToVideoID[sanitizeFilename(r.T)] = r.I
+      titleToRecord[sanitizeFilename(r.T)] = r
    }
 
    // ── Delete files not in input ────────────────────────────────────
@@ -191,7 +192,7 @@ func main() {
    }
 
    for title, filename := range allFiles {
-      if _, exists := titleToVideoID[title]; !exists {
+      if _, exists := titleToRecord[title]; !exists {
          path := filepath.Join(*outputDir, filename)
          if err := os.Remove(path); err != nil {
             log.Printf("cannot remove %s: %v", path, err)
@@ -203,11 +204,17 @@ func main() {
 
    // ── Download missing / empty files ────────────────────────────────
 
-   for title, videoID := range titleToVideoID {
+   for title, r := range titleToRecord {
       if nonEmpty[title] {
          continue
       }
-      err := downloadVideo(videoID, title, cfg.VisitorID, *outputDir, *threads, *maxETA)
+      var err error
+      switch r.P {
+      case "bandcamp":
+         err = downloadBandcamp(r.I, title, *outputDir, *maxETA)
+      default:
+         err = downloadVideo(r.I, title, cfg.VisitorID, *outputDir, *threads, *maxETA)
+      }
       if err != nil {
          if errors.Is(err, errVisitorExpired) {
             log.Printf("visitor ID expired, clearing from config: %v", err)
