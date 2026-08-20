@@ -29,10 +29,14 @@ func cleanupTmpFiles(outputDir string) {
       return
    }
    for _, entry := range entries {
-      if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".tmp") {
+      if entry.IsDir() {
          continue
       }
-      path := filepath.Join(outputDir, entry.Name())
+      name := entry.Name()
+      if !strings.HasSuffix(name, ".tmp") && !strings.HasSuffix(name, ".ff") && !strings.HasSuffix(name, ".t") {
+         continue
+      }
+      path := filepath.Join(outputDir, name)
       if err := os.Remove(path); err != nil {
          log.Printf("cannot remove tmp file %s: %v", path, err)
       } else {
@@ -64,7 +68,7 @@ func generateM3U(outputDir string, records []Record) error {
          continue
       }
       name := entry.Name()
-      if strings.HasSuffix(name, ".tmp") || strings.HasSuffix(name, ".m3u") {
+      if strings.HasSuffix(name, ".tmp") || strings.HasSuffix(name, ".ff") || strings.HasSuffix(name, ".t") || strings.HasSuffix(name, ".m3u") {
          continue
       }
       base := strings.TrimSuffix(name, filepath.Ext(name))
@@ -82,7 +86,11 @@ func generateM3U(outputDir string, records []Record) error {
 
    trackNum := 0
    for _, item := range items {
-      filename, exists := titleToFile[sanitizeFilename(item.T)]
+      ext := ".opus"
+      if item.P == "bandcamp" {
+         ext = ".mp3"
+      }
+      filename, exists := titleToFile[sanitizeFilename(item.T, ext, outputDir)]
       if !exists {
          continue
       }
@@ -153,7 +161,11 @@ func main() {
       if (r.P != "" && r.P != "bandcamp") || r.I == "" || r.T == "" {
          continue
       }
-      titleToRecord[sanitizeFilename(r.T)] = r
+      ext := ".opus"
+      if r.P == "bandcamp" {
+         ext = ".mp3"
+      }
+      titleToRecord[sanitizeFilename(r.T, ext, *outputDir)] = r
    }
 
    // ── Delete files not in input ────────────────────────────────────
@@ -167,7 +179,7 @@ func main() {
    nonEmpty := make(map[string]bool)
 
    for _, entry := range entries {
-      if entry.IsDir() || strings.HasSuffix(entry.Name(), ".tmp") {
+      if entry.IsDir() || strings.HasSuffix(entry.Name(), ".tmp") || strings.HasSuffix(entry.Name(), ".ff") || strings.HasSuffix(entry.Name(), ".t") {
          continue
       }
       name := entry.Name()
@@ -211,9 +223,9 @@ func main() {
       var err error
       switch r.P {
       case "bandcamp":
-         err = downloadBandcamp(r.I, title, *outputDir, *maxETA)
+         err = downloadBandcamp(r.I, r.T, *outputDir, *maxETA)
       default:
-         err = downloadVideo(r.I, title, cfg.VisitorID, *outputDir, *threads, *maxETA)
+         err = downloadVideo(r.I, r.T, cfg.VisitorID, *outputDir, *threads, *maxETA)
       }
       if err != nil {
          if errors.Is(err, errVisitorExpired) {

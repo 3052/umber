@@ -3,6 +3,7 @@ package main
 import (
    "fmt"
    "strings"
+   "unicode/utf8"
 )
 
 const visitorExpiredReason = "This content isn't available, try again later."
@@ -59,22 +60,11 @@ func getOutputExt(mimeType string) string {
    }
 }
 
-// getSourceExt returns the file extension for the downloaded file based on
-// the container format from the MIME type.
-func getSourceExt(mimeType string) string {
-   parts := strings.Split(mimeType, ";")
-   main := strings.TrimSpace(parts[0])
-   switch main {
-   case "audio/webm":
-      return ".webm"
-   case "audio/mp4":
-      return ".m4a"
-   default:
-      return ".bin"
-   }
-}
-
-func sanitizeFilename(s string) string {
+// sanitizeFilename sanitizes a title for use as a filename, then truncates
+// the result so that name+ext fits within both the NTFS component limit
+// (255 chars) and the Windows MAX_PATH limit (259 usable chars). The
+// extension and output directory determine the per-file cap.
+func sanitizeFilename(s string, ext string, outputDir string) string {
    invalid := `\/:*?"<>|`
    var b strings.Builder
    for _, c := range s {
@@ -84,7 +74,26 @@ func sanitizeFilename(s string) string {
          b.WriteRune(c)
       }
    }
-   return strings.TrimRight(b.String(), ". ")
+   result := strings.TrimRight(b.String(), ". ")
+
+   capComponent := 255 - len(ext)
+   capPath := 259 - len(outputDir) - 1 - len(ext)
+   cap := capComponent
+   if capPath < cap {
+      cap = capPath
+   }
+   if cap < 1 {
+      cap = 1
+   }
+
+   if len(result) > cap {
+      result = result[:cap]
+      for !utf8.ValidString(result) {
+         result = result[:len(result)-1]
+      }
+      result = strings.TrimRight(result, ". ")
+   }
+   return result
 }
 
 type AdaptiveFormat struct {

@@ -39,8 +39,9 @@ func downloadBandcamp(trackID, title, outputDir string, maxETA time.Duration) er
       return fmt.Errorf("no mp3-128 stream URL found")
    }
 
-   finalPath := filepath.Join(outputDir, sanitizeFilename(title)+".mp3")
-   dlPath := filepath.Join(outputDir, sanitizeFilename(title)+".mp3.tmp")
+   name := sanitizeFilename(title, ".mp3", outputDir)
+   finalPath := filepath.Join(outputDir, name+".mp3")
+   dlPath := filepath.Join(outputDir, name+".t")
 
    if err := downloadFileSingle(audioURL, dlPath, maxETA); err != nil {
       if err := os.Remove(dlPath); err != nil && !os.IsNotExist(err) {

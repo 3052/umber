@@ -345,12 +345,12 @@ func downloadVideo(videoID, title, visitorID, outputDir string, threads int, max
       return fmt.Errorf("no AUDIO_QUALITY_MEDIUM format found")
    }
 
-   srcExt := getSourceExt(mimeType)
    outExt := getOutputExt(mimeType)
    ffFormat := getFFmpegFormat(mimeType)
-   finalPath := filepath.Join(outputDir, sanitizeFilename(title)+outExt)
-   dlPath := filepath.Join(outputDir, sanitizeFilename(title)+srcExt+".tmp")
-   ffTmp := filepath.Join(outputDir, sanitizeFilename(title)+outExt+".ff.tmp")
+   name := sanitizeFilename(title, outExt, outputDir)
+   finalPath := filepath.Join(outputDir, name+outExt)
+   dlPath := filepath.Join(outputDir, name+".tmp")
+   ffTmp := filepath.Join(outputDir, name+".ff")
 
    if err := downloadFile(audioURL, dlPath, threads, maxETA); err != nil {
       if err := os.Remove(dlPath); err != nil && !os.IsNotExist(err) {
