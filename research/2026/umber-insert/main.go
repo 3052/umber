@@ -14,8 +14,8 @@ import (
 func main() {
    log.SetFlags(log.Ltime)
    name := flag.String("n", "", "input JSON file path (required on first run)")
-   address := flag.String("a", "", "address")
-   video_url := flag.String("u", "", "video URL")
+   address := flag.String("a", "", "Bandcamp address")
+   video_url := flag.String("u", "", "YouTube video URL")
    flag.Parse()
 
    // ── Config ───────────────────────────────────────────────────────

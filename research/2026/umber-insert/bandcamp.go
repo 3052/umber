@@ -1,27 +1,19 @@
 package main
 
 import (
-   "bytes"
    "encoding/json"
-   "encoding/xml"
    "errors"
    "fmt"
+   "html"
    "io"
    "log"
    "net/http"
    "net/url"
    "slices"
    "strconv"
+   "strings"
    "time"
 )
-
-func cut_before(s, sep []byte) ([]byte, []byte, bool) {
-   i := bytes.Index(s, sep)
-   if i >= 0 {
-      return s[:i], s[i:], true
-   }
-   return s, nil, false
-}
 
 func do_bandcamp(address, name string) error {
    var params ReportParams
@@ -87,25 +79,39 @@ type ReportParams struct {
    Itype string `json:"i_type"`
 }
 
-func (r *ReportParams) New(url2 string) error {
-   resp, err := http.Get(url2)
+func (r *ReportParams) New(address string) error {
+   resp, err := http.Get(address)
    if err != nil {
       return err
    }
    defer resp.Body.Close()
-   data, err := io.ReadAll(resp.Body)
-   if err != nil {
+
+   var b strings.Builder
+   if _, err := io.Copy(&b, resp.Body); err != nil {
       return err
    }
-   _, data, _ = cut_before(data, []byte(`<p id="report-account-vm"`))
-   var p struct {
-      DataTouReportParams []byte `xml:"data-tou-report-params,attr"`
+   data := b.String()
+
+   // Locate the report-account-vm <p> tag.
+   _, data, found := strings.Cut(data, `<p id="report-account-vm"`)
+   if !found {
+      return errors.New("report-account-vm not found")
    }
-   err = xml.Unmarshal(data, &p)
-   if err != nil {
-      return err
+
+   // Locate the data-tou-report-params attribute inside that tag.
+   _, data, found = strings.Cut(data, `data-tou-report-params="`)
+   if !found {
+      return errors.New("data-tou-report-params not found")
    }
-   return json.Unmarshal(p.DataTouReportParams, r)
+
+   // The attribute value ends at the next double quote. The value is
+   // HTML-entity-encoded JSON (e.g. &quot; for "), so unescape it.
+   value, _, found := strings.Cut(data, `"`)
+   if !found {
+      return errors.New("data-tou-report-params: closing quote not found")
+   }
+
+   return json.Unmarshal([]byte(html.UnescapeString(value)), r)
 }
 
 func (r *ReportParams) Tralbum() (*Tralbum, bool) {
@@ -154,4 +160,4 @@ func (t *TralbumDetails) Time() time.Time {
    return time.Unix(t.ReleaseDate, 0)
 }
 
-// bandcamp-insert.go
+// bandcamp.go
