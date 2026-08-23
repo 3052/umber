@@ -5,82 +5,16 @@ import (
    "encoding/json"
    "errors"
    "flag"
-   "fmt"
    "log"
    "net/url"
    "os"
    "path/filepath"
-   "slices"
-   "time"
 )
-
-func do_video_id(video_id, name, visitorID string) error {
-   raw_songs, err := read_songs(name)
-   if err != nil {
-      return err
-   }
-   seen := make(map[string]bool)
-   var songs []map[string]any
-   input_exists := false
-
-   // Iterate through ALL existing records to filter out duplicates
-   for _, song := range raw_songs {
-      if id, ok := song["I"].(string); ok {
-         // Check if the input we are trying to add already exists
-         if id == video_id {
-            input_exists = true
-         }
-         // If we haven't seen this ID yet in the loop, keep it and mark it as seen
-         if !seen[id] {
-            seen[id] = true
-            songs = append(songs, song)
-         }
-      } else {
-         // Safety fallback: if the record is missing the "I" string, keep it to prevent data loss
-         songs = append(songs, song)
-      }
-   }
-
-   if input_exists {
-      // If pre-existing duplicates were found and cleaned from the file, save the clean file before exiting.
-      if len(songs) < len(raw_songs) {
-         log.Printf("Cleaned up %d pre-existing duplicate(s) in %s\n", len(raw_songs)-len(songs), name)
-         _ = write_songs(name, songs)
-      }
-      return fmt.Errorf("duplicate found: video ID '%s' already exists in %s", video_id, name)
-   }
-
-   play, err := fetch_player(video_id, visitorID)
-   if err != nil {
-      return err
-   }
-   fmt.Println(play.VideoDetails.ShortDescription)
-
-   image, err := get_image(video_id)
-   if err != nil {
-      return err
-   }
-
-   // Insert native map data
-   song_data := map[string]any{
-      "D": time.Now().Unix(),
-      "I": video_id,
-      "T": play.VideoDetails.Author + " - " + play.VideoDetails.Title,
-      "Y": play.Microformat.PlayerMicroformatRenderer.PublishDate.Year(),
-   }
-   if image != "" {
-      song_data["A"] = image
-   }
-
-   songs = slices.Insert(songs, 0, song_data)
-
-   // Save the newly cleaned and updated list
-   return write_songs(name, songs)
-}
 
 func main() {
    log.SetFlags(log.Ltime)
    name := flag.String("n", "", "input JSON file path (required on first run)")
+   address := flag.String("a", "", "address")
    video_url := flag.String("u", "", "video URL")
    flag.Parse()
 
@@ -101,7 +35,7 @@ func main() {
 
    // ── Visitor ID ──────────────────────────────────────────────────
 
-   if cfg.VisitorID == "" {
+   if cfg.VisitorID == "" && *video_url != "" {
       visitorId, err := fetchVisitorID()
       if err != nil {
          log.Fatalf("cannot fetch visitor ID: %v", err)
@@ -124,7 +58,14 @@ func main() {
       log.Fatal("-n is required on first run")
    }
 
-   if *video_url != "" {
+   // ── Dispatch ────────────────────────────────────────────────────
+
+   switch {
+   case *address != "":
+      if err := do_bandcamp(*address, inputPath); err != nil {
+         log.Fatal(err)
+      }
+   case *video_url != "":
       u, err := url.Parse(*video_url)
       if err != nil {
          log.Fatal("Invalid URL:", err)
@@ -145,22 +86,9 @@ func main() {
          }
          log.Fatal(err)
       }
-   } else {
+   default:
       flag.Usage()
    }
-}
-
-func read_songs(name string) ([]map[string]any, error) {
-   data, err := os.ReadFile(name)
-   if err != nil {
-      return nil, err
-   }
-   var songs []map[string]any
-   err = json.Unmarshal(data, &songs)
-   if err != nil {
-      return nil, err
-   }
-   return songs, nil
 }
 
 // saveConfig writes the config to disk.
@@ -183,7 +111,7 @@ func write_file(name string, data []byte) error {
 }
 
 // Helper to handle the repeating logic of formatting and writing JSON
-func write_songs(name string, songs []map[string]any) error {
+func write_songs(name string, songs []Song) error {
    var buf bytes.Buffer
    enc := json.NewEncoder(&buf)
    enc.SetEscapeHTML(false)
@@ -201,4 +129,26 @@ type Config struct {
    InputFile string `json:"input_file"`
 }
 
-// youtube-insert.go
+type Song struct {
+   A string `json:"A,omitempty"`
+   D int64  `json:"D"`
+   I string `json:"I"`
+   P string `json:"P,omitempty"`
+   T string `json:"T"`
+   Y int    `json:"Y"`
+}
+
+func read_songs(name string) ([]Song, error) {
+   data, err := os.ReadFile(name)
+   if err != nil {
+      return nil, err
+   }
+   var songs []Song
+   err = json.Unmarshal(data, &songs)
+   if err != nil {
+      return nil, err
+   }
+   return songs, nil
+}
+
+// main.go

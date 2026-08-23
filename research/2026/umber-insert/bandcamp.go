@@ -5,13 +5,11 @@ import (
    "encoding/json"
    "encoding/xml"
    "errors"
-   "flag"
    "fmt"
    "io"
    "log"
    "net/http"
    "net/url"
-   "os"
    "slices"
    "strconv"
    "time"
@@ -83,39 +81,6 @@ func do_bandcamp(address, name string) error {
    return write_songs(name, songs)
 }
 
-func main() {
-   log.SetFlags(log.Ltime)
-   name := flag.String("n", "umber.json", "name")
-   address := flag.String("a", "", "address")
-   flag.Parse()
-
-   if *address != "" {
-      err := do_bandcamp(*address, *name)
-      if err != nil {
-         log.Fatal(err)
-      }
-   } else {
-      flag.Usage()
-   }
-}
-
-func write_file(name string, data []byte) error {
-   log.Println("WriteFile", name)
-   return os.WriteFile(name, data, os.ModePerm)
-}
-
-func write_songs(name string, songs []Song) error {
-   var buf bytes.Buffer
-   enc := json.NewEncoder(&buf)
-   enc.SetEscapeHTML(false)
-   enc.SetIndent("", " ")
-   err := enc.Encode(songs)
-   if err != nil {
-      return err
-   }
-   return write_file(name, buf.Bytes())
-}
-
 type ReportParams struct {
    Aid   int64  `json:"a_id"`
    Iid   int    `json:"i_id"`
@@ -151,28 +116,6 @@ func (r *ReportParams) Tralbum() (*Tralbum, bool) {
       return &Tralbum{r.Iid, 't'}, true
    }
    return nil, false
-}
-
-type Song struct {
-   A string `json:"A,omitempty"`
-   D int64  `json:"D"`
-   I string `json:"I"`
-   P string `json:"P,omitempty"`
-   T string `json:"T"`
-   Y int    `json:"Y"`
-}
-
-func read_songs(name string) ([]Song, error) {
-   data, err := os.ReadFile(name)
-   if err != nil {
-      return nil, err
-   }
-   var songs []Song
-   err = json.Unmarshal(data, &songs)
-   if err != nil {
-      return nil, err
-   }
-   return songs, nil
 }
 
 type Tralbum struct {
