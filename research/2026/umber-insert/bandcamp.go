@@ -1,3 +1,4 @@
+// bandcamp.go marker preserve
 package main
 
 import (
@@ -60,7 +61,7 @@ func do_bandcamp(address, name string) error {
    }
 
    song_data := Song{
-      A: strconv.FormatInt(detail.ArtId, 10),
+      A: "https://f4.bcbits.com/img/a" + strconv.Itoa(detail.ArtId) + "_2",
       D: time.Now().Unix(),
       I: tralbum_id,
       P: "bandcamp",
@@ -74,7 +75,6 @@ func do_bandcamp(address, name string) error {
 }
 
 type ReportParams struct {
-   Aid   int64  `json:"a_id"`
    Iid   int    `json:"i_id"`
    Itype string `json:"i_type"`
 }
@@ -150,7 +150,7 @@ func (t *Tralbum) Tralbum() (*TralbumDetails, error) {
 }
 
 type TralbumDetails struct {
-   ArtId         int64 `json:"art_id"`
+   ArtId         int   `json:"art_id"`
    ReleaseDate   int64 `json:"release_date"`
    Title         string
    TralbumArtist string `json:"tralbum_artist"`
@@ -160,4 +160,4 @@ func (t *TralbumDetails) Time() time.Time {
    return time.Unix(t.ReleaseDate, 0)
 }
 
-// bandcamp.go
+// bandcamp.go marker preserve

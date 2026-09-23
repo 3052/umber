@@ -1,3 +1,4 @@
+// youtube.go marker preserve
 package main
 
 import (
@@ -14,7 +15,6 @@ import (
 
 const sep = "\nytcfg.set("
 
-// visitor.go
 func do_video_id(video_id, name, visitorID string) error {
    raw_songs, err := read_songs(name)
    if err != nil {
@@ -178,4 +178,4 @@ type ytCfg struct {
    InnertubeContextClientVersion string `json:"INNERTUBE_CONTEXT_CLIENT_VERSION"`
 }
 
-// youtube.go
+// youtube.go marker preserve

@@ -4,7 +4,7 @@
 export function bandcamp(row) {
    return {
       href: 'https://bandcamp.com/EmbeddedPlayer/track=' + row.I,
-      src: 'https://f4.bcbits.com/img/a' + row.A + '_2'
+      src: row.A
    };
 }
 
@@ -18,7 +18,7 @@ export function http(row) {
 const formatter = new Intl.DateTimeFormat('en', {
    weekday: 'short', 
    month: 'short', 
-   day: 'numeric', 
+   day: 'numeric',
    year: 'numeric'
 });
 
@@ -42,12 +42,13 @@ export function soundcloud(row) {
 }
 
 export function youtube(row) {
-   const image = row.A !== undefined ? row.A : 'sddefault.webp';
-   const path = row.I + '/' + image;
+   const ytimg = 'https://i.ytimg.com/vi_webp/' + row.I + '/sddefault.webp';
+   const image = row.A !== undefined ? row.A : ytimg;
    
    return {
       href: 'https://www.youtube.com/watch?v=' + row.I,
-      src: image.endsWith('.webp') ? 'https://i.ytimg.com/vi_webp/' + path : 'https://i.ytimg.com/vi/' + path
+      src: image
    };
 }
+
 // platform.js marker preserve

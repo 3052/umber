@@ -1,3 +1,4 @@
+// player.go marker preserve
 package main
 
 import (
@@ -54,9 +55,9 @@ func get_image(video_id string) (string, error) {
    for index, name := range yt_imgs {
       var address string
       if strings.HasSuffix(name, ".webp") {
-         address = "http://i.ytimg.com/vi_webp/" + video_id + "/" + name
+         address = "https://i.ytimg.com/vi_webp/" + video_id + "/" + name
       } else {
-         address = "http://i.ytimg.com/vi/" + video_id + "/" + name
+         address = "https://i.ytimg.com/vi/" + video_id + "/" + name
       }
       status, err := head(address)
       if err != nil {
@@ -66,7 +67,7 @@ func get_image(video_id string) (string, error) {
          if index == 0 {
             return "", nil
          }
-         return name, nil
+         return address, nil
       }
    }
    return "", nil
@@ -144,4 +145,4 @@ func fetch_player(video_id, visitorID string) (*player, error) {
    return result, nil
 }
 
-// player.go
+// player.go marker preserve

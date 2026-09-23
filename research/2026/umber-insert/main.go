@@ -1,3 +1,4 @@
+// main.go marker preserve
 package main
 
 import (
@@ -151,4 +152,4 @@ func read_songs(name string) ([]Song, error) {
    return songs, nil
 }
 
-// main.go
+// main.go marker preserve
