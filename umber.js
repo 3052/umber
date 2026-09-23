@@ -1,3 +1,4 @@
+// umber.js marker preserve
 'use strict';
 
 import {
@@ -9,7 +10,7 @@ import {
 } from '/umber/platform.js';
 
 const template = document.querySelector('template');
-const limit = 25;
+const limit = 10;
 
 const sources = {
    bandcamp: bandcamp,
@@ -39,45 +40,6 @@ function build(row) {
    const posted = clone.querySelector('.post');
    posted.textContent = date(row.D);
 
-   const counter = clone.querySelector('.count');
-   const saved = localStorage.getItem(link.href);
-
-   if (saved !== null) {
-      counter.textContent = saved;
-   }
-
-   const upvote = clone.querySelector('.up');
-   const downvote = clone.querySelector('.down');
-
-   const increaseScore = () => {
-      const stored = localStorage.getItem(link.href);
-      const score = (stored === null ? 0 : Number(stored)) + 1;
-
-      if (score === 0) {
-         localStorage.removeItem(link.href);
-         counter.textContent = '';
-      } else {
-         localStorage.setItem(link.href, score.toString(10));
-         counter.textContent = score.toString(10);
-      }
-   };
-
-   link.addEventListener('click', increaseScore);
-   upvote.addEventListener('click', increaseScore);
-
-   downvote.addEventListener('click', () => {
-      const stored = localStorage.getItem(link.href);
-      const score = (stored === null ? 0 : Number(stored)) - 1;
-
-      if (score === 0) {
-         localStorage.removeItem(link.href);
-         counter.textContent = '';
-      } else {
-         localStorage.setItem(link.href, score.toString(10));
-         counter.textContent = score.toString(10);
-      }
-   });
-
    return clone;
 }
 
@@ -93,37 +55,13 @@ async function main() {
       }
    }
 
-   records = records.map(row => {
-      const platform = row.P !== undefined ? row.P : 'youtube';
-      const url = sources[platform](row).href;
-      const stored = localStorage.getItem(url);
-      const score = stored !== null ? Number(stored) : 0;
-
-      return {
-         row: row,
-         url: url,
-         score: score,
-         time: row.D
-      };
-   });
-
-   records.sort((x, y) => {
-      const left = Math.abs(x.score);
-      const right = Math.abs(y.score);
-      if (left !== right) {
-         return left - right;
-      }
-      return y.time - x.time;
-   });
-
-   records = records.map(item => item.row);
+   records.sort((x, y) => y.D - x.D);
 
    const pageParam = query.get('page');
-   const page = pageParam !== null ? parseInt(pageParam, 10) : 1;
-   const start = (page - 1) * limit;
+   const start = pageParam === null ? 0 : records.findIndex(row => String(row.I) === pageParam);
 
-   if (page > 1) {
-      document.title = 'Umber - Page ' + page.toString(10);
+   if (start === -1) {
+      return;
    }
 
    const chunk = records.slice(start, start + limit);
@@ -131,15 +69,15 @@ async function main() {
 
    const older = document.getElementById('older');
    if (start + limit < records.length) {
-      query.set('page', (page + 1).toString(10));
+      query.set('page', String(records[start + limit].I));
       older.href = '?' + query.toString();
    } else {
       older.remove();
    }
 
    const newer = document.getElementById('newer');
-   if (page > 1) {
-      query.set('page', (page - 1).toString(10));
+   if (start > 0) {
+      query.set('page', String(records[Math.max(0, start - limit)].I));
       newer.href = '?' + query.toString();
    } else {
       newer.remove();
@@ -155,3 +93,4 @@ document.querySelector('form').onsubmit = function() {
 
 const query = new URLSearchParams(location.search);
 main();
+// umber.js marker preserve

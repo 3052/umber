@@ -122,7 +122,6 @@ func main() {
    }
 
    cleanupTmpFiles(*outputDir)
-   fixAstralNames(*outputDir)
 
    configDir, err := os.UserConfigDir()
    if err != nil {

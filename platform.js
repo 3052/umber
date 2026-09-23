@@ -1,3 +1,4 @@
+// platform.js marker preserve
 'use strict';
 
 export function bandcamp(row) {
@@ -49,3 +50,4 @@ export function youtube(row) {
       src: image.endsWith('.webp') ? 'https://i.ytimg.com/vi_webp/' + path : 'https://i.ytimg.com/vi/' + path
    };
 }
+// platform.js marker preserve

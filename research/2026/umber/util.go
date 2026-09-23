@@ -2,9 +2,6 @@ package main
 
 import (
    "fmt"
-   "log"
-   "os"
-   "path/filepath"
    "strings"
    "unicode/utf8"
 )
@@ -21,44 +18,6 @@ var errVisitorExpired = fmt.Errorf("visitor ID expired")
 // BMP-only names are never rewritten.
 func astralRune(r rune) bool {
    return r > 0xFFFF
-}
-
-// fixAstralNames renames existing files in dir whose names contain astral
-// runes to the names sanitizeFilename now produces, so the unknown-file
-// cleanup in main keeps them instead of deleting and re-downloading.
-// Files without astral runes are not touched.
-func fixAstralNames(dir string) {
-   entries, err := os.ReadDir(dir)
-   if err != nil {
-      return
-   }
-   for _, entry := range entries {
-      if entry.IsDir() {
-         continue
-      }
-      name := entry.Name()
-      ext := filepath.Ext(name)
-      if !validExts[strings.ToLower(ext)] {
-         continue
-      }
-      base := strings.TrimSuffix(name, ext)
-      if !strings.ContainsFunc(base, astralRune) {
-         continue
-      }
-      fixed := sanitizeFilename(base, ext, dir)
-      if fixed == base || fixed == "" {
-         continue
-      }
-      if _, err := os.Stat(filepath.Join(dir, fixed+ext)); err == nil {
-         log.Printf("rename %s: %s already exists, leaving as is", name, fixed+ext)
-         continue
-      }
-      if err := os.Rename(filepath.Join(dir, name), filepath.Join(dir, fixed+ext)); err != nil {
-         log.Printf("cannot rename %s: %v", name, err)
-         continue
-      }
-      log.Printf("renamed %s -> %s", name, fixed+ext)
-   }
 }
 
 // fixAstralRunes rewrites s (which must contain astral runes) into a
