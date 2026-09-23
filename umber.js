@@ -57,8 +57,8 @@ async function main() {
 
    records.sort((x, y) => y.D - x.D);
 
-   const pageParam = query.get('page');
-   const start = pageParam === null ? 0 : records.findIndex(row => String(row.I) === pageParam);
+   const timeParam = query.get('d');
+   const start = timeParam === null ? 0 : records.findIndex(row => String(row.D) === timeParam);
 
    if (start === -1) {
       return;
@@ -69,7 +69,7 @@ async function main() {
 
    const older = document.getElementById('older');
    if (start + limit < records.length) {
-      query.set('page', String(records[start + limit].I));
+      query.set('d', String(records[start + limit].D));
       older.href = '?' + query.toString();
    } else {
       older.remove();
@@ -77,7 +77,7 @@ async function main() {
 
    const newer = document.getElementById('newer');
    if (start > 0) {
-      query.set('page', String(records[Math.max(0, start - limit)].I));
+      query.set('d', String(records[Math.max(0, start - limit)].D));
       newer.href = '?' + query.toString();
    } else {
       newer.remove();
