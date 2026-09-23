@@ -263,7 +263,7 @@ func downloadVideo(videoID, title, visitorID, outputDir string, threads int, max
       return fmt.Errorf("signature timestamp: %w", err)
    }
 
-   pc := &PlaybackContext{}
+   pc := PlaybackContext{}
    pc.ContentPlaybackContext.Html5Preference = "HTML5_PREF_WANTS"
    pc.ContentPlaybackContext.SignatureTimestamp = sts
 

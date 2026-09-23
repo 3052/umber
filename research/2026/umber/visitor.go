@@ -63,13 +63,13 @@ func extractJSON(content []byte, prefix []byte) ([]byte, error) {
 }
 
 func fetchVisitorID() (string, error) {
-   targetUrl := &url.URL{Scheme: "https", Host: "www.youtube.com"}
-   req := &http.Request{
+   targetUrl := url.URL{Scheme: "https", Host: "www.youtube.com"}
+   req := http.Request{
       Method: http.MethodGet,
-      URL:    targetUrl,
+      URL:    &targetUrl,
    }
    log.Println("fetching visitor ID from", req.URL)
-   resp, err := http.DefaultClient.Do(req)
+   resp, err := http.DefaultClient.Do(&req)
    if err != nil {
       return "", err
    }

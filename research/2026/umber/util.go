@@ -2,6 +2,9 @@ package main
 
 import (
    "fmt"
+   "log"
+   "os"
+   "path/filepath"
    "strings"
    "unicode/utf8"
 )
@@ -11,6 +14,75 @@ const visitorExpiredReason = "This content isn't available, try again later."
 var errETASkipped = fmt.Errorf("skipped due to ETA")
 
 var errVisitorExpired = fmt.Errorf("visitor ID expired")
+
+// astralRune reports whether r is outside the Basic Multilingual Plane.
+// HiBy players fail to open files whose names contain such runes (emoji,
+// "fancy text" letters), reporting "playback failed file not found".
+// BMP-only names are never rewritten.
+func astralRune(r rune) bool {
+   return r > 0xFFFF
+}
+
+// fixAstralNames renames existing files in dir whose names contain astral
+// runes to the names sanitizeFilename now produces, so the unknown-file
+// cleanup in main keeps them instead of deleting and re-downloading.
+// Files without astral runes are not touched.
+func fixAstralNames(dir string) {
+   entries, err := os.ReadDir(dir)
+   if err != nil {
+      return
+   }
+   for _, entry := range entries {
+      if entry.IsDir() {
+         continue
+      }
+      name := entry.Name()
+      ext := filepath.Ext(name)
+      if !validExts[strings.ToLower(ext)] {
+         continue
+      }
+      base := strings.TrimSuffix(name, ext)
+      if !strings.ContainsFunc(base, astralRune) {
+         continue
+      }
+      fixed := sanitizeFilename(base, ext, dir)
+      if fixed == base || fixed == "" {
+         continue
+      }
+      if _, err := os.Stat(filepath.Join(dir, fixed+ext)); err == nil {
+         log.Printf("rename %s: %s already exists, leaving as is", name, fixed+ext)
+         continue
+      }
+      if err := os.Rename(filepath.Join(dir, name), filepath.Join(dir, fixed+ext)); err != nil {
+         log.Printf("cannot rename %s: %v", name, err)
+         continue
+      }
+      log.Printf("renamed %s -> %s", name, fixed+ext)
+   }
+}
+
+// fixAstralRunes rewrites s (which must contain astral runes) into a
+// HiBy-safe string: mathematical letters/digits become ASCII, every other
+// astral rune (emoji, flags, ...) is dropped, along with the zero-width
+// emoji joiners they leave dangling. All other runes pass through as-is.
+func fixAstralRunes(s string) string {
+   var b strings.Builder
+   b.Grow(len(s))
+   for _, r := range s {
+      switch {
+      case r <= 0xFFFF:
+         if r == 0x200D || r == 0xFE0F {
+            continue
+         }
+         b.WriteRune(r)
+      default:
+         if a, ok := mathAlnumASCII(r); ok {
+            b.WriteRune(a)
+         }
+      }
+   }
+   return b.String()
+}
 
 func formatBytes(b int64) string {
    if b < 0 {
@@ -60,11 +132,34 @@ func getOutputExt(mimeType string) string {
    }
 }
 
+// mathAlnumASCII maps Mathematical Alphanumeric Symbols (U+1D400–U+1D7FF,
+// the 𝗯𝗼𝗹𝗱 / 𝘀𝗰𝗿𝗶𝗽𝘁 / 𝟭𝟮𝟯 code points emitted by fancy-text generators)
+// to their ASCII equivalents, matching their Unicode NFKC decompositions.
+// ok is false for runes with no ASCII equivalent.
+func mathAlnumASCII(r rune) (ascii rune, ok bool) {
+   if r >= 0x1D400 && r <= 0x1D6A3 { // Latin letter styles, all 26+26 runs
+      off := (r - 0x1D400) % 52
+      if off < 26 {
+         return 'A' + off, true
+      }
+      return 'a' + off - 26, true
+   }
+   if r >= 0x1D7CE && r <= 0x1D7FF { // digit styles
+      return '0' + (r-0x1D7CE)%10, true
+   }
+   return 0, false
+}
+
 // sanitizeFilename sanitizes a title for use as a filename, then truncates
 // the result so that name+ext fits within both the NTFS component limit
 // (255 chars) and the Windows MAX_PATH limit (259 usable chars). The
-// extension and output directory determine the per-file cap.
+// extension and output directory determine the per-file cap. BMP-only
+// names pass through unchanged; only names containing astral runes are
+// rewritten first.
 func sanitizeFilename(s string, ext string, outputDir string) string {
+   if strings.ContainsFunc(s, astralRune) {
+      s = fixAstralRunes(s)
+   }
    invalid := `\/:*?"<>|`
    var b strings.Builder
    for _, c := range s {
@@ -128,11 +223,11 @@ type PlayerContext struct {
 }
 
 type PlayerRequest struct {
-   VideoId         string           `json:"videoId"`
-   Context         PlayerContext    `json:"context"`
-   PlaybackContext *PlaybackContext `json:"playbackContext,omitempty"`
-   ContentCheckOk  bool             `json:"contentCheckOk"`
-   RacyCheckOk     bool             `json:"racyCheckOk"`
+   VideoId         string          `json:"videoId"`
+   Context         PlayerContext   `json:"context"`
+   PlaybackContext PlaybackContext `json:"playbackContext"`
+   ContentCheckOk  bool            `json:"contentCheckOk"`
+   RacyCheckOk     bool            `json:"racyCheckOk"`
 }
 
 type PlayerResponse struct {

@@ -122,6 +122,7 @@ func main() {
    }
 
    cleanupTmpFiles(*outputDir)
+   fixAstralNames(*outputDir)
 
    configDir, err := os.UserConfigDir()
    if err != nil {
@@ -143,7 +144,7 @@ func main() {
       }
       cfg.VisitorID = visitorId
       log.Printf("visitor ID fetched")
-      saveConfig(configPath, cfg)
+      saveConfig(configPath, &cfg)
    }
 
    fileData, err := os.ReadFile(*inputFile)
@@ -231,7 +232,7 @@ func main() {
          if errors.Is(err, errVisitorExpired) {
             log.Printf("visitor ID expired, clearing from config: %v", err)
             cfg.VisitorID = ""
-            saveConfig(configPath, cfg)
+            saveConfig(configPath, &cfg)
             return
          }
          log.Printf("error downloading %s: %v", title, err)
@@ -243,7 +244,7 @@ func main() {
    }
 }
 
-func saveConfig(configPath string, cfg Config) {
+func saveConfig(configPath string, cfg *Config) {
    if err := os.MkdirAll(filepath.Dir(configPath), 0755); err != nil {
       log.Fatalf("cannot create config dir: %v", err)
    }

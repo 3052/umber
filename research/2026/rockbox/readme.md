@@ -1,5 +1,9 @@
 # Rockbox on the HiBy R1
 
+## restore firmware
+
+https://store.hiby.com/apps/help-center
+
 ## Download and flash the patched bootloader
 
 Grab the pre-patched update file for firmware (need final slash):
