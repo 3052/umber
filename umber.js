@@ -9,6 +9,12 @@ import {
 const template = document.querySelector('template');
 const limit = 10;
 
+function label(row) {
+   const artist = row.R !== undefined ? row.R + ' - ' : '';
+   const title = row.T !== undefined ? row.T : '';
+   return artist + title;
+}
+
 function build(row) {
    const clone = template.content.cloneNode(true);
    const { href, src } = media(row);
@@ -21,7 +27,7 @@ function build(row) {
    image.src = src;
 
    const title = clone.querySelector('thead td');
-   title.textContent = row.T !== undefined ? row.T : '';
+   title.textContent = label(row);
 
    const release = clone.querySelector('.release');
    release.textContent = row.Y !== undefined ? row.Y.toString(10) : '';
@@ -40,7 +46,7 @@ async function main() {
       const searchParam = query.get('t');
       if (searchParam !== null) {
          const pattern = new RegExp(searchParam, 'i');
-         records = records.filter(row => pattern.test(row.T));
+         records = records.filter(row => pattern.test(label(row)));
       }
    }
 

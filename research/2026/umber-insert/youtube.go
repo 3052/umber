@@ -15,7 +15,7 @@ import (
 
 const sep = "\nytcfg.set("
 
-func do_video_id(video_id, name, visitorID string) error {
+func do_video_id(video_id, artist, title, name, visitorID string) error {
    watch := "https://youtube.com/watch?v=" + video_id
 
    raw_songs, err := read_songs(name)
@@ -68,7 +68,8 @@ func do_video_id(video_id, name, visitorID string) error {
    song_data := Song{
       D: time.Now().Unix(),
       I: watch,
-      T: play.VideoDetails.Author + " - " + play.VideoDetails.Title,
+      R: artist,
+      T: title,
       Y: play.Microformat.PlayerMicroformatRenderer.PublishDate.Year(),
    }
    if image != "" {

@@ -30,8 +30,9 @@ func do_bandcamp(address, name string) error {
    if err != nil {
       return err
    }
-
-   player := "https://bandcamp.com/EmbeddedPlayer/track=" + strconv.Itoa(tralbum.Id)
+   if detail.BandcampURL == "" {
+      return errors.New("tralbum_details: bandcamp_url is empty")
+   }
 
    raw_songs, err := read_songs(name)
    if err != nil {
@@ -43,7 +44,7 @@ func do_bandcamp(address, name string) error {
    input_exists := false
 
    for _, song := range raw_songs {
-      if song.I == player {
+      if song.I == detail.BandcampURL {
          input_exists = true
       }
       if !seen[song.I] {
@@ -57,14 +58,15 @@ func do_bandcamp(address, name string) error {
          log.Printf("Cleaned up %d pre-existing duplicate(s) in %s\n", len(raw_songs)-len(songs), name)
          _ = write_songs(name, songs)
       }
-      return fmt.Errorf("duplicate found: '%s' already exists in %s", player, name)
+      return fmt.Errorf("duplicate found: '%s' already exists in %s", detail.BandcampURL, name)
    }
 
    song_data := Song{
       A: "https://f4.bcbits.com/img/a" + strconv.Itoa(detail.ArtId) + "_2",
       D: time.Now().Unix(),
-      I: player,
-      T: detail.TralbumArtist + " - " + detail.Title,
+      I: detail.BandcampURL,
+      R: detail.TralbumArtist,
+      T: detail.Title,
       Y: detail.Time().Year(),
    }
 
@@ -149,8 +151,9 @@ func (t *Tralbum) Tralbum() (*TralbumDetails, error) {
 }
 
 type TralbumDetails struct {
-   ArtId         int   `json:"art_id"`
-   ReleaseDate   int64 `json:"release_date"`
+   ArtId         int    `json:"art_id"`
+   BandcampURL   string `json:"bandcamp_url"`
+   ReleaseDate   int64  `json:"release_date"`
    Title         string
    TralbumArtist string `json:"tralbum_artist"`
 }
