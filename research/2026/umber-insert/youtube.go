@@ -16,6 +16,8 @@ import (
 const sep = "\nytcfg.set("
 
 func do_video_id(video_id, name, visitorID string) error {
+   watch := "https://youtube.com/watch?v=" + video_id
+
    raw_songs, err := read_songs(name)
    if err != nil {
       return err
@@ -32,7 +34,7 @@ func do_video_id(video_id, name, visitorID string) error {
          continue
       }
       // Check if the input we are trying to add already exists
-      if song.I == video_id {
+      if song.I == watch {
          input_exists = true
       }
       // If we haven't seen this ID yet in the loop, keep it and mark it as seen
@@ -48,7 +50,7 @@ func do_video_id(video_id, name, visitorID string) error {
          log.Printf("Cleaned up %d pre-existing duplicate(s) in %s\n", len(raw_songs)-len(songs), name)
          _ = write_songs(name, songs)
       }
-      return fmt.Errorf("duplicate found: video ID '%s' already exists in %s", video_id, name)
+      return fmt.Errorf("duplicate found: '%s' already exists in %s", watch, name)
    }
 
    play, err := fetch_player(video_id, visitorID)
@@ -65,7 +67,7 @@ func do_video_id(video_id, name, visitorID string) error {
    // Insert native map data
    song_data := Song{
       D: time.Now().Unix(),
-      I: video_id,
+      I: watch,
       T: play.VideoDetails.Author + " - " + play.VideoDetails.Title,
       Y: play.Microformat.PlayerMicroformatRenderer.PublishDate.Year(),
    }

@@ -134,7 +134,6 @@ type Song struct {
    A string `json:"A,omitempty"`
    D int64  `json:"D"`
    I string `json:"I"`
-   P string `json:"P,omitempty"`
    T string `json:"T"`
    Y int    `json:"Y"`
 }

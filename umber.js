@@ -3,33 +3,22 @@
 
 import {
    date,
-   bandcamp,
-   http,
-   soundcloud,
-   youtube
+   media
 } from '/umber/platform.js';
 
 const template = document.querySelector('template');
 const limit = 10;
 
-const sources = {
-   bandcamp: bandcamp,
-   http: http,
-   soundcloud: soundcloud,
-   youtube: youtube
-};
-
 function build(row) {
    const clone = template.content.cloneNode(true);
-   const platform = row.P !== undefined ? row.P : 'youtube';
-   const media = sources[platform](row);
+   const { href, src } = media(row);
 
    const link = clone.querySelector('a');
    link.target = '_blank';
-   link.href = media.href;
+   link.href = href;
 
    const image = clone.querySelector('img');
-   image.src = media.src;
+   image.src = src;
 
    const title = clone.querySelector('thead td');
    title.textContent = row.T !== undefined ? row.T : '';

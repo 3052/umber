@@ -31,7 +31,7 @@ func do_bandcamp(address, name string) error {
       return err
    }
 
-   tralbum_id := strconv.Itoa(tralbum.Id)
+   player := "https://bandcamp.com/EmbeddedPlayer/track=" + strconv.Itoa(tralbum.Id)
 
    raw_songs, err := read_songs(name)
    if err != nil {
@@ -43,7 +43,7 @@ func do_bandcamp(address, name string) error {
    input_exists := false
 
    for _, song := range raw_songs {
-      if song.I == tralbum_id {
+      if song.I == player {
          input_exists = true
       }
       if !seen[song.I] {
@@ -57,14 +57,13 @@ func do_bandcamp(address, name string) error {
          log.Printf("Cleaned up %d pre-existing duplicate(s) in %s\n", len(raw_songs)-len(songs), name)
          _ = write_songs(name, songs)
       }
-      return fmt.Errorf("duplicate found: tralbum ID '%s' already exists in %s", tralbum_id, name)
+      return fmt.Errorf("duplicate found: '%s' already exists in %s", player, name)
    }
 
    song_data := Song{
       A: "https://f4.bcbits.com/img/a" + strconv.Itoa(detail.ArtId) + "_2",
       D: time.Now().Unix(),
-      I: tralbum_id,
-      P: "bandcamp",
+      I: player,
       T: detail.TralbumArtist + " - " + detail.Title,
       Y: detail.Time().Year(),
    }
