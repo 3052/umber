@@ -26,7 +26,7 @@ const sep = "\nytcfg.set("
 func artist_title(author, video_title string) (artist, title string, err error) {
    line := video_title
    if !containsAuthor(video_title, author) {
-      line = author + ", " + video_title
+      line = author + " - " + video_title
    }
    left, right, ok := splitAtCenter(line)
    if !ok {

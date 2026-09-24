@@ -10,9 +10,7 @@ const template = document.querySelector('template');
 const limit = 10;
 
 function label(row) {
-   const artist = row.R !== undefined ? row.R + ' - ' : '';
-   const title = row.T !== undefined ? row.T : '';
-   return artist + title;
+   return row.L === undefined ? '' : row.L.join(' - ');
 }
 
 function build(row) {
