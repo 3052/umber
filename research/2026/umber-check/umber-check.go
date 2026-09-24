@@ -46,7 +46,10 @@ func do_check(name string, start int) error {
 
    for i, song := range songs {
       if i >= start && is_youtube(song.I) {
-         video_id := video_id_from_url(song.I)
+         video_id, err := video_id_from_url(song.I)
+         if err != nil {
+            return err
+         }
 
          play, err := fetch_player(video_id)
          if err != nil {
@@ -91,27 +94,18 @@ func main() {
    }
 }
 
-// video_id_from_url extracts the bare video ID from a YouTube URL,
+// video_id_from_url extracts the video ID from a watch URL,
 // e.g. https://youtube.com/watch?v=Q0ifFtMCFv8 -> Q0ifFtMCFv8
-func video_id_from_url(link string) string {
+func video_id_from_url(link string) (string, error) {
    u, err := url.Parse(link)
    if err != nil {
-      return link
+      return "", fmt.Errorf("parse %q: %w", link, err)
    }
-   if id := u.Query().Get("v"); id != "" {
-      return id
+   id := u.Query().Get("v")
+   if id == "" {
+      return "", fmt.Errorf("no video ID in %q", link)
    }
-   if u.Hostname() == "youtu.be" {
-      return strings.TrimPrefix(u.Path, "/")
-   }
-   // /embed/ID, /shorts/ID, /live/ID
-   if parts := strings.Split(strings.Trim(u.Path, "/"), "/"); len(parts) >= 2 {
-      switch parts[0] {
-      case "embed", "shorts", "live":
-         return parts[1]
-      }
-   }
-   return link
+   return id, nil
 }
 
 type player struct {
