@@ -17,8 +17,6 @@ func main() {
    name := flag.String("n", "", "input JSON file path (required on first run)")
    address := flag.String("a", "", "Bandcamp address")
    video_url := flag.String("u", "", "YouTube video URL")
-   artist := flag.String("r", "", "YouTube artist")
-   title := flag.String("t", "", "YouTube title")
    flag.Parse()
 
    // ── Config ───────────────────────────────────────────────────────
@@ -69,10 +67,6 @@ func main() {
          log.Fatal(err)
       }
    case *video_url != "":
-      if *artist == "" || *title == "" {
-         log.Fatal("YouTube requires both -r artist and -t title")
-      }
-
       u, err := url.Parse(*video_url)
       if err != nil {
          log.Fatal("Invalid URL:", err)
@@ -83,7 +77,7 @@ func main() {
          log.Fatal("Could not extract 'v' parameter from URL")
       }
 
-      err = do_video_id(video_id, *artist, *title, inputPath, cfg.VisitorID)
+      err = do_video_id(video_id, inputPath, cfg.VisitorID)
       if err != nil {
          if errors.Is(err, errVisitorExpired) {
             log.Printf("visitor ID expired, clearing from config: %v", err)

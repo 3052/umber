@@ -8,7 +8,9 @@ import (
    "fmt"
    "log"
    "net/http"
+   "net/url"
    "os"
+   "strings"
    "time"
 )
 
@@ -19,14 +21,13 @@ func do_check(name string, start int) error {
    }
    defer file.Close()
 
-   // Updated struct to match the new JSON format
    var songs []struct {
+      A string `json:"A,omitempty"` // image URL
       D int64  `json:"D"`
-      I string `json:"I"`
-      T string `json:"T"`
+      I string `json:"I"` // source URL
+      R string `json:"R"` // artist
+      T string `json:"T"` // title
       Y int    `json:"Y"`
-      A string `json:"A,omitempty"`
-      P string `json:"P,omitempty"`
    }
 
    err = json.NewDecoder(file).Decode(&songs)
@@ -34,28 +35,46 @@ func do_check(name string, start int) error {
       return err
    }
 
+   // Count the YouTube entries in range, so the remaining count
+   // stays accurate since non-YouTube rows get skipped.
+   remaining := 0
    for i, song := range songs {
-      if i >= start {
-         // If P is missing (empty string), then it's YouTube
-         if song.P == "" {
-            video_id := song.I // The ID is now stored in 'I'
-            play, err := fetch_player(video_id)
-            if err != nil {
-               return err
-            }
+      if i >= start && is_youtube(song.I) {
+         remaining++
+      }
+   }
 
-            // Output using the new title variable 'song.T'
-            fmt.Println(i, len(songs)-i, video_id, song.T)
+   for i, song := range songs {
+      if i >= start && is_youtube(song.I) {
+         video_id := video_id_from_url(song.I)
 
-            if play.PlayabilityStatus.Status != "OK" {
-               fmt.Printf("%+v\n", play.PlayabilityStatus)
-               break
-            }
-            time.Sleep(99 * time.Millisecond)
+         play, err := fetch_player(video_id)
+         if err != nil {
+            return err
          }
+
+         fmt.Println(i, remaining, video_id, song.R, "-", song.T)
+         remaining--
+
+         if play.PlayabilityStatus.Status != "OK" {
+            fmt.Printf("%+v\n", play.PlayabilityStatus)
+            break
+         }
+         time.Sleep(99 * time.Millisecond)
       }
    }
    return nil
+}
+
+// is_youtube reports whether the source URL points at YouTube.
+func is_youtube(link string) bool {
+   u, err := url.Parse(link)
+   if err != nil {
+      return false
+   }
+   host := strings.ToLower(u.Hostname())
+   return host == "youtube.com" || host == "youtu.be" ||
+      strings.HasSuffix(host, ".youtube.com") // www., m., music., ...
 }
 
 func main() {
@@ -70,6 +89,29 @@ func main() {
    } else {
       flag.Usage()
    }
+}
+
+// video_id_from_url extracts the bare video ID from a YouTube URL,
+// e.g. https://youtube.com/watch?v=Q0ifFtMCFv8 -> Q0ifFtMCFv8
+func video_id_from_url(link string) string {
+   u, err := url.Parse(link)
+   if err != nil {
+      return link
+   }
+   if id := u.Query().Get("v"); id != "" {
+      return id
+   }
+   if u.Hostname() == "youtu.be" {
+      return strings.TrimPrefix(u.Path, "/")
+   }
+   // /embed/ID, /shorts/ID, /live/ID
+   if parts := strings.Split(strings.Trim(u.Path, "/"), "/"); len(parts) >= 2 {
+      switch parts[0] {
+      case "embed", "shorts", "live":
+         return parts[1]
+      }
+   }
+   return link
 }
 
 type player struct {
