@@ -7,7 +7,6 @@ import (
    "fmt"
    "log"
    "os"
-   "time"
 )
 
 func do_check(name string, start int) error {
@@ -58,7 +57,7 @@ func do_check(name string, start int) error {
    for _, e := range entries {
       play, err := fetch_player(e.id, visitorID)
       if err != nil {
-         return fmt.Errorf("%s: %w", e.id, err)
+         return fmt.Errorf("song %d, %s: %w", e.index, e.id, err)
       }
 
       fmt.Println(e.index, remaining, e.id, e.artist, "-", e.title)
@@ -68,7 +67,6 @@ func do_check(name string, start int) error {
          fmt.Printf("%+v\n", play.PlayabilityStatus)
          break
       }
-      time.Sleep(99 * time.Millisecond)
    }
    return nil
 }
