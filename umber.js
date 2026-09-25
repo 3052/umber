@@ -10,7 +10,7 @@ const template = document.querySelector('template');
 const limit = 10;
 
 function label(row) {
-   return row.L === undefined ? '' : row.L.join(' - ');
+   return row.R === undefined ? row.T : row.R + ' - ' + row.T;
 }
 
 function build(row) {
