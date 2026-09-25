@@ -30,8 +30,13 @@ func do_bandcamp(address, name string) error {
       return fmt.Errorf("duplicate found: '%s' already exists in %s", details.URL, name)
    }
 
-   // Dates look like "12 Jun 2026 00:00:00 GMT".
-   release, err := time.Parse("02 Jan 2006 15:04:05 GMT", details.AlbumReleaseDate)
+   // Tracks not on an album have album_release_date = null; fall back to
+   // the track's own release date. Dates look like "12 Jun 2026 00:00:00 GMT".
+   release_date := details.AlbumReleaseDate
+   if release_date == "" {
+      release_date = details.Current.ReleaseDate
+   }
+   release, err := time.Parse("02 Jan 2006 15:04:05 GMT", release_date)
    if err != nil {
       return err
    }
@@ -61,7 +66,8 @@ type tralbum struct {
    URL              string `json:"url"`
    AlbumReleaseDate string `json:"album_release_date"`
    Current          struct {
-      Title string `json:"title"`
+      Title       string `json:"title"`
+      ReleaseDate string `json:"release_date"`
    } `json:"current"`
 }
 
