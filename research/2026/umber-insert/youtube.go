@@ -34,7 +34,7 @@ func do_video_id(video_id, name, visitorID string) error {
       return err
    }
 
-   if slices.ContainsFunc(songs, func(song *Song) bool { return song.I == watch }) {
+   if contains_song(songs, watch) {
       return fmt.Errorf("duplicate found: '%s' already exists in %s", watch, name)
    }
 
@@ -57,7 +57,7 @@ func do_video_id(video_id, name, visitorID string) error {
       return err
    }
 
-   song_data := Song{
+   song_data := song{
       D: time.Now().Unix(),
       I: watch,
       T: video_title,
@@ -71,7 +71,7 @@ func do_video_id(video_id, name, visitorID string) error {
    }
 
    songs = append(songs, &song_data)
-   slices.SortFunc(songs, func(a, b *Song) int {
+   slices.SortFunc(songs, func(a, b *song) int {
       return cmp.Compare(b.D, a.D)
    })
 

@@ -12,6 +12,16 @@ import (
    "path/filepath"
 )
 
+// contains_song reports whether a song with the given address already exists.
+func contains_song(songs []*song, address string) bool {
+   for _, s := range songs {
+      if s.I == address {
+         return true
+      }
+   }
+   return false
+}
+
 func main() {
    log.SetFlags(log.Ltime)
    name := flag.String("n", "", "input JSON file path (required on first run)")
@@ -27,11 +37,17 @@ func main() {
    }
    configPath := filepath.Join(configDir, "umber", "umber.json")
 
-   var cfg Config
-   if data, err := os.ReadFile(configPath); err == nil {
+   var cfg config
+   data, err := os.ReadFile(configPath)
+   switch {
+   case err == nil:
       if err := json.Unmarshal(data, &cfg); err != nil {
          log.Fatalf("cannot parse config: %v", err)
       }
+   case errors.Is(err, os.ErrNotExist):
+      // first run, no config yet
+   default:
+      log.Fatalf("cannot read config: %v", err)
    }
 
    // ── Visitor ID ──────────────────────────────────────────────────
@@ -93,7 +109,7 @@ func main() {
 }
 
 // saveConfig writes the config to disk.
-func saveConfig(configPath string, cfg *Config) {
+func saveConfig(configPath string, cfg *config) {
    if err := os.MkdirAll(filepath.Dir(configPath), 0755); err != nil {
       log.Fatalf("cannot create config dir: %v", err)
    }
@@ -112,7 +128,7 @@ func write_file(name string, data []byte) error {
 }
 
 // Helper to handle the repeating logic of formatting and writing JSON
-func write_songs(name string, songs []*Song) error {
+func write_songs(name string, songs []*song) error {
    var buf bytes.Buffer
    enc := json.NewEncoder(&buf)
    enc.SetEscapeHTML(false)
@@ -124,13 +140,13 @@ func write_songs(name string, songs []*Song) error {
    return write_file(name, buf.Bytes())
 }
 
-// Config is persisted to os.UserConfigDir()/umber/umber.json.
-type Config struct {
+// config is persisted to os.UserConfigDir()/umber/umber.json.
+type config struct {
    VisitorID string `json:"visitor_id"`
    InputFile string `json:"input_file"`
 }
 
-type Song struct {
+type song struct {
    A string `json:"A,omitempty"`
    D int64  `json:"D"`
    I string `json:"I"`
@@ -139,12 +155,12 @@ type Song struct {
    Y int    `json:"Y"`
 }
 
-func read_songs(name string) ([]*Song, error) {
+func read_songs(name string) ([]*song, error) {
    data, err := os.ReadFile(name)
    if err != nil {
       return nil, err
    }
-   var songs []*Song
+   var songs []*song
    err = json.Unmarshal(data, &songs)
    if err != nil {
       return nil, err

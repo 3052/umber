@@ -19,18 +19,14 @@ import (
 
 // downloadBandcamp downloads the mp3-128 stream for a bandcamp.com track URL
 // such as https://intlanthem.bandcamp.com/track/waiting. The page is resolved
-// to a tralbum ID via its report params, and the mobile API provides the
-// streaming URL. An album URL would download its first track.
+// to a track ID via its report params, and the mobile API provides the
+// streaming URL.
 func downloadBandcamp(address, title, outputDir string, maxETA time.Duration) error {
-   var params ReportParams
-   if err := params.New(address); err != nil {
+   trackID, err := fetch_tralbum_id(address)
+   if err != nil {
       return fmt.Errorf("resolve tralbum from %s: %w", address, err)
    }
-   tralbum, ok := params.Tralbum()
-   if !ok {
-      return fmt.Errorf("unsupported tralbum type %q", params.Itype)
-   }
-   detail, err := tralbum.Details()
+   detail, err := fetch_tralbum_details(trackID)
    if err != nil {
       return fmt.Errorf("bandcamp api: %w", err)
    }
@@ -65,98 +61,59 @@ func downloadBandcamp(address, title, outputDir string, maxETA time.Duration) er
    return nil
 }
 
-// ReportParams holds the tralbum reference embedded in a bandcamp page's
-// "report-account-vm" tag.
-type ReportParams struct {
-   Iid   int    `json:"i_id"`
-   Itype string `json:"i_type"`
-}
-
-// New fetches the track page and extracts the data-tou-report-params
-// attribute, whose HTML-entity-encoded JSON identifies the tralbum.
-func (r *ReportParams) New(address string) error {
+// fetch_tralbum_id fetches a Bandcamp track page and extracts the track's
+// numeric ID from its data-tou-report-params attribute.
+func fetch_tralbum_id(address string) (int, error) {
    resp, err := http.Get(address)
    if err != nil {
-      return err
-   }
-   defer resp.Body.Close()
-   if resp.StatusCode != http.StatusOK {
-      return fmt.Errorf("fetch page: status %d", resp.StatusCode)
-   }
-
-   var b strings.Builder
-   if _, err := io.Copy(&b, resp.Body); err != nil {
-      return err
-   }
-   data := b.String()
-
-   // Locate the report-account-vm <p> tag.
-   _, data, found := strings.Cut(data, `<p id="report-account-vm"`)
-   if !found {
-      return errors.New("report-account-vm not found")
-   }
-
-   // Locate the data-tou-report-params attribute inside that tag.
-   _, data, found = strings.Cut(data, `data-tou-report-params="`)
-   if !found {
-      return errors.New("data-tou-report-params not found")
-   }
-
-   // The attribute value ends at the next double quote. The value is
-   // HTML-entity-encoded JSON (e.g. &quot; for "), so unescape it.
-   value, _, found := strings.Cut(data, `"`)
-   if !found {
-      return errors.New("data-tou-report-params: closing quote not found")
-   }
-
-   return json.Unmarshal([]byte(html.UnescapeString(value)), r)
-}
-
-// Tralbum returns the tralbum reference for known item types
-// ("a" album, "t" track).
-func (r *ReportParams) Tralbum() (*Tralbum, bool) {
-   switch r.Itype {
-   case "a":
-      return &Tralbum{Id: r.Iid, Type: 'a'}, true
-   case "t":
-      return &Tralbum{Id: r.Iid, Type: 't'}, true
-   }
-   return nil, false
-}
-
-// Tralbum identifies a bandcamp album or track by numeric ID.
-type Tralbum struct {
-   Id   int
-   Type byte
-}
-
-// Details fetches the tralbum details from bandcamp's mobile API.
-func (t *Tralbum) Details() (*TralbumDetails, error) {
-   query := url.Values{
-      "band_id":      {"1"},
-      "tralbum_id":   {strconv.Itoa(t.Id)},
-      "tralbum_type": {string(t.Type)},
-   }
-   resp, err := http.Get("https://bandcamp.com/api/mobile/24/tralbum_details?" + query.Encode())
-   if err != nil {
-      return nil, err
+      return 0, err
    }
    defer resp.Body.Close()
 
-   if resp.StatusCode != http.StatusOK {
-      return nil, fmt.Errorf("bandcamp api returned status %d", resp.StatusCode)
+   var page strings.Builder
+   if _, err := io.Copy(&page, resp.Body); err != nil {
+      return 0, err
    }
 
-   detail := &TralbumDetails{}
-   if err := json.NewDecoder(resp.Body).Decode(detail); err != nil {
-      return nil, err
+   // The track ID lives in a JSON object on the report-account-vm tag,
+   // stored as an HTML-entity-encoded attribute value.
+   rest := page.String()
+
+   _, rest, found := strings.Cut(rest, `<p id="report-account-vm"`)
+   if !found {
+      return 0, errors.New("report-account-vm not found")
    }
-   return detail, nil
+
+   _, rest, found = strings.Cut(rest, `data-tou-report-params="`)
+   if !found {
+      return 0, errors.New("data-tou-report-params not found")
+   }
+
+   // The attribute value ends at the next double quote.
+   attr, _, found := strings.Cut(rest, `"`)
+   if !found {
+      return 0, errors.New("data-tou-report-params: closing quote not found")
+   }
+
+   var report struct {
+      ID int `json:"i_id"`
+   }
+   if err := json.Unmarshal([]byte(html.UnescapeString(attr)), &report); err != nil {
+      return 0, err
+   }
+   if report.ID == 0 {
+      return 0, errors.New("data-tou-report-params: missing i_id")
+   }
+   return report.ID, nil
 }
 
-// TralbumDetails is the subset of the tralbum_details response the
-// downloader needs; Tracks carries the mp3-128 streaming URL.
-type TralbumDetails struct {
+type bandcampTrack struct {
+   StreamingURL map[string]string `json:"streaming_url"`
+}
+
+// tralbumDetails is the tralbum_details response subset, with Tracks added
+// for the mp3-128 streaming URL.
+type tralbumDetails struct {
    ArtId         int    `json:"art_id"`
    BandcampURL   string `json:"bandcamp_url"`
    ReleaseDate   int64  `json:"release_date"`
@@ -165,8 +122,27 @@ type TralbumDetails struct {
    Tracks        []bandcampTrack `json:"tracks"`
 }
 
-type bandcampTrack struct {
-   StreamingURL map[string]string `json:"streaming_url"`
+// fetch_tralbum_details fetches a track's details from Bandcamp's mobile API.
+func fetch_tralbum_details(trackID int) (*tralbumDetails, error) {
+   query := url.Values{
+      "band_id":      {"1"},
+      "tralbum_id":   {strconv.Itoa(trackID)},
+      "tralbum_type": {"t"},
+   }.Encode()
+   endpoint := "https://bandcamp.com/api/mobile/24/tralbum_details?" + query
+   resp, err := http.Get(endpoint)
+   if err != nil {
+      return nil, err
+   }
+   defer resp.Body.Close()
+   if resp.StatusCode != http.StatusOK {
+      return nil, fmt.Errorf("tralbum_details: %s", resp.Status)
+   }
+   details := new(tralbumDetails)
+   if err := json.NewDecoder(resp.Body).Decode(details); err != nil {
+      return nil, err
+   }
+   return details, nil
 }
 
 // bandcamp.go marker preserve
