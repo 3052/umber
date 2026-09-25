@@ -14,7 +14,6 @@ var files = []string{
    "umber.css",
    "umber.png",
    "index.html",
-   "platform.js",
    "umber.js",
    "umber.json",
 }

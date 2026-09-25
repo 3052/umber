@@ -115,6 +115,9 @@ a {
 input {
    vertical-align: middle;
 }
+td.view {
+   width: 28%;
+}
 table {
    width: 100%;
 }
