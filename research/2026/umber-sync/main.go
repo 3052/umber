@@ -46,7 +46,50 @@ func cleanupTmpFiles(outputDir string) {
    }
 }
 
+// countStems counts, for every supported record, how many records sanitize
+// to the same filename stem. Stems are compared lowercased (so names
+// differing only in case collide, as they do on case-insensitive
+// filesystems) and keyed with the expected extension (so a Bandcamp .mp3
+// and a YouTube .opus sharing a title are not duplicates of each other).
+func countStems(records []Record, outputDir string) map[string]int {
+   counts := make(map[string]int)
+   for _, r := range records {
+      if r.I == "" || r.T == "" {
+         continue
+      }
+      ext, ok := stemExt(r.I)
+      if !ok {
+         continue
+      }
+      stem := sanitizeFilename(r.baseName(), ext, outputDir)
+      counts[strings.ToLower(stem)+ext]++
+   }
+   return counts
+}
+
+// fileStem returns the filename stem for r: the sanitized base name, plus
+// " " + recordID when stemCounts shows another record sharing that stem
+// case-insensitively. The suffix lets distinct items whose names differ
+// only in case coexist on case-insensitive filesystems; non-duplicates keep
+// their exact names. Identical records (same ID) collapse to one stem.
+func fileStem(r Record, stemCounts map[string]int, outputDir string) string {
+   ext, ok := stemExt(r.I)
+   if !ok {
+      return ""
+   }
+   stem := sanitizeFilename(r.baseName(), ext, outputDir)
+   if stemCounts[strings.ToLower(stem)+ext] < 2 {
+      return stem
+   }
+   if id := recordID(r.I); id != "" {
+      stem = sanitizeFilename(stem+" "+id, ext, outputDir)
+   }
+   return stem
+}
+
 func generateM3U(outputDir string, records []Record) error {
+   stemCounts := countStems(records, outputDir)
+
    var items []*Record
    for i, r := range records {
       if r.I == "" || r.T == "" {
@@ -90,11 +133,11 @@ func generateM3U(outputDir string, records []Record) error {
 
    trackNum := 0
    for _, item := range items {
-      ext := ".opus"
-      if platformOf(item.I) == platformBandcamp {
-         ext = ".mp3"
+      stem := fileStem(*item, stemCounts, outputDir)
+      if stem == "" {
+         continue
       }
-      filename, exists := titleToFile[sanitizeFilename(item.baseName(), ext, outputDir)]
+      filename, exists := titleToFile[stem]
       if !exists {
          continue
       }
@@ -160,22 +203,18 @@ func main() {
       log.Fatalf("cannot parse input JSON: %v", err)
    }
 
+   stemCounts := countStems(records, *outputDir)
+
    titleToRecord := make(map[string]Record)
    for _, r := range records {
       if r.I == "" || r.T == "" {
          continue
       }
-      var ext string
-      switch platformOf(r.I) {
-      case platformBandcamp:
-         ext = ".mp3"
-      case platformYouTube:
-         ext = ".opus"
-      default:
-         // unsupported platforms are skipped for now
+      stem := fileStem(r, stemCounts, *outputDir)
+      if stem == "" {
          continue
       }
-      titleToRecord[sanitizeFilename(r.baseName(), ext, *outputDir)] = r
+      titleToRecord[stem] = r
    }
 
    // ── Delete files not in input ────────────────────────────────────
@@ -233,9 +272,9 @@ func main() {
       var err error
       switch platformOf(r.I) {
       case platformBandcamp:
-         err = downloadBandcamp(r.I, r.baseName(), *outputDir, *maxETA)
+         err = downloadBandcamp(r.I, title, *outputDir, *maxETA)
       case platformYouTube:
-         err = downloadVideo(r.I, r.baseName(), cfg.VisitorID, *outputDir, *threads, *maxETA)
+         err = downloadVideo(r.I, title, cfg.VisitorID, *outputDir, *threads, *maxETA)
       }
       if err != nil {
          if errors.Is(err, errVisitorExpired) {
@@ -264,6 +303,19 @@ func saveConfig(configPath string, cfg *Config) {
    if err := os.WriteFile(configPath, data, 0644); err != nil {
       log.Fatalf("cannot write config: %v", err)
    }
+}
+
+// stemExt returns the extension a record's output file is expected to use,
+// which sizes the filename truncation cap. ok is false for unsupported
+// platforms.
+func stemExt(raw string) (ext string, ok bool) {
+   switch platformOf(raw) {
+   case platformBandcamp:
+      return ".mp3", true
+   case platformYouTube:
+      return ".opus", true
+   }
+   return "", false
 }
 
 // Config is persisted to os.UserConfigDir()/umber/umber.json.

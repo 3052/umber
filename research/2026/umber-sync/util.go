@@ -111,6 +111,28 @@ func mathAlnumASCII(r rune) (ascii rune, ok bool) {
    return 0, false
 }
 
+// recordID returns the URL-derived identifier used to disambiguate records
+// whose filename stems collide: the YouTube video ID, or the final path
+// segment of a Bandcamp URL (e.g. "waiting" in .../track/waiting).
+func recordID(raw string) string {
+   u, err := url.Parse(raw)
+   if err != nil {
+      return ""
+   }
+   switch platformOf(raw) {
+   case platformYouTube:
+      id, _ := videoIDFromURL(raw)
+      return id
+   case platformBandcamp:
+      path := strings.Trim(u.Path, "/")
+      if i := strings.LastIndex(path, "/"); i >= 0 {
+         return path[i+1:]
+      }
+      return path
+   }
+   return ""
+}
+
 // sanitizeFilename sanitizes a title for use as a filename, then truncates
 // the result so that name+ext fits within both the NTFS component limit
 // (255 chars) and the Windows MAX_PATH limit (259 usable chars). The
