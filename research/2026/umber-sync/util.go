@@ -1,3 +1,4 @@
+// util.go marker preserve
 package main
 
 import (
@@ -204,4 +205,4 @@ type PlayerResponse struct {
    } `json:"streamingData"`
 }
 
-// util.go
+// util.go marker preserve

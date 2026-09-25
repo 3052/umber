@@ -1,3 +1,4 @@
+// bandcamp.go marker preserve
 package main
 
 import (
@@ -69,4 +70,4 @@ type bandcampTrack struct {
    StreamingURL map[string]string `json:"streaming_url"`
 }
 
-// bandcamp.go
+// bandcamp.go marker preserve

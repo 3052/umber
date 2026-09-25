@@ -1,3 +1,4 @@
+// main.go marker preserve
 package main
 
 import (
@@ -271,4 +272,4 @@ type Record struct {
    Y int    `json:"Y"`
 }
 
-// main.go
+// main.go marker preserve

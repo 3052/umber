@@ -7,7 +7,6 @@ import (
    "fmt"
    "html"
    "io"
-   "log"
    "net/http"
    "net/url"
    "slices"
@@ -34,30 +33,12 @@ func do_bandcamp(address, name string) error {
       return errors.New("tralbum_details: bandcamp_url is empty")
    }
 
-   raw_songs, err := read_songs(name)
+   songs, err := read_songs(name)
    if err != nil {
       return err
    }
 
-   seen := make(map[string]bool)
-   var songs []Song
-   input_exists := false
-
-   for _, song := range raw_songs {
-      if song.I == detail.BandcampURL {
-         input_exists = true
-      }
-      if !seen[song.I] {
-         seen[song.I] = true
-         songs = append(songs, song)
-      }
-   }
-
-   if input_exists {
-      if len(songs) < len(raw_songs) {
-         log.Printf("Cleaned up %d pre-existing duplicate(s) in %s\n", len(raw_songs)-len(songs), name)
-         _ = write_songs(name, songs)
-      }
+   if slices.ContainsFunc(songs, func(song Song) bool { return song.I == detail.BandcampURL }) {
       return fmt.Errorf("duplicate found: '%s' already exists in %s", detail.BandcampURL, name)
    }
 

@@ -1,3 +1,4 @@
+// visitor.go marker preserve
 package main
 
 import (
@@ -190,4 +191,4 @@ type ytCfg struct {
    InnertubeContextClientVersion string `json:"INNERTUBE_CONTEXT_CLIENT_VERSION"`
 }
 
-// visitor.go
+// visitor.go marker preserve
