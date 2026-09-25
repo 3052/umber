@@ -24,9 +24,11 @@ func contains_song(songs []*song, address string) bool {
 
 func main() {
    log.SetFlags(log.Ltime)
+
+   address := flag.String("b", "", "Bandcamp address")
    name := flag.String("n", "", "input JSON file path (required on first run)")
-   address := flag.String("a", "", "Bandcamp address")
-   video_url := flag.String("u", "", "YouTube video URL")
+   video_url := flag.String("y", "", "YouTube video URL")
+
    flag.Parse()
 
    // ── Config ───────────────────────────────────────────────────────
