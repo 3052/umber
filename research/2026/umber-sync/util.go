@@ -3,6 +3,7 @@ package main
 
 import (
    "fmt"
+   "net/url"
    "strings"
    "unicode/utf8"
 )
@@ -151,6 +152,19 @@ func sanitizeFilename(s string, ext string, outputDir string) string {
    return result
 }
 
+// videoIDFromURL extracts the video ID from a YouTube watch URL such as
+// https://youtube.com/watch?v=dKJfJMMsqX4.
+func videoIDFromURL(raw string) (string, error) {
+   u, err := url.Parse(raw)
+   if err != nil {
+      return "", fmt.Errorf("parse url: %w", err)
+   }
+   if id := u.Query().Get("v"); id != "" {
+      return id, nil
+   }
+   return "", fmt.Errorf("no video ID in %s", raw)
+}
+
 type AdaptiveFormat struct {
    Bitrate      int    `json:"bitrate"`
    AudioQuality string `json:"audioQuality"`
@@ -203,6 +217,33 @@ type PlayerResponse struct {
       AdaptiveFormats []*AdaptiveFormat `json:"adaptiveFormats"`
       HlsManifestURL  string            `json:"hlsManifestUrl"`
    } `json:"streamingData"`
+}
+
+// platform identifies which service a record's I URL points at.
+type platform int
+
+const (
+   platformBandcamp platform = iota
+   platformYouTube
+   platformOther
+)
+
+// platformOf classifies a record URL by host: bandcamp.com (or a
+// *.bandcamp.com subdomain) is bandcamp, youtube.com exactly is YouTube,
+// and anything else is other.
+func platformOf(raw string) platform {
+   u, err := url.Parse(raw)
+   if err != nil {
+      return platformOther
+   }
+   host := strings.ToLower(u.Hostname())
+   switch {
+   case host == "bandcamp.com" || strings.HasSuffix(host, ".bandcamp.com"):
+      return platformBandcamp
+   case host == "youtube.com":
+      return platformYouTube
+   }
+   return platformOther
 }
 
 // util.go marker preserve

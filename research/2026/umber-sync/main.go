@@ -49,10 +49,13 @@ func cleanupTmpFiles(outputDir string) {
 func generateM3U(outputDir string, records []Record) error {
    var items []*Record
    for i, r := range records {
-      if (r.P != "" && r.P != "bandcamp") || r.I == "" || r.T == "" {
+      if r.I == "" || r.T == "" {
          continue
       }
-      items = append(items, &records[i])
+      switch platformOf(r.I) {
+      case platformBandcamp, platformYouTube:
+         items = append(items, &records[i])
+      }
    }
 
    slices.SortFunc(items, func(a, b *Record) int {
@@ -88,15 +91,15 @@ func generateM3U(outputDir string, records []Record) error {
    trackNum := 0
    for _, item := range items {
       ext := ".opus"
-      if item.P == "bandcamp" {
+      if platformOf(item.I) == platformBandcamp {
          ext = ".mp3"
       }
-      filename, exists := titleToFile[sanitizeFilename(item.T, ext, outputDir)]
+      filename, exists := titleToFile[sanitizeFilename(item.baseName(), ext, outputDir)]
       if !exists {
          continue
       }
       trackNum++
-      fmt.Fprintf(out, "#EXTINF:0,%s\n", item.T)
+      fmt.Fprintf(out, "#EXTINF:0,%s\n", item.baseName())
       fmt.Fprintf(out, "%s\n", filename)
    }
 
@@ -159,14 +162,20 @@ func main() {
 
    titleToRecord := make(map[string]Record)
    for _, r := range records {
-      if (r.P != "" && r.P != "bandcamp") || r.I == "" || r.T == "" {
+      if r.I == "" || r.T == "" {
          continue
       }
-      ext := ".opus"
-      if r.P == "bandcamp" {
+      var ext string
+      switch platformOf(r.I) {
+      case platformBandcamp:
          ext = ".mp3"
+      case platformYouTube:
+         ext = ".opus"
+      default:
+         // unsupported platforms are skipped for now
+         continue
       }
-      titleToRecord[sanitizeFilename(r.T, ext, *outputDir)] = r
+      titleToRecord[sanitizeFilename(r.baseName(), ext, *outputDir)] = r
    }
 
    // ── Delete files not in input ────────────────────────────────────
@@ -222,11 +231,11 @@ func main() {
          continue
       }
       var err error
-      switch r.P {
-      case "bandcamp":
-         err = downloadBandcamp(r.I, r.T, *outputDir, *maxETA)
-      default:
-         err = downloadVideo(r.I, r.T, cfg.VisitorID, *outputDir, *threads, *maxETA)
+      switch platformOf(r.I) {
+      case platformBandcamp:
+         err = downloadBandcamp(r.I, r.baseName(), *outputDir, *maxETA)
+      case platformYouTube:
+         err = downloadVideo(r.I, r.baseName(), cfg.VisitorID, *outputDir, *threads, *maxETA)
       }
       if err != nil {
          if errors.Is(err, errVisitorExpired) {
@@ -262,14 +271,24 @@ type Config struct {
    VisitorID string `json:"visitor_id"`
 }
 
-// Record represents one entry in the input JSON.
+// Record represents one entry in the input JSON. I is the item URL, T the
+// required title, R the optional author, and A the optional artwork URL.
 type Record struct {
-   A string `json:"A"`
+   A string `json:"A,omitempty"`
    D int64  `json:"D"`
    I string `json:"I"`
-   P string `json:"P"`
+   R string `json:"R,omitempty"`
    T string `json:"T"`
    Y int    `json:"Y"`
+}
+
+// baseName returns the filename stem for the record: the author (R) when
+// present, followed by the title (T).
+func (r Record) baseName() string {
+   if r.R != "" {
+      return r.R + " - " + r.T
+   }
+   return r.T
 }
 
 // main.go marker preserve

@@ -250,7 +250,15 @@ func downloadFileSingle(url, filename string, maxETA time.Duration) error {
    return nil
 }
 
-func downloadVideo(videoID, title, visitorID, outputDir string, threads int, maxETA time.Duration) error {
+// downloadVideo downloads the AUDIO_QUALITY_MEDIUM stream for a YouTube
+// watch URL (youtube.com host) and remuxes it with ffmpeg. title is the
+// filename stem: the author (R) followed by the title (T) when R exists.
+func downloadVideo(pageURL, title, visitorID, outputDir string, threads int, maxETA time.Duration) error {
+   videoID, err := videoIDFromURL(pageURL)
+   if err != nil {
+      return err
+   }
+
    wc, err := fetchWatchConfig(videoID)
    if err != nil {
       return fmt.Errorf("watch config: %w", err)
