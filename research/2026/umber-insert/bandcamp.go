@@ -2,6 +2,7 @@
 package main
 
 import (
+   "cmp"
    "encoding/json"
    "errors"
    "fmt"
@@ -38,7 +39,7 @@ func do_bandcamp(address, name string) error {
       return err
    }
 
-   if slices.ContainsFunc(songs, func(song Song) bool { return song.I == detail.BandcampURL }) {
+   if slices.ContainsFunc(songs, func(song *Song) bool { return song.I == detail.BandcampURL }) {
       return fmt.Errorf("duplicate found: '%s' already exists in %s", detail.BandcampURL, name)
    }
 
@@ -51,7 +52,10 @@ func do_bandcamp(address, name string) error {
       Y: detail.Time().Year(),
    }
 
-   songs = slices.Insert(songs, 0, song_data)
+   songs = append(songs, &song_data)
+   slices.SortFunc(songs, func(a, b *Song) int {
+      return cmp.Compare(b.D, a.D)
+   })
 
    return write_songs(name, songs)
 }

@@ -43,7 +43,7 @@ func main() {
       }
       cfg.VisitorID = visitorId
       log.Printf("visitor ID fetched")
-      saveConfig(configPath, cfg)
+      saveConfig(configPath, &cfg)
    }
 
    // ── Input file ──────────────────────────────────────────────────
@@ -52,7 +52,7 @@ func main() {
    if *name != "" {
       inputPath = *name
       cfg.InputFile = inputPath
-      saveConfig(configPath, cfg)
+      saveConfig(configPath, &cfg)
    } else if cfg.InputFile != "" {
       inputPath = cfg.InputFile
    } else {
@@ -82,7 +82,7 @@ func main() {
          if errors.Is(err, errVisitorExpired) {
             log.Printf("visitor ID expired, clearing from config: %v", err)
             cfg.VisitorID = ""
-            saveConfig(configPath, cfg)
+            saveConfig(configPath, &cfg)
             return
          }
          log.Fatal(err)
@@ -93,7 +93,7 @@ func main() {
 }
 
 // saveConfig writes the config to disk.
-func saveConfig(configPath string, cfg Config) {
+func saveConfig(configPath string, cfg *Config) {
    if err := os.MkdirAll(filepath.Dir(configPath), 0755); err != nil {
       log.Fatalf("cannot create config dir: %v", err)
    }
@@ -112,7 +112,7 @@ func write_file(name string, data []byte) error {
 }
 
 // Helper to handle the repeating logic of formatting and writing JSON
-func write_songs(name string, songs []Song) error {
+func write_songs(name string, songs []*Song) error {
    var buf bytes.Buffer
    enc := json.NewEncoder(&buf)
    enc.SetEscapeHTML(false)
@@ -139,12 +139,12 @@ type Song struct {
    Y int    `json:"Y"`
 }
 
-func read_songs(name string) ([]Song, error) {
+func read_songs(name string) ([]*Song, error) {
    data, err := os.ReadFile(name)
    if err != nil {
       return nil, err
    }
-   var songs []Song
+   var songs []*Song
    err = json.Unmarshal(data, &songs)
    if err != nil {
       return nil, err

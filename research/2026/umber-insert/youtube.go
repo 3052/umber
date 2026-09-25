@@ -3,6 +3,7 @@ package main
 
 import (
    "bytes"
+   "cmp"
    "encoding/json"
    "fmt"
    "io"
@@ -33,7 +34,7 @@ func do_video_id(video_id, name, visitorID string) error {
       return err
    }
 
-   if slices.ContainsFunc(songs, func(song Song) bool { return song.I == watch }) {
+   if slices.ContainsFunc(songs, func(song *Song) bool { return song.I == watch }) {
       return fmt.Errorf("duplicate found: '%s' already exists in %s", watch, name)
    }
 
@@ -43,7 +44,9 @@ func do_video_id(video_id, name, visitorID string) error {
    }
    fmt.Println(play.VideoDetails.ShortDescription)
 
-   author := play.VideoDetails.Author
+   // YouTube Music auto-generated channels are suffixed with " - Topic";
+   // strip it so the artist name is clean.
+   author := strings.TrimSuffix(play.VideoDetails.Author, " - Topic")
    video_title := play.VideoDetails.Title
    if video_title == "" {
       return fmt.Errorf("%s: player response has empty title", watch)
@@ -67,7 +70,10 @@ func do_video_id(video_id, name, visitorID string) error {
       song_data.A = image
    }
 
-   songs = slices.Insert(songs, 0, song_data)
+   songs = append(songs, &song_data)
+   slices.SortFunc(songs, func(a, b *Song) int {
+      return cmp.Compare(b.D, a.D)
+   })
 
    return write_songs(name, songs)
 }
