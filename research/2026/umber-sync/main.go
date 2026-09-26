@@ -34,7 +34,7 @@ func cleanupTmpFiles(outputDir string) {
          continue
       }
       name := entry.Name()
-      if !strings.HasSuffix(name, ".tmp") && !strings.HasSuffix(name, ".ff") && !strings.HasSuffix(name, ".t") {
+      if !isTempFile(name) {
          continue
       }
       path := filepath.Join(outputDir, name)
@@ -116,7 +116,7 @@ func generateM3U(outputDir string, records []Record) error {
          continue
       }
       name := entry.Name()
-      if strings.HasSuffix(name, ".tmp") || strings.HasSuffix(name, ".ff") || strings.HasSuffix(name, ".t") || strings.HasSuffix(name, ".m3u") {
+      if isTempFile(name) || strings.HasSuffix(name, ".m3u") {
          continue
       }
       base := strings.TrimSuffix(name, filepath.Ext(name))
@@ -229,7 +229,7 @@ func main() {
    nonEmpty := make(map[string]bool)
 
    for _, entry := range entries {
-      if entry.IsDir() || strings.HasSuffix(entry.Name(), ".tmp") || strings.HasSuffix(entry.Name(), ".ff") || strings.HasSuffix(entry.Name(), ".t") {
+      if entry.IsDir() || isTempFile(entry.Name()) {
          continue
       }
       name := entry.Name()

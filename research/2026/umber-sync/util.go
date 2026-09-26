@@ -2,17 +2,21 @@
 package main
 
 import (
+   "context"
    "fmt"
+   "io"
+   "log"
+   "net/http"
    "net/url"
+   "os"
+   "path/filepath"
    "strings"
+   "sync"
+   "time"
    "unicode/utf8"
 )
 
-const visitorExpiredReason = "This content isn't available, try again later."
-
 var errETASkipped = fmt.Errorf("skipped due to ETA")
-
-var errVisitorExpired = fmt.Errorf("visitor ID expired")
 
 // astralRune reports whether r is outside the Basic Multilingual Plane.
 // HiBy players fail to open files whose names contain such runes (emoji,
@@ -20,6 +24,234 @@ var errVisitorExpired = fmt.Errorf("visitor ID expired")
 // BMP-only names are never rewritten.
 func astralRune(r rune) bool {
    return r > 0xFFFF
+}
+
+// downloadFile downloads url to filename, using a Range-request probe to
+// split the transfer across threads parallel chunks when the server
+// supports ranges, and falling back to downloadFileSingle otherwise.
+// Items whose estimated time to completion exceeds maxETA are abandoned.
+func downloadFile(url, filename string, threads int, maxETA time.Duration) error {
+   probeReq, err := http.NewRequest("GET", url, nil)
+   if err != nil {
+      return fmt.Errorf("create probe request: %w", err)
+   }
+   probeReq.Header.Set("Range", "bytes=0-0")
+
+   probeResp, err := http.DefaultClient.Do(probeReq)
+   if err != nil {
+      return fmt.Errorf("probe request: %w", err)
+   }
+   contentRange := probeResp.Header.Get("Content-Range")
+   if _, err := io.Copy(io.Discard, probeResp.Body); err != nil {
+      probeResp.Body.Close()
+      return fmt.Errorf("drain probe body: %w", err)
+   }
+   if err := probeResp.Body.Close(); err != nil {
+      return fmt.Errorf("close probe body: %w", err)
+   }
+
+   if contentRange == "" {
+      return downloadFileSingle(url, filename, maxETA)
+   }
+
+   parts := strings.Split(contentRange, "/")
+   if len(parts) != 2 {
+      return downloadFileSingle(url, filename, maxETA)
+   }
+   var total int64
+   if _, err := fmt.Sscanf(parts[1], "%d", &total); err != nil {
+      return downloadFileSingle(url, filename, maxETA)
+   }
+
+   chunkSize := (total + int64(threads) - 1) / int64(threads)
+   type result struct {
+      data []byte
+      err  error
+   }
+   results := make([]result, threads)
+   var wg sync.WaitGroup
+
+   ctx, cancel := context.WithCancel(context.Background())
+   defer cancel()
+
+   start := time.Now()
+   lastLog := time.Now()
+   var downloaded int64
+   var mu sync.Mutex
+   var skipped bool
+
+   logProgress := func() {
+      now := time.Now()
+      if now.Sub(lastLog) < time.Second {
+         return
+      }
+      elapsed := now.Sub(start).Round(time.Millisecond)
+      var etaDuration time.Duration
+      if downloaded > 0 {
+         speed := float64(downloaded) / elapsed.Seconds()
+         if speed > 0 {
+            remaining := float64(total - downloaded)
+            if remaining < 0 {
+               remaining = 0
+            }
+            etaDuration = time.Duration(remaining / speed * float64(time.Second))
+         }
+      }
+      etaStr := "unknown"
+      if etaDuration > 0 {
+         etaStr = etaDuration.Round(time.Millisecond).String()
+      }
+      log.Printf("%s  %s / %s  elapsed %s  eta %s",
+         filepath.Base(filename), formatBytes(downloaded), formatBytes(total), elapsed.String(), etaStr)
+      lastLog = now
+      if etaDuration > maxETA && now.Sub(start) > 2*time.Second {
+         skipped = true
+         cancel()
+      }
+   }
+
+   for i := 0; i < threads; i++ {
+      wg.Add(1)
+      go func(idx int) {
+         defer wg.Done()
+         startByte := int64(idx) * chunkSize
+         endByte := startByte + chunkSize - 1
+         if endByte > total-1 {
+            endByte = total - 1
+         }
+         if startByte > endByte {
+            return
+         }
+         chunkReq, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+         if err != nil {
+            results[idx].err = err
+            return
+         }
+         chunkReq.Header.Set("Range", fmt.Sprintf("bytes=%d-%d", startByte, endByte))
+         chunkResp, err := http.DefaultClient.Do(chunkReq)
+         if err != nil {
+            results[idx].err = err
+            return
+         }
+         defer chunkResp.Body.Close()
+         if chunkResp.StatusCode != http.StatusOK && chunkResp.StatusCode != http.StatusPartialContent {
+            results[idx].err = fmt.Errorf("chunk %d returned status %d", idx, chunkResp.StatusCode)
+            return
+         }
+         buf := make([]byte, 32*1024)
+         for {
+            n, rerr := chunkResp.Body.Read(buf)
+            if n > 0 {
+               results[idx].data = append(results[idx].data, buf[:n]...)
+               mu.Lock()
+               downloaded += int64(n)
+               logProgress()
+               mu.Unlock()
+            }
+            if rerr == io.EOF {
+               break
+            }
+            if rerr != nil {
+               results[idx].err = rerr
+               return
+            }
+         }
+      }(i)
+   }
+   wg.Wait()
+
+   if skipped {
+      return fmt.Errorf("%w: ETA exceeds max %s", errETASkipped, maxETA)
+   }
+   for i := range results {
+      if results[i].err != nil {
+         return fmt.Errorf("thread %d: %w", i, results[i].err)
+      }
+   }
+
+   out, err := os.Create(filename)
+   if err != nil {
+      return fmt.Errorf("create file: %w", err)
+   }
+   defer out.Close()
+   for i := range results {
+      if len(results[i].data) > 0 {
+         if _, err := out.Write(results[i].data); err != nil {
+            return fmt.Errorf("write file: %w", err)
+         }
+      }
+   }
+   log.Printf("%s  done  %s in %s", strings.TrimSuffix(filepath.Base(filename), ".tmp"), formatBytes(total), time.Since(start).Round(time.Millisecond).String())
+   return nil
+}
+
+// downloadFileSingle streams url to filename in one request, the fallback
+// for servers without range support. Items whose estimated time to
+// completion exceeds maxETA are abandoned mid-transfer.
+func downloadFileSingle(url, filename string, maxETA time.Duration) error {
+   resp, err := http.Get(url)
+   if err != nil {
+      return fmt.Errorf("download request: %w", err)
+   }
+   defer resp.Body.Close()
+   if resp.StatusCode != http.StatusOK {
+      return fmt.Errorf("download returned status %d", resp.StatusCode)
+   }
+
+   total := resp.ContentLength
+   out, err := os.Create(filename)
+   if err != nil {
+      return fmt.Errorf("create file: %w", err)
+   }
+   defer out.Close()
+
+   start := time.Now()
+   lastLog := time.Now()
+   buf := make([]byte, 32*1024)
+   var downloaded int64
+
+   for {
+      n, err := resp.Body.Read(buf)
+      if n > 0 {
+         if _, werr := out.Write(buf[:n]); werr != nil {
+            return fmt.Errorf("write file: %w", werr)
+         }
+         downloaded += int64(n)
+         now := time.Now()
+         if now.Sub(lastLog) >= time.Second {
+            elapsed := now.Sub(start).Round(time.Millisecond)
+            var etaDuration time.Duration
+            if total > 0 && downloaded > 0 {
+               speed := float64(downloaded) / elapsed.Seconds()
+               if speed > 0 {
+                  remaining := float64(total - downloaded)
+                  if remaining < 0 {
+                     remaining = 0
+                  }
+                  etaDuration = time.Duration(remaining / speed * float64(time.Second))
+               }
+            }
+            etaStr := "unknown"
+            if etaDuration > 0 {
+               etaStr = etaDuration.Round(time.Millisecond).String()
+            }
+            log.Printf("%s  %s / %s  elapsed %s  eta %s",
+               strings.TrimSuffix(filepath.Base(filename), ".tmp"), formatBytes(downloaded), formatBytes(total), elapsed.String(), etaStr)
+            lastLog = now
+            if etaDuration > maxETA && now.Sub(start) > 2*time.Second {
+               return fmt.Errorf("%w: ETA %s exceeds max %s", errETASkipped, etaDuration.Round(time.Millisecond), maxETA)
+            }
+         }
+      }
+      if err == io.EOF {
+         break
+      }
+      if err != nil {
+         return fmt.Errorf("read body: %w", err)
+      }
+   }
+   log.Printf("%s  done  %s in %s", strings.TrimSuffix(filepath.Base(filename), ".tmp"), formatBytes(downloaded), time.Since(start).Round(time.Millisecond).String())
+   return nil
 }
 
 // fixAstralRunes rewrites s (which must contain astral runes) into a
@@ -61,36 +293,21 @@ func formatBytes(b int64) string {
    return fmt.Sprintf("%.1f %ciB", float64(b)/float64(div), "KMGTPE"[exp])
 }
 
-// getFFmpegFormat returns the FFmpeg format name (-f) for the output file
-// based on the MIME type. This is needed because the temp file extension
-// (.tmp) is not recognized by FFmpeg's format auto-detection.
-func getFFmpegFormat(mimeType string) string {
-   parts := strings.Split(mimeType, ";")
-   main := strings.TrimSpace(parts[0])
-   switch main {
-   case "audio/webm":
-      return "ogg"
-   case "audio/mp4":
-      return "ipod"
-   default:
-      return "ipod"
+// isTempFile reports whether name is one of this program's in-flight
+// temp files: <stem>.tmp (raw YouTube stream), <stem>.t (Bandcamp /
+// SoundCloud stream), or <stem>.remux.<ext> (FFmpeg remux output). The
+// remux temp ends in the real extension so FFmpeg picks the muxer from
+// the name; its marker ends in a dot, and since sanitizeFilename
+// strips trailing dots from stems, a final file can never land on a
+// temp name.
+func isTempFile(name string) bool {
+   if strings.HasSuffix(name, ".tmp") || strings.HasSuffix(name, ".t") {
+      return true
    }
-}
-
-// getOutputExt returns the file extension for the FFmpeg remuxed output based
-// on the container format from the MIME type. Only .opus and .m4a are
-// produced.
-func getOutputExt(mimeType string) string {
-   parts := strings.Split(mimeType, ";")
-   main := strings.TrimSpace(parts[0])
-   switch main {
-   case "audio/webm":
-      return ".opus"
-   case "audio/mp4":
-      return ".m4a"
-   default:
-      return ".m4a"
+   if i := strings.LastIndex(name, "."); i >= 0 {
+      return strings.HasSuffix(name[:i], ".remux.")
    }
+   return false
 }
 
 // mathAlnumASCII maps Mathematical Alphanumeric Symbols (U+1D400–U+1D7FF,
@@ -173,73 +390,6 @@ func sanitizeFilename(s string, ext string, outputDir string) string {
       result = strings.TrimRight(result, ". ")
    }
    return result
-}
-
-// videoIDFromURL extracts the video ID from a YouTube watch URL such as
-// https://youtube.com/watch?v=dKJfJMMsqX4.
-func videoIDFromURL(raw string) (string, error) {
-   u, err := url.Parse(raw)
-   if err != nil {
-      return "", fmt.Errorf("parse url: %w", err)
-   }
-   if id := u.Query().Get("v"); id != "" {
-      return id, nil
-   }
-   return "", fmt.Errorf("no video ID in %s", raw)
-}
-
-type AdaptiveFormat struct {
-   Bitrate      int    `json:"bitrate"`
-   AudioQuality string `json:"audioQuality"`
-   URL          string `json:"url"`
-   MimeType     string `json:"mimeType"`
-}
-
-type PlaybackContext struct {
-   ContentPlaybackContext struct {
-      Html5Preference    string `json:"html5Preference,omitempty"`
-      SignatureTimestamp int    `json:"signatureTimestamp,omitempty"`
-   } `json:"contentPlaybackContext"`
-}
-
-type PlayerClient struct {
-   ClientName       string `json:"clientName"`
-   ClientVersion    string `json:"clientVersion"`
-   DeviceMake       string `json:"deviceMake,omitempty"`
-   DeviceModel      string `json:"deviceModel,omitempty"`
-   UserAgent        string `json:"userAgent,omitempty"`
-   OsName           string `json:"osName,omitempty"`
-   OsVersion        string `json:"osVersion,omitempty"`
-   Hl               string `json:"hl,omitempty"`
-   TimeZone         string `json:"timeZone,omitempty"`
-   UtcOffsetMinutes int    `json:"utcOffsetMinutes"`
-}
-
-type PlayerContext struct {
-   Client PlayerClient `json:"client"`
-}
-
-type PlayerRequest struct {
-   VideoId         string          `json:"videoId"`
-   Context         PlayerContext   `json:"context"`
-   PlaybackContext PlaybackContext `json:"playbackContext"`
-   ContentCheckOk  bool            `json:"contentCheckOk"`
-   RacyCheckOk     bool            `json:"racyCheckOk"`
-}
-
-type PlayerResponse struct {
-   VideoDetails struct {
-      Author string `json:"author"`
-      Title  string `json:"title"`
-   } `json:"videoDetails"`
-   PlayabilityStatus struct {
-      Status string `json:"status"`
-      Reason string `json:"reason"`
-   } `json:"playabilityStatus"`
-   StreamingData struct {
-      AdaptiveFormats []*AdaptiveFormat `json:"adaptiveFormats"`
-      HlsManifestURL  string            `json:"hlsManifestUrl"`
-   } `json:"streamingData"`
 }
 
 // platform identifies which service a record's I URL points at.
