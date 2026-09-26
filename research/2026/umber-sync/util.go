@@ -113,7 +113,8 @@ func mathAlnumASCII(r rune) (ascii rune, ok bool) {
 
 // recordID returns the URL-derived identifier used to disambiguate records
 // whose filename stems collide: the YouTube video ID, or the final path
-// segment of a Bandcamp URL (e.g. "waiting" in .../track/waiting).
+// segment of a Bandcamp URL (e.g. "waiting" in .../track/waiting) or a
+// SoundCloud URL (e.g. "flickermood" in .../forss/flickermood).
 func recordID(raw string) string {
    u, err := url.Parse(raw)
    if err != nil {
@@ -123,7 +124,7 @@ func recordID(raw string) string {
    case platformYouTube:
       id, _ := videoIDFromURL(raw)
       return id
-   case platformBandcamp:
+   case platformBandcamp, platformSoundCloud:
       path := strings.Trim(u.Path, "/")
       if i := strings.LastIndex(path, "/"); i >= 0 {
          return path[i+1:]
@@ -247,12 +248,14 @@ type platform int
 const (
    platformBandcamp platform = iota
    platformYouTube
+   platformSoundCloud
    platformOther
 )
 
 // platformOf classifies a record URL by host: bandcamp.com (or a
-// *.bandcamp.com subdomain) is bandcamp, youtube.com exactly is YouTube,
-// and anything else is other.
+// *.bandcamp.com subdomain) is bandcamp, soundcloud.com (or a
+// *.soundcloud.com subdomain) is soundcloud, youtube.com exactly is
+// YouTube, and anything else is other.
 func platformOf(raw string) platform {
    u, err := url.Parse(raw)
    if err != nil {
@@ -262,6 +265,8 @@ func platformOf(raw string) platform {
    switch {
    case host == "bandcamp.com" || strings.HasSuffix(host, ".bandcamp.com"):
       return platformBandcamp
+   case host == "soundcloud.com" || strings.HasSuffix(host, ".soundcloud.com"):
+      return platformSoundCloud
    case host == "youtube.com":
       return platformYouTube
    }

@@ -35,7 +35,11 @@ const template = document.querySelector('template');
 const limit = 10;
 
 function label(row) {
-   return row.R === undefined ? row.T : row.R + ' - ' + row.T;
+   const R = row.I.startsWith('https://youtube.com/') && row.R.endsWith(' - Topic')
+      ? row.R.slice(0, -' - Topic'.length)
+      : row.R;
+
+   return row.T.toLowerCase().includes(R.toLowerCase()) ? row.T : R + ' - ' + row.T;
 }
 
 function build(row) {
@@ -53,7 +57,7 @@ function build(row) {
    title.textContent = label(row);
 
    const release = clone.querySelector('.release');
-   release.textContent = row.Y !== undefined ? row.Y.toString(10) : '';
+   release.textContent = row.Y.toString(10);
 
    const posted = clone.querySelector('.post');
    posted.textContent = date(row.D);

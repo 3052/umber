@@ -49,8 +49,9 @@ func cleanupTmpFiles(outputDir string) {
 // countStems counts, for every supported record, how many records sanitize
 // to the same filename stem. Stems are compared lowercased (so names
 // differing only in case collide, as they do on case-insensitive
-// filesystems) and keyed with the expected extension (so a Bandcamp .mp3
-// and a YouTube .opus sharing a title are not duplicates of each other).
+// filesystems) and keyed with the expected extension (so a Bandcamp or
+// SoundCloud .mp3 and a YouTube .opus sharing a title are not duplicates
+// of each other).
 func countStems(records []Record, outputDir string) map[string]int {
    counts := make(map[string]int)
    for _, r := range records {
@@ -96,7 +97,7 @@ func generateM3U(outputDir string, records []Record) error {
          continue
       }
       switch platformOf(r.I) {
-      case platformBandcamp, platformYouTube:
+      case platformBandcamp, platformYouTube, platformSoundCloud:
          items = append(items, &records[i])
       }
    }
@@ -273,6 +274,8 @@ func main() {
       switch platformOf(r.I) {
       case platformBandcamp:
          err = downloadBandcamp(r.I, title, *outputDir, *maxETA)
+      case platformSoundCloud:
+         err = downloadSoundCloud(r.I, title, *outputDir, *maxETA)
       case platformYouTube:
          err = downloadVideo(r.I, title, cfg.VisitorID, *outputDir, *threads, *maxETA)
       }
@@ -310,7 +313,7 @@ func saveConfig(configPath string, cfg *Config) {
 // platforms.
 func stemExt(raw string) (ext string, ok bool) {
    switch platformOf(raw) {
-   case platformBandcamp:
+   case platformBandcamp, platformSoundCloud:
       return ".mp3", true
    case platformYouTube:
       return ".opus", true
