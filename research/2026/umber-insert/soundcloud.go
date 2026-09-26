@@ -19,10 +19,9 @@ const clientID = "KKzJxmw11tYpCs6T24P4uUYhqmjalG6M"
 
 // do_soundcloud adds a SoundCloud track to the songs file. The duplicate
 // check runs first, before any network request: its key is the pasted
-// address, which is known up front. The insert itself is allowed only
-// when the audio file answers a HEAD request — the track's progressive
-// mp3 transcoding, the same stream the downloader fetches, is exchanged
-// for its signed URL, which must respond.
+// address. The insert is allowed only when the resolve response itself
+// shows the plain progressive mp3 stream the downloader fetches — no
+// second request is needed to learn that.
 func do_soundcloud(address, name string) error {
    songs, err := read_songs(name)
    if err != nil {
@@ -44,7 +43,8 @@ func do_soundcloud(address, name string) error {
       return fmt.Errorf("%s: resolve response has empty title", address)
    }
 
-   // Before the insert is allowed, verify the audio file is reachable.
+   // The insert is allowed only when the track offers the stream the
+   // downloader fetches.
    if err := verify_audio(track); err != nil {
       return err
    }
@@ -67,44 +67,23 @@ func do_soundcloud(address, name string) error {
    return write_songs(name, songs)
 }
 
-// fetch_stream_url exchanges a transcoding endpoint for the signed
-// stream URL it hands out for this client id.
-func fetch_stream_url(transcoding_url string) (string, error) {
-   u, err := url.Parse(transcoding_url)
-   if err != nil {
-      return "", err
-   }
-   q := u.Query()
-   q.Set("client_id", clientID)
-   u.RawQuery = q.Encode()
-
-   resp, err := http.Get(u.String())
-   if err != nil {
-      return "", err
-   }
-   defer resp.Body.Close()
-   if resp.StatusCode != http.StatusOK {
-      return "", fmt.Errorf("transcoding endpoint: %s", resp.Status)
-   }
-
-   var s struct {
-      URL string `json:"url"`
-   }
-   if err := json.NewDecoder(resp.Body).Decode(&s); err != nil {
-      return "", err
-   }
-   if s.URL == "" {
-      return "", fmt.Errorf("transcoding endpoint returned no stream URL")
-   }
-   return s.URL, nil
-}
-
-// verify_audio checks that the track's audio file answers a HEAD
-// request, so an insert is only allowed for tracks the downloader can
-// actually fetch. It walks the same path the downloader does: the policy
-// gate, then the progressive mp3 transcoding, whose endpoint is exchanged
-// for the signed stream URL, which must answer.
+// verify_audio reports whether the track offers the progressive mp3
+// stream the downloader fetches, using only what the resolve response
+// already carries. It walks the same selection the downloader does: no
+// DRM, a policy that allows a full stream, and a non-snipped progressive
+// mp3 transcoding.
 func verify_audio(track *resolve) error {
+   // DRM: SoundCloud serves some tracks (major-label catalog) only via
+   // encrypted protocols (cbc-encrypted-hls, ctr-encrypted-hls). The API
+   // still lists the plain legacy transcodings, but their stream
+   // endpoints answer 404 — tombstones. yt-dlp detects the same tracks
+   // by skipping protocols starting with "ctr-"/"cbc-".
+   for i := range track.Media.Transcodings {
+      if strings.Contains(track.Media.Transcodings[i].Format.Protocol, "encrypted") {
+         return fmt.Errorf("DRM track: only encrypted streams available")
+      }
+   }
+
    switch track.Policy {
    case "", "ALLOW", "MONETIZE":
    default:
@@ -121,17 +100,6 @@ func verify_audio(track *resolve) error {
       }
       mime := strings.TrimSpace(strings.Split(t.Format.MimeType, ";")[0])
       if mime == "audio/mpeg" && t.Format.Protocol == "progressive" {
-         address, err := fetch_stream_url(t.URL)
-         if err != nil {
-            return err
-         }
-         status, err := head(address)
-         if err != nil {
-            return err
-         }
-         if status != http.StatusOK {
-            return fmt.Errorf("audio file: HTTP %d %s", status, http.StatusText(status))
-         }
          return nil
       }
    }
@@ -140,7 +108,8 @@ func verify_audio(track *resolve) error {
 
 // resolve mirrors the fields we need from the JSON answer of the
 // SoundCloud resolve endpoint: the song metadata, plus the kind, policy
-// and transcoding list needed to verify the audio file before an insert.
+// and transcoding list needed to tell whether the track is downloadable
+// before an insert.
 type resolve struct {
    ArtworkUrl  string    `json:"artwork_url"`
    DisplayDate time.Time `json:"display_date"`
@@ -204,12 +173,11 @@ func (r *resolve) artwork() string {
    return strings.Replace(address, "-large", "-t500x500", 1)
 }
 
-// transcoding mirrors one entry of the media.transcodings array; URL
-// points at an endpoint that hands out the signed stream URL when asked
-// with the client_id.
+// transcoding mirrors one entry of the media.transcodings array; only
+// the fields needed to tell whether the plain progressive mp3 stream
+// exists are kept.
 type transcoding struct {
-   URL     string `json:"url"`
-   Snipped bool   `json:"snipped"`
+   Snipped bool `json:"snipped"`
    Format  struct {
       Protocol string `json:"protocol"`
       MimeType string `json:"mime_type"`
