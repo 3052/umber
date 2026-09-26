@@ -1,5 +1,20 @@
 [
  {
+  "A": "https://f002.backblazeb2.com/file/minerals/music/amon-tobin-bricolage.jpg",
+  "D": 1790390692,
+  "I": "https://f002.backblazeb2.com/file/minerals/music/02.+Amon+Tobin+-+Easy+Muffin.mp3",
+  "R": "Amon Tobin",
+  "T": "Easy Muffin",
+  "Y": 1997
+ },
+ {
+  "D": 1790385694,
+  "I": "https://youtube.com/watch?v=rHWFUMnddfs",
+  "R": "Eric Whitacre - Topic",
+  "T": "Whitacre, Gillam: Auguries of Innocence: II. When the Soul Slept",
+  "Y": 2026
+ },
+ {
   "D": 1790317585,
   "I": "https://youtube.com/watch?v=AKAB9kAGHaU",
   "R": "Doe Paoro - Topic",
@@ -3495,10 +3510,10 @@
   "Y": 2010
  },
  {
-  "A": "https://i1.sndcdn.com/artworks-uCLT5zlr2CxC-0-t500x500.jpg",
+  "A": "https://i1.sndcdn.com/artworks-xYAsXaVtwPIt-0-t500x500.jpg",
   "D": 1748297283,
   "I": "https://soundcloud.com/eliandfur/your-eyes",
-  "R": "eli & fur",
+  "R": "Eli & Fur",
   "T": "Your Eyes",
   "Y": 2015
  },
@@ -4239,8 +4254,8 @@
   "A": "https://i1.sndcdn.com/avatars-000075616659-q206r4-t500x500.jpg",
   "D": 1732890859,
   "I": "https://soundcloud.com/quetzalcoatl101/avril-1",
-  "R": "aphex twin",
-  "T": "avril 1st",
+  "R": "quetzalcoatl101",
+  "T": "aphex twin - avril 1st",
   "Y": 2014
  },
  {
@@ -6587,8 +6602,8 @@
   "A": "https://i1.sndcdn.com/artworks-000042861544-cxk4iu-t500x500.jpg",
   "D": 1696991150,
   "I": "https://soundcloud.com/teendaze/mountain-range-its-lonely",
-  "R": "Mountain Range",
-  "T": "It's Lonely Around People, Too (Teen Daze Remix)",
+  "R": "Teen Daze",
+  "T": "Mountain Range - It's Lonely Around People, Too (Teen Daze Remix)",
   "Y": 2013
  },
  {
@@ -6794,8 +6809,8 @@
   "A": "https://i1.sndcdn.com/artworks-000087501147-i565dn-t500x500.jpg",
   "D": 1689652767,
   "I": "https://soundcloud.com/fedecrossover/disclosure-ftsam-smith-latch-daniela-andrade-cover-fede-remix",
-  "R": "Disclosure ft.Sam Smith",
-  "T": "Latch (Daniela Andrade Cover) FEDE Remix",
+  "R": "Fede",
+  "T": "Disclosure ft.Sam Smith - Latch (Daniela Andrade Cover) FEDE Remix",
   "Y": 2014
  },
  {
@@ -7071,8 +7086,8 @@
   "A": "https://i1.sndcdn.com/artworks-000365245539-x9ixki-t500x500.jpg",
   "D": 1681347915,
   "I": "https://soundcloud.com/erasedtapes/michael-price-shade-of-dreams",
-  "R": "Michael Price",
-  "T": "Shade of Dreams",
+  "R": "Erased Tapes",
+  "T": "Michael Price - Shade Of Dreams",
   "Y": 2018
  },
  {
@@ -7914,9 +7929,9 @@
   "A": "https://i1.sndcdn.com/avatars-000274827119-0dxutu-t500x500.jpg",
   "D": 1645126836,
   "I": "https://soundcloud.com/pdis_inpartmaint/harold-budd-perhaps-moss",
-  "R": "Harold Budd",
-  "T": "Moss Landing",
-  "Y": 2007
+  "R": "pdis_inpartmaint",
+  "T": "Harold Budd - Perhaps - Moss Landing (Root Strata)",
+  "Y": 2013
  },
  {
   "A": "https://i.ytimg.com/vi/mqRo2tqXza8/sddefault.jpg",
@@ -8070,9 +8085,9 @@
   "A": "https://i1.sndcdn.com/artworks-000111721019-3qcdgv-t500x500.jpg",
   "D": 1641612695,
   "I": "https://soundcloud.com/harold-budd-1/through-the-hill",
-  "R": "Harold Budd, Andy Partridge",
+  "R": "Harold Budd",
   "T": "Through the Hill",
-  "Y": 1994
+  "Y": 2015
  },
  {
   "A": "https://i.ytimg.com/vi/Nu9RVPTpDyA/sd1.jpg",
@@ -8186,8 +8201,8 @@
   "A": "https://i1.sndcdn.com/artworks-AzBenqDkaG5OYBSr-XN3tYg-t500x500.jpg",
   "D": 1634080495,
   "I": "https://soundcloud.com/afterhour-sounds/premiere-ele-bisu-caradamom-coffee",
-  "R": "Ele & Bisu",
-  "T": "Cardamom Coffee",
+  "R": "Afterhour Sounds",
+  "T": "PREMIERE: ele & bisu - Cardamom Coffee [ Talpa Rec. ]",
   "Y": 2021
  },
  {
@@ -8486,14 +8501,6 @@
   "Y": 2002
  },
  {
-  "A": "https://i1.sndcdn.com/artworks-giLADkGEBARNygor-ttwEBg-t500x500.jpg",
-  "D": 1631655721,
-  "I": "https://soundcloud.com/noor-ali-830450056/amon-tobin-easy-muffin-339374585",
-  "R": "Amon Tobin",
-  "T": "Easy Muffin",
-  "Y": 1997
- },
- {
   "D": 1631415922,
   "I": "https://youtube.com/watch?v=T9lV5-wbPqw",
   "R": "Stars of the Lid - Topic",
@@ -8582,16 +8589,16 @@
   "A": "https://i1.sndcdn.com/artworks-000109577634-hscw1v-t500x500.jpg",
   "D": 1629657480,
   "I": "https://soundcloud.com/sieren/hundred-waters-murmurs-sieren-remixx",
-  "R": "Sieren, Hundred Waters",
-  "T": "Murmurs (remix)",
+  "R": "SIEREN",
+  "T": "Hundred Waters - Murmurs (Sieren Remix) [Free DL]",
   "Y": 2015
  },
  {
   "A": "https://i1.sndcdn.com/artworks-000008919255-aagig2-t500x500.jpg",
   "D": 1629657438,
   "I": "https://soundcloud.com/janirmusic/jani-r-no-more-words-second",
-  "R": "Jani Rantanen",
-  "T": "No More Words (Second mix)",
+  "R": "Jani R",
+  "T": "No More Words (Second Mix)",
   "Y": 2011
  },
  {
@@ -8607,15 +8614,15 @@
   "D": 1629657389,
   "I": "https://soundcloud.com/beatsbysavon/aint-no-way",
   "R": "SAVON",
-  "T": "Ain’t No Way",
+  "T": "Ain't No Way",
   "Y": 2015
  },
  {
   "A": "https://i1.sndcdn.com/artworks-000129838607-iu3d65-t500x500.jpg",
   "D": 1629656853,
   "I": "https://soundcloud.com/eekkoo/loudplaces",
-  "R": "Jamie xx",
-  "T": "Loud Places (feat. Romy) [Eekkoo Edit]",
+  "R": "eekkoo",
+  "T": "Jamie xx - Loud Places (feat. Romy) [Eekkoo Edit]",
   "Y": 2015
  },
  {
