@@ -8,6 +8,7 @@ import (
    "net/http"
    "net/url"
    "slices"
+   "strings"
    "time"
 )
 
@@ -33,16 +34,14 @@ func do_soundcloud(address, name string) error {
       return fmt.Errorf("duplicate found: '%s' already exists in %s", address, name)
    }
 
+   // Every track has artwork, or at worst the artist avatar as fallback.
    song_data := song{
+      A: track.artwork(),
       D: time.Now().Unix(),
       I: address,
       R: track.User.Username,
       T: track.Title,
       Y: track.DisplayDate.Year(),
-   }
-   image := track.artwork()
-   if image != "" {
-      song_data.A = image
    }
 
    songs = append(songs, &song_data)
@@ -96,13 +95,18 @@ func fetch_resolve(address string) (*resolve, error) {
    return result, nil
 }
 
-// artwork returns the track artwork, falling back to the artist avatar
-// when the track has no artwork of its own.
+// artwork returns the track artwork at the 500x500 size, falling back to
+// the artist avatar when the track has no artwork of its own. The API
+// serves a "-large" size; "-t500x500" is the larger square variant.
+// https://i1.sndcdn.com/artworks-xYAsXaVtwPIt-0-t500x500.jpg
 func (r *resolve) artwork() string {
+   var address string
    if r.ArtworkUrl != "" {
-      return r.ArtworkUrl
+      address = r.ArtworkUrl
+   } else {
+      address = r.User.AvatarUrl
    }
-   return r.User.AvatarUrl
+   return strings.Replace(address, "-large", "-t500x500", 1)
 }
 
 // soundcloud.go marker preserve
