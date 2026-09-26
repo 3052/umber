@@ -331,24 +331,28 @@ func mathAlnumASCII(r rune) (ascii rune, ok bool) {
 // recordID returns the URL-derived identifier used to disambiguate records
 // whose filename stems collide: the YouTube video ID, or the final path
 // segment of a Bandcamp URL (e.g. "waiting" in .../track/waiting) or a
-// SoundCloud URL (e.g. "flickermood" in .../forss/flickermood).
-func recordID(raw string) string {
-   u, err := url.Parse(raw)
-   if err != nil {
-      return ""
-   }
-   switch platformOf(raw) {
+// SoundCloud URL (e.g. "flickermood" in .../forss/flickermood). p must be
+// the record's platform as classified by platformOf.
+func recordID(p platform, raw string) (string, error) {
+   switch p {
    case platformYouTube:
-      id, _ := videoIDFromURL(raw)
-      return id
+      id, err := videoIDFromURL(raw)
+      if err != nil {
+         return "", err
+      }
+      return id, nil
    case platformBandcamp, platformSoundCloud:
+      u, err := url.Parse(raw)
+      if err != nil {
+         return "", fmt.Errorf("parse url: %w", err)
+      }
       path := strings.Trim(u.Path, "/")
       if i := strings.LastIndex(path, "/"); i >= 0 {
-         return path[i+1:]
+         return path[i+1:], nil
       }
-      return path
+      return path, nil
    }
-   return ""
+   return "", nil
 }
 
 // sanitizeFilename sanitizes a title for use as a filename, then truncates
@@ -405,22 +409,23 @@ const (
 // platformOf classifies a record URL by host: bandcamp.com (or a
 // *.bandcamp.com subdomain) is bandcamp, soundcloud.com (or a
 // *.soundcloud.com subdomain) is soundcloud, youtube.com exactly is
-// YouTube, and anything else is other.
-func platformOf(raw string) platform {
+// YouTube, and anything else is other. A URL that does not parse is an
+// error; callers must not silently treat it as platformOther.
+func platformOf(raw string) (platform, error) {
    u, err := url.Parse(raw)
    if err != nil {
-      return platformOther
+      return platformOther, fmt.Errorf("parse url: %w", err)
    }
    host := strings.ToLower(u.Hostname())
    switch {
    case host == "bandcamp.com" || strings.HasSuffix(host, ".bandcamp.com"):
-      return platformBandcamp
+      return platformBandcamp, nil
    case host == "soundcloud.com" || strings.HasSuffix(host, ".soundcloud.com"):
-      return platformSoundCloud
+      return platformSoundCloud, nil
    case host == "youtube.com":
-      return platformYouTube
+      return platformYouTube, nil
    }
-   return platformOther
+   return platformOther, nil
 }
 
 // util.go marker preserve

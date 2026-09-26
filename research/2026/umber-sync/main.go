@@ -24,11 +24,17 @@ var validExts = map[string]bool{
    ".mp3":  true,
 }
 
-func cleanupTmpFiles(outputDir string) {
+// cleanupTmpFiles removes leftover in-flight temp files from interrupted
+// runs: every file matching isTempFile in outputDir. A leftover remux
+// temp is not just clutter — ffmpeg runs without -y and would refuse to
+// overwrite it — so cleanup failure is an error, not a log line. All
+// removal failures are joined so one bad file does not mask another.
+func cleanupTmpFiles(outputDir string) error {
    entries, err := os.ReadDir(outputDir)
    if err != nil {
-      return
+      return fmt.Errorf("read output dir: %w", err)
    }
+   var errs []error
    for _, entry := range entries {
       if entry.IsDir() {
          continue
@@ -39,11 +45,12 @@ func cleanupTmpFiles(outputDir string) {
       }
       path := filepath.Join(outputDir, name)
       if err := os.Remove(path); err != nil {
-         log.Printf("cannot remove tmp file %s: %v", path, err)
+         errs = append(errs, fmt.Errorf("remove %s: %w", path, err))
       } else {
          log.Printf("removed tmp file %s", path)
       }
    }
+   return errors.Join(errs...)
 }
 
 // countStems counts, for every supported record, how many records sanitize
@@ -51,52 +58,74 @@ func cleanupTmpFiles(outputDir string) {
 // differing only in case collide, as they do on case-insensitive
 // filesystems) and keyed with the expected extension (so a Bandcamp or
 // SoundCloud .mp3 and a YouTube .opus sharing a title are not duplicates
-// of each other).
-func countStems(records []Record, outputDir string) map[string]int {
+// of each other). A record whose URL does not parse is an error: it would
+// otherwise silently vanish from the stem map.
+func countStems(records []Record, outputDir string) (map[string]int, error) {
    counts := make(map[string]int)
    for _, r := range records {
       if r.I == "" || r.T == "" {
          continue
       }
-      ext, ok := stemExt(r.I)
+      p, err := platformOf(r.I)
+      if err != nil {
+         return nil, fmt.Errorf("record %q: %w", r.T, err)
+      }
+      ext, ok := stemExt(p)
       if !ok {
          continue
       }
       stem := sanitizeFilename(r.baseName(), ext, outputDir)
       counts[strings.ToLower(stem)+ext]++
    }
-   return counts
+   return counts, nil
 }
 
 // fileStem returns the filename stem for r: the sanitized base name, plus
 // " " + recordID when stemCounts shows another record sharing that stem
 // case-insensitively. The suffix lets distinct items whose names differ
 // only in case coexist on case-insensitive filesystems; non-duplicates keep
-// their exact names. Identical records (same ID) collapse to one stem.
-func fileStem(r *Record, stemCounts map[string]int, outputDir string) string {
-   ext, ok := stemExt(r.I)
+// their exact names. Identical records (same ID) collapse to one stem. A
+// return of "" with a nil error means the record's platform is unsupported
+// and no file is expected for it.
+func fileStem(r *Record, stemCounts map[string]int, outputDir string) (string, error) {
+   p, err := platformOf(r.I)
+   if err != nil {
+      return "", fmt.Errorf("record %q: %w", r.T, err)
+   }
+   ext, ok := stemExt(p)
    if !ok {
-      return ""
+      return "", nil
    }
    stem := sanitizeFilename(r.baseName(), ext, outputDir)
    if stemCounts[strings.ToLower(stem)+ext] < 2 {
-      return stem
+      return stem, nil
    }
-   if id := recordID(r.I); id != "" {
+   id, err := recordID(p, r.I)
+   if err != nil {
+      return "", fmt.Errorf("record %q: %w", r.T, err)
+   }
+   if id != "" {
       stem = sanitizeFilename(stem+" "+id, ext, outputDir)
    }
-   return stem
+   return stem, nil
 }
 
 func generateM3U(outputDir string, records []Record) error {
-   stemCounts := countStems(records, outputDir)
+   stemCounts, err := countStems(records, outputDir)
+   if err != nil {
+      return err
+   }
 
    var items []*Record
    for i, r := range records {
       if r.I == "" || r.T == "" {
          continue
       }
-      switch platformOf(r.I) {
+      p, perr := platformOf(r.I)
+      if perr != nil {
+         return fmt.Errorf("record %q: %w", r.T, perr)
+      }
+      switch p {
       case platformBandcamp, platformYouTube, platformSoundCloud:
          items = append(items, &records[i])
       }
@@ -130,11 +159,16 @@ func generateM3U(outputDir string, records []Record) error {
    }
    defer out.Close()
 
-   fmt.Fprintln(out, "#EXTM3U")
+   if _, werr := fmt.Fprintln(out, "#EXTM3U"); werr != nil {
+      return fmt.Errorf("write m3u header: %w", werr)
+   }
 
    trackNum := 0
    for _, item := range items {
-      stem := fileStem(item, stemCounts, outputDir)
+      stem, serr := fileStem(item, stemCounts, outputDir)
+      if serr != nil {
+         return serr
+      }
       if stem == "" {
          continue
       }
@@ -143,8 +177,12 @@ func generateM3U(outputDir string, records []Record) error {
          continue
       }
       trackNum++
-      fmt.Fprintf(out, "#EXTINF:0,%s\n", item.baseName())
-      fmt.Fprintf(out, "%s\n", filename)
+      if _, werr := fmt.Fprintf(out, "#EXTINF:0,%s\n", item.baseName()); werr != nil {
+         return fmt.Errorf("write m3u entry: %w", werr)
+      }
+      if _, werr := fmt.Fprintf(out, "%s\n", filename); werr != nil {
+         return fmt.Errorf("write m3u entry: %w", werr)
+      }
    }
 
    log.Printf("M3U file generated: %s (%d tracks)", m3uPath, trackNum)
@@ -169,7 +207,9 @@ func main() {
       log.Fatalf("cannot create output dir: %v", err)
    }
 
-   cleanupTmpFiles(*outputDir)
+   if err := cleanupTmpFiles(*outputDir); err != nil {
+      log.Fatalf("cleanup tmp files: %v", err)
+   }
 
    configDir, err := os.UserConfigDir()
    if err != nil {
@@ -178,10 +218,13 @@ func main() {
    configPath := filepath.Join(configDir, "umber", "umber.json")
 
    var cfg Config
-   if data, err := os.ReadFile(configPath); err == nil {
-      if err := json.Unmarshal(data, &cfg); err != nil {
-         log.Fatalf("cannot parse config: %v", err)
+   if data, rerr := os.ReadFile(configPath); rerr != nil {
+      if !errors.Is(rerr, os.ErrNotExist) {
+         log.Fatalf("cannot read config: %v", rerr)
       }
+      // No config file yet: proceed with an empty one.
+   } else if uerr := json.Unmarshal(data, &cfg); uerr != nil {
+      log.Fatalf("cannot parse config: %v", uerr)
    }
 
    if cfg.VisitorID == "" {
@@ -204,14 +247,23 @@ func main() {
       log.Fatalf("cannot parse input JSON: %v", err)
    }
 
-   stemCounts := countStems(records, *outputDir)
+   // A record whose URL does not parse is fatal: it would silently drop
+   // out of titleToRecord below and the sweep would then delete its
+   // existing file as unreferenced.
+   stemCounts, err := countStems(records, *outputDir)
+   if err != nil {
+      log.Fatal(err)
+   }
 
    titleToRecord := make(map[string]Record)
    for _, r := range records {
       if r.I == "" || r.T == "" {
          continue
       }
-      stem := fileStem(&r, stemCounts, *outputDir)
+      stem, serr := fileStem(&r, stemCounts, *outputDir)
+      if serr != nil {
+         log.Fatal(serr)
+      }
       if stem == "" {
          continue
       }
@@ -248,7 +300,10 @@ func main() {
       }
       base := strings.TrimSuffix(name, filepath.Ext(name))
       allFiles[base] = name
-      if info, err := entry.Info(); err == nil && info.Size() > 0 {
+      info, ierr := entry.Info()
+      if ierr != nil {
+         log.Printf("cannot stat %s: %v", name, ierr)
+      } else if info.Size() > 0 {
          nonEmpty[base] = true
       }
    }
@@ -271,7 +326,12 @@ func main() {
          continue
       }
       var err error
-      switch platformOf(r.I) {
+      p, perr := platformOf(r.I)
+      if perr != nil {
+         log.Printf("error downloading %s: %v", title, perr)
+         continue
+      }
+      switch p {
       case platformBandcamp:
          err = downloadBandcamp(r.I, title, *outputDir, *maxETA)
       case platformSoundCloud:
@@ -311,8 +371,8 @@ func saveConfig(configPath string, cfg *Config) {
 // stemExt returns the extension a record's output file is expected to use,
 // which sizes the filename truncation cap. ok is false for unsupported
 // platforms.
-func stemExt(raw string) (ext string, ok bool) {
-   switch platformOf(raw) {
+func stemExt(p platform) (ext string, ok bool) {
+   switch p {
    case platformBandcamp, platformSoundCloud:
       return ".mp3", true
    case platformYouTube:
