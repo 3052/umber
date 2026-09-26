@@ -73,7 +73,7 @@ func countStems(records []Record, outputDir string) map[string]int {
 // case-insensitively. The suffix lets distinct items whose names differ
 // only in case coexist on case-insensitive filesystems; non-duplicates keep
 // their exact names. Identical records (same ID) collapse to one stem.
-func fileStem(r Record, stemCounts map[string]int, outputDir string) string {
+func fileStem(r *Record, stemCounts map[string]int, outputDir string) string {
    ext, ok := stemExt(r.I)
    if !ok {
       return ""
@@ -134,7 +134,7 @@ func generateM3U(outputDir string, records []Record) error {
 
    trackNum := 0
    for _, item := range items {
-      stem := fileStem(*item, stemCounts, outputDir)
+      stem := fileStem(item, stemCounts, outputDir)
       if stem == "" {
          continue
       }
@@ -211,7 +211,7 @@ func main() {
       if r.I == "" || r.T == "" {
          continue
       }
-      stem := fileStem(r, stemCounts, *outputDir)
+      stem := fileStem(&r, stemCounts, *outputDir)
       if stem == "" {
          continue
       }
@@ -337,13 +337,20 @@ type Record struct {
    Y int    `json:"Y"`
 }
 
-// baseName returns the filename stem for the record: the author (R) when
-// present, followed by the title (T).
-func (r Record) baseName() string {
-   if r.R != "" {
-      return r.R + " - " + r.T
+// baseName returns the filename stem for the record, translating the
+// adder's label() function: a YouTube "... - Topic" author (an auto-
+// generated topic channel) has that suffix stripped, and the title alone
+// is used when it already contains the author (case-insensitive substring
+// match); otherwise the stem is "author - title".
+func (r *Record) baseName() string {
+   author := r.R
+   if strings.HasPrefix(r.I, "https://youtube.com/") && strings.HasSuffix(author, " - Topic") {
+      author = strings.TrimSuffix(author, " - Topic")
    }
-   return r.T
+   if strings.Contains(strings.ToLower(r.T), strings.ToLower(author)) {
+      return r.T
+   }
+   return author + " - " + r.T
 }
 
 // main.go marker preserve

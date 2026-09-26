@@ -2,14 +2,12 @@
 package main
 
 import (
-   "bytes"
    "encoding/json"
    "fmt"
    "log"
    "net/http"
    "net/url"
    "os"
-   "os/exec"
    "path/filepath"
    "strings"
    "time"
@@ -23,9 +21,8 @@ const clientID = "KKzJxmw11tYpCs6T24P4uUYhqmjalG6M"
 // downloadSoundCloud downloads the mp3 stream for a soundcloud.com track
 // URL such as https://soundcloud.com/forss/flickermood. The resolve
 // endpoint is fetched once; among its transcodings the progressive mp3
-// is preferred — a plain signed file, downloaded like Bandcamp's — with
-// the HLS mp3 as a fallback, remuxed by ffmpeg like the YouTube stream.
-// Output is always .mp3.
+// is a plain signed file downloaded exactly like Bandcamp's stream —
+// no HLS path is needed. Output is always .mp3.
 func downloadSoundCloud(address, title, outputDir string, maxETA time.Duration) error {
    track, err := fetchResolve(address)
    if err != nil {
@@ -42,7 +39,6 @@ func downloadSoundCloud(address, title, outputDir string, maxETA time.Duration) 
       return fmt.Errorf("policy %s: no full stream available", track.Policy)
    }
 
-   var hls *soundcloudTranscoding
    for i := range track.Media.Transcodings {
       t := &track.Media.Transcodings[i]
       // Snipped transcodings are 30-second previews of Go+ tracks.
@@ -50,22 +46,11 @@ func downloadSoundCloud(address, title, outputDir string, maxETA time.Duration) 
          continue
       }
       mime := strings.TrimSpace(strings.Split(t.Format.MimeType, ";")[0])
-      if mime != "audio/mpeg" {
-         continue
-      }
-      switch t.Format.Protocol {
-      case "progressive":
+      if mime == "audio/mpeg" && t.Format.Protocol == "progressive" {
          return downloadSoundCloudFile(t, title, outputDir, maxETA)
-      case "hls":
-         if hls == nil {
-            hls = t
-         }
       }
    }
-   if hls == nil {
-      return fmt.Errorf("no mp3 stream found for %s", address)
-   }
-   return downloadSoundCloudHLS(hls, title, outputDir)
+   return fmt.Errorf("no progressive mp3 stream found for %s", address)
 }
 
 // downloadSoundCloudFile downloads the progressive mp3 in one request,
@@ -98,43 +83,8 @@ func downloadSoundCloudFile(t *soundcloudTranscoding, title, outputDir string, m
    return nil
 }
 
-// downloadSoundCloudHLS handles tracks that only offer the HLS mp3
-// transcoding: ffmpeg downloads the playlist and remuxes the segments
-// into one mp3, like the YouTube remux. The max-eta guard does not
-// apply to this path.
-func downloadSoundCloudHLS(t *soundcloudTranscoding, title, outputDir string) error {
-   playlistURL, err := fetchStreamURL(t.URL)
-   if err != nil {
-      return err
-   }
-
-   name := sanitizeFilename(title, ".mp3", outputDir)
-   finalPath := filepath.Join(outputDir, name+".mp3")
-   ffTmp := filepath.Join(outputDir, name+".ff")
-
-   cmd := exec.Command("ffmpeg", "-y", "-i", playlistURL, "-c", "copy", "-f", "mp3", ffTmp)
-   var stderr bytes.Buffer
-   cmd.Stderr = &stderr
-   if err := cmd.Run(); err != nil {
-      if err := os.Remove(ffTmp); err != nil && !os.IsNotExist(err) {
-         return fmt.Errorf("remove ff tmp: %w", err)
-      }
-      return fmt.Errorf("ffmpeg hls remux: %w\n%s", err, stderr.String())
-   }
-   if err := os.Rename(ffTmp, finalPath); err != nil {
-      if err := os.Remove(ffTmp); err != nil && !os.IsNotExist(err) {
-         return fmt.Errorf("remove ff tmp after rename fail: %w", err)
-      }
-      return fmt.Errorf("rename file: %w", err)
-   }
-
-   log.Printf("%s  remuxed", filepath.Base(finalPath))
-   return nil
-}
-
 // fetchStreamURL exchanges a transcoding endpoint for the signed stream
-// URL it hands out for this client id. Progressive answers with a plain
-// CDN file; HLS answers with an m3u8 playlist.
+// URL it hands out for this client id.
 func fetchStreamURL(transcodingURL string) (string, error) {
    u, err := url.Parse(transcodingURL)
    if err != nil {
@@ -210,7 +160,7 @@ func fetchResolve(address string) (*soundcloudTrack, error) {
 
 // soundcloudTranscoding mirrors one entry of the media.transcodings
 // array; URL points at an endpoint that hands out the stream URL when
-// asked with the client_id. Snipped marks 30-second Go+ previews.
+// asked with the client_id.
 type soundcloudTranscoding struct {
    URL     string `json:"url"`
    Snipped bool   `json:"snipped"`
