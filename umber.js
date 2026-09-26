@@ -93,7 +93,7 @@ async function main() {
    records.sort((x, y) => y.D - x.D);
 
    const timeParam = query.get('d');
-   const start = timeParam === null ? 0 : records.findIndex(row => String(row.D) === timeParam);
+   const start = timeParam === null ? 0 : records.findIndex(row => row.D <= Number(timeParam));
 
    if (start === -1) {
       return;
@@ -102,9 +102,28 @@ async function main() {
    const chunk = records.slice(start, start + limit);
    document.getElementById('figures').append(...chunk.map(build));
 
+   // the roundest timestamp that still opens the page starting at `index`:
+   // any value in [records[index].D, records[index - 1].D) does, so take the
+   // one with the most trailing zeroes that fits below the previous record
+   const landmark = index => {
+      const target = records[index].D;
+      const before = index === 0 ? Infinity : records[index - 1].D;
+
+      for (let digits = 9; digits > 0; digits--) {
+         const power = 10 ** digits;
+         const remainder = target % power;
+         const round = remainder ? target - remainder + power : target;
+         if (round < before) {
+            return round;
+         }
+      }
+
+      return target; // neighbours too close to round at all
+   };
+
    const older = document.getElementById('older');
    if (start + limit < records.length) {
-      query.set('d', String(records[start + limit].D));
+      query.set('d', String(landmark(start + limit)));
       older.href = '?' + query.toString();
    } else {
       older.remove();
@@ -112,7 +131,12 @@ async function main() {
 
    const newer = document.getElementById('newer');
    if (start > 0) {
-      query.set('d', String(records[Math.max(0, start - limit)].D));
+      const target = Math.max(0, start - limit);
+      if (target === 0) {
+         query.delete('d'); // rounder than any round number: no d at all
+      } else {
+         query.set('d', String(landmark(target)));
+      }
       newer.href = '?' + query.toString();
    } else {
       newer.remove();
