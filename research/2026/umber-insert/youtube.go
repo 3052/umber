@@ -11,20 +11,10 @@ import (
    "net/http"
    "net/url"
    "slices"
-   "strings"
    "time"
 )
 
 const sep = "\nytcfg.set("
-
-// containsAuthor reports whether the title contains the author,
-// ignoring case and spaces.
-func containsAuthor(title, author string) bool {
-   fold := func(s string) string {
-      return strings.ToLower(strings.ReplaceAll(s, " ", ""))
-   }
-   return strings.Contains(fold(title), fold(author))
-}
 
 func do_video_id(video_id, name, visitorID string) error {
    watch := "https://youtube.com/watch?v=" + video_id
@@ -44,9 +34,6 @@ func do_video_id(video_id, name, visitorID string) error {
    }
    fmt.Println(play.VideoDetails.ShortDescription)
 
-   // YouTube Music auto-generated channels are suffixed with " - Topic";
-   // strip it so the artist name is clean.
-   author := strings.TrimSuffix(play.VideoDetails.Author, " - Topic")
    video_title := play.VideoDetails.Title
    if video_title == "" {
       return fmt.Errorf("%s: player response has empty title", watch)
@@ -60,11 +47,9 @@ func do_video_id(video_id, name, visitorID string) error {
    song_data := song{
       D: time.Now().Unix(),
       I: watch,
+      R: play.VideoDetails.Author,
       T: video_title,
       Y: play.Microformat.PlayerMicroformatRenderer.PublishDate.Year(),
-   }
-   if !containsAuthor(video_title, author) {
-      song_data.R = author
    }
    if image != "" {
       song_data.A = image

@@ -27,6 +27,7 @@ func main() {
 
    address := flag.String("b", "", "Bandcamp address")
    name := flag.String("n", "", "input JSON file path (required on first run)")
+   soundcloud_url := flag.String("s", "", "SoundCloud address")
    video_url := flag.String("y", "", "YouTube video URL")
 
    flag.Parse()
@@ -82,6 +83,10 @@ func main() {
    switch {
    case *address != "":
       if err := do_bandcamp(*address, inputPath); err != nil {
+         log.Fatal(err)
+      }
+   case *soundcloud_url != "":
+      if err := do_soundcloud(*soundcloud_url, inputPath); err != nil {
          log.Fatal(err)
       }
    case *video_url != "":
