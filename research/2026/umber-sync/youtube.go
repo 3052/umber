@@ -43,10 +43,12 @@ var (
 
 var errVisitorExpired = fmt.Errorf("visitor ID expired")
 
-// downloadVideo downloads the AUDIO_QUALITY_MEDIUM stream for a YouTube
-// watch URL (youtube.com host) and remuxes it with ffmpeg. title is the
-// filename stem: the author (R) followed by the title (T) when R exists.
-func downloadVideo(pageURL, title, visitorID, outputDir string, threads int, maxETA time.Duration) error {
+// downloadYouTube downloads the AUDIO_QUALITY_MEDIUM audio stream for a
+// YouTube watch URL (youtube.com host) and remuxes it with ffmpeg. title is
+// the record's filename stem, built by baseName: "author - title", except a
+// YouTube " - Topic" author is stripped, and the title alone is used when
+// it already contains the author.
+func downloadYouTube(pageURL, title, visitorID, outputDir string, threads int, maxETA time.Duration) error {
    videoID, err := videoIDFromURL(pageURL)
    if err != nil {
       return err

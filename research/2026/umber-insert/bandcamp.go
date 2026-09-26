@@ -14,20 +14,22 @@ import (
    "time"
 )
 
-// do_bandcamp adds a Bandcamp track to the songs file.
+// do_bandcamp adds a Bandcamp track to the songs file. The address the
+// user pasted is what gets stored as I, so the duplicate check runs
+// first, before any network request.
 func do_bandcamp(address, name string) error {
-   details, err := fetch_tralbum(address)
-   if err != nil {
-      return err
-   }
-
    songs, err := read_songs(name)
    if err != nil {
       return err
    }
 
-   if contains_song(songs, details.URL) {
-      return fmt.Errorf("duplicate found: '%s' already exists in %s", details.URL, name)
+   if contains_song(songs, address) {
+      return fmt.Errorf("duplicate found: '%s' already exists in %s", address, name)
+   }
+
+   details, err := fetch_tralbum(address)
+   if err != nil {
+      return err
    }
 
    // Tracks not on an album have album_release_date = null; fall back to
@@ -46,7 +48,7 @@ func do_bandcamp(address, name string) error {
       // standard size.
       A: fmt.Sprintf("https://f4.bcbits.com/img/a%d_2", details.ArtId),
       D: time.Now().Unix(),
-      I: details.URL,
+      I: address,
       R: details.Artist,
       T: details.Current.Title,
       Y: release.Year(),
@@ -63,7 +65,6 @@ func do_bandcamp(address, name string) error {
 type tralbum struct {
    Artist           string `json:"artist"`
    ArtId            int    `json:"art_id"`
-   URL              string `json:"url"`
    AlbumReleaseDate string `json:"album_release_date"`
    Current          struct {
       Title       string `json:"title"`
@@ -73,8 +74,7 @@ type tralbum struct {
 
 // fetch_tralbum fetches a Bandcamp track page and extracts the track
 // details from its data-tralbum attribute in a single request. The JSON
-// blob carries everything the old two-request flow gathered: artist,
-// title, art ID, release date and the canonical URL.
+// blob carries artist, title, art ID and the release date.
 func fetch_tralbum(address string) (*tralbum, error) {
    resp, err := http.Get(address)
    if err != nil {

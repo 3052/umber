@@ -110,11 +110,9 @@ func downloadFile(url, filename string, threads int, maxETA time.Duration) error
       }
    }
 
-   for i := 0; i < threads; i++ {
-      wg.Add(1)
-      go func(idx int) {
-         defer wg.Done()
-         startByte := int64(idx) * chunkSize
+   for i := range threads {
+      wg.Go(func() {
+         startByte := int64(i) * chunkSize
          endByte := startByte + chunkSize - 1
          if endByte > total-1 {
             endByte = total - 1
@@ -124,25 +122,25 @@ func downloadFile(url, filename string, threads int, maxETA time.Duration) error
          }
          chunkReq, err := http.NewRequestWithContext(ctx, "GET", url, nil)
          if err != nil {
-            results[idx].err = err
+            results[i].err = err
             return
          }
          chunkReq.Header.Set("Range", fmt.Sprintf("bytes=%d-%d", startByte, endByte))
          chunkResp, err := http.DefaultClient.Do(chunkReq)
          if err != nil {
-            results[idx].err = err
+            results[i].err = err
             return
          }
          defer chunkResp.Body.Close()
          if chunkResp.StatusCode != http.StatusOK && chunkResp.StatusCode != http.StatusPartialContent {
-            results[idx].err = fmt.Errorf("chunk %d returned status %d", idx, chunkResp.StatusCode)
+            results[i].err = fmt.Errorf("chunk %d returned status %d", i, chunkResp.StatusCode)
             return
          }
          buf := make([]byte, 32*1024)
          for {
             n, rerr := chunkResp.Body.Read(buf)
             if n > 0 {
-               results[idx].data = append(results[idx].data, buf[:n]...)
+               results[i].data = append(results[i].data, buf[:n]...)
                mu.Lock()
                downloaded += int64(n)
                logProgress()
@@ -152,11 +150,11 @@ func downloadFile(url, filename string, threads int, maxETA time.Duration) error
                break
             }
             if rerr != nil {
-               results[idx].err = rerr
+               results[i].err = rerr
                return
             }
          }
-      }(i)
+      })
    }
    wg.Wait()
 

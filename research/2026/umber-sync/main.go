@@ -203,56 +203,70 @@ func main() {
       return
    }
 
-   if err := os.MkdirAll(*outputDir, 0755); err != nil {
-      log.Fatalf("cannot create output dir: %v", err)
+   if err := run(*inputFile, *outputDir, *threads, *maxETA); err != nil {
+      log.Fatal(err)
+   }
+}
+
+// run performs the full sync after flag validation: prepares the output
+// directory, loads config and input records, removes files no longer in
+// the input, downloads missing or empty items, and writes the M3U
+// playlist. Conditions that abort the run are returned as errors for
+// main to report; per-item failures (file removals, stats, downloads)
+// are logged and skipped so one bad item does not abort the run. The
+// visitor-expired return ends the run early so the next invocation
+// refetches the visitor ID.
+func run(inputFile, outputDir string, threads int, maxETA time.Duration) error {
+   if err := os.MkdirAll(outputDir, 0755); err != nil {
+      return fmt.Errorf("cannot create output dir: %w", err)
    }
 
-   if err := cleanupTmpFiles(*outputDir); err != nil {
-      log.Fatalf("cleanup tmp files: %v", err)
+   if err := cleanupTmpFiles(outputDir); err != nil {
+      return fmt.Errorf("cleanup tmp files: %w", err)
    }
 
    configDir, err := os.UserConfigDir()
    if err != nil {
-      log.Fatalf("cannot determine config dir: %v", err)
+      return fmt.Errorf("cannot determine config dir: %w", err)
    }
    configPath := filepath.Join(configDir, "umber", "umber.json")
 
    var cfg Config
    if data, rerr := os.ReadFile(configPath); rerr != nil {
       if !errors.Is(rerr, os.ErrNotExist) {
-         log.Fatalf("cannot read config: %v", rerr)
+         return fmt.Errorf("cannot read config: %w", rerr)
       }
       // No config file yet: proceed with an empty one.
    } else if uerr := json.Unmarshal(data, &cfg); uerr != nil {
-      log.Fatalf("cannot parse config: %v", uerr)
+      return fmt.Errorf("cannot parse config: %w", uerr)
    }
 
    if cfg.VisitorID == "" {
       visitorId, err := fetchVisitorID()
       if err != nil {
-         log.Fatalf("cannot fetch visitor ID: %v", err)
+         return fmt.Errorf("cannot fetch visitor ID: %w", err)
       }
       cfg.VisitorID = visitorId
       log.Printf("visitor ID fetched")
       saveConfig(configPath, &cfg)
    }
 
-   fileData, err := os.ReadFile(*inputFile)
+   fileData, err := os.ReadFile(inputFile)
    if err != nil {
-      log.Fatalf("cannot read input file: %v", err)
+      return fmt.Errorf("cannot read input file: %w", err)
    }
 
    var records []Record
    if err := json.Unmarshal(fileData, &records); err != nil {
-      log.Fatalf("cannot parse input JSON: %v", err)
+      return fmt.Errorf("cannot parse input JSON: %w", err)
    }
 
    // A record whose URL does not parse is fatal: it would silently drop
    // out of titleToRecord below and the sweep would then delete its
    // existing file as unreferenced.
-   stemCounts, err := countStems(records, *outputDir)
+   stemCounts, err := countStems(records, outputDir)
    if err != nil {
-      log.Fatal(err)
+      return err
    }
 
    titleToRecord := make(map[string]Record)
@@ -260,9 +274,9 @@ func main() {
       if r.I == "" || r.T == "" {
          continue
       }
-      stem, serr := fileStem(&r, stemCounts, *outputDir)
+      stem, serr := fileStem(&r, stemCounts, outputDir)
       if serr != nil {
-         log.Fatal(serr)
+         return serr
       }
       if stem == "" {
          continue
@@ -272,9 +286,9 @@ func main() {
 
    // ── Delete files not in input ────────────────────────────────────
 
-   entries, err := os.ReadDir(*outputDir)
+   entries, err := os.ReadDir(outputDir)
    if err != nil {
-      log.Fatalf("cannot read output directory: %v", err)
+      return fmt.Errorf("cannot read output directory: %w", err)
    }
 
    allFiles := make(map[string]string)
@@ -290,7 +304,7 @@ func main() {
       }
       ext := strings.ToLower(filepath.Ext(name))
       if !validExts[ext] {
-         path := filepath.Join(*outputDir, name)
+         path := filepath.Join(outputDir, name)
          if err := os.Remove(path); err != nil {
             log.Printf("cannot remove non-audio file %s: %v", path, err)
          } else {
@@ -310,7 +324,7 @@ func main() {
 
    for title, filename := range allFiles {
       if _, exists := titleToRecord[title]; !exists {
-         path := filepath.Join(*outputDir, filename)
+         path := filepath.Join(outputDir, filename)
          if err := os.Remove(path); err != nil {
             log.Printf("cannot remove %s: %v", path, err)
          } else {
@@ -333,26 +347,27 @@ func main() {
       }
       switch p {
       case platformBandcamp:
-         err = downloadBandcamp(r.I, title, *outputDir, *maxETA)
+         err = downloadBandcamp(r.I, title, outputDir, maxETA)
       case platformSoundCloud:
-         err = downloadSoundCloud(r.I, title, *outputDir, *maxETA)
+         err = downloadSoundCloud(r.I, title, outputDir, maxETA)
       case platformYouTube:
-         err = downloadVideo(r.I, title, cfg.VisitorID, *outputDir, *threads, *maxETA)
+         err = downloadYouTube(r.I, title, cfg.VisitorID, outputDir, threads, maxETA)
       }
       if err != nil {
          if errors.Is(err, errVisitorExpired) {
             log.Printf("visitor ID expired, clearing from config: %v", err)
             cfg.VisitorID = ""
             saveConfig(configPath, &cfg)
-            return
+            return nil
          }
          log.Printf("error downloading %s: %v", title, err)
       }
    }
 
-   if err := generateM3U(*outputDir, records); err != nil {
+   if err := generateM3U(outputDir, records); err != nil {
       log.Printf("error generating M3U file: %v", err)
    }
+   return nil
 }
 
 func saveConfig(configPath string, cfg *Config) {
@@ -387,12 +402,12 @@ type Config struct {
 }
 
 // Record represents one entry in the input JSON. I is the item URL, T the
-// required title, R the optional author, and A the optional artwork URL.
+// required title, R the author, and A the optional artwork URL.
 type Record struct {
    A string `json:"A,omitempty"`
    D int64  `json:"D"`
    I string `json:"I"`
-   R string `json:"R,omitempty"`
+   R string `json:"R"`
    T string `json:"T"`
    Y int    `json:"Y"`
 }
