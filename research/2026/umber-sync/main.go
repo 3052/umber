@@ -55,7 +55,7 @@ func main() {
    inputFile := flag.String("input", "", "input JSON file path (required)")
    outputDir := flag.String("output", "", "output directory (required)")
    threads := flag.Int("threads", 2, "number of download threads per item")
-   maxETA := flag.Duration("max-eta", time.Minute, "maximum ETA; items exceeding this are skipped")
+   maxETA := flag.Duration("max-eta", time.Minute, "maximum ETA for YouTube downloads; YouTube items exceeding this are skipped (0 disables)")
    flag.Parse()
 
    if *threads < 1 || *outputDir == "" || *inputFile == "" {
@@ -70,12 +70,12 @@ func main() {
 
 // run performs the full sync after flag validation: prepares the output
 // directory, loads config and input records, removes files no longer in
-// the input, downloads missing or empty items, and writes the M3U
-// playlist. Conditions that abort the run are returned as errors for
-// main to report; per-item failures (file removals, stats, downloads)
-// are logged and skipped so one bad item does not abort the run. The
-// visitor-expired return ends the run early so the next invocation
-// refetches the visitor ID.
+// the input, downloads missing or empty items (the max-eta limit applies
+// to YouTube downloads only), and writes the M3U playlist. Conditions
+// that abort the run are returned as errors for main to report; per-item
+// failures (file removals, stats, downloads) are logged and skipped so
+// one bad item does not abort the run. The visitor-expired return ends
+// the run early so the next invocation refetches the visitor ID.
 func run(inputFile, outputDir string, threads int, maxETA time.Duration) error {
    if err := os.MkdirAll(outputDir, 0755); err != nil {
       return fmt.Errorf("cannot create output dir: %w", err)
@@ -207,11 +207,11 @@ func run(inputFile, outputDir string, threads int, maxETA time.Duration) error {
       }
       switch p {
       case platformBandcamp:
-         err = downloadBandcamp(r, title, outputDir, maxETA)
+         err = downloadBandcamp(&r, title, outputDir)
       case platformSoundCloud:
-         err = downloadSoundCloud(r, title, outputDir, maxETA)
+         err = downloadSoundCloud(&r, title, outputDir)
       case platformYouTube:
-         err = downloadYouTube(r, title, cfg.VisitorID, outputDir, threads, maxETA)
+         err = downloadYouTube(&r, title, cfg.VisitorID, outputDir, threads, maxETA)
       }
       if err != nil {
          if errors.Is(err, errVisitorExpired) {

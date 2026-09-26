@@ -3,6 +3,7 @@ package main
 
 import (
    "bytes"
+   "cmp"
    "encoding/json"
    "fmt"
    "io"
@@ -12,13 +13,14 @@ import (
    "os"
    "path/filepath"
    "regexp"
+   "slices"
    "strconv"
    "strings"
    "sync"
    "time"
 )
 
-// VISIONOS client constants, matching what current yt-dlp sends (verified
+// VISIONOS client constants, matching what current yt-tlp sends (verified
 // against a mitmproxy capture of yt-dlp 2026.08). The user agent is sent both
 // in the client context and as the HTTP User-Agent header.
 const (
@@ -40,13 +42,16 @@ var (
 
 var errVisitorExpired = fmt.Errorf("visitor ID expired")
 
-// downloadYouTube downloads the first AUDIO_QUALITY_MEDIUM audio stream for
-// a YouTube watch URL (youtube.com host), remuxes it with ffmpeg, and tags
-// artist and title from the record. title is the record's filename stem,
-// built by baseName: "author - title", except a YouTube " - Topic" author
-// is stripped, and the title alone is used when it already contains the
-// author.
-func downloadYouTube(r Record, title, visitorID, outputDir string, threads int, maxETA time.Duration) error {
+// downloadYouTube downloads the AUDIO_QUALITY_MEDIUM audio stream for a
+// YouTube watch URL (youtube.com host), remuxes it with ffmpeg, and tags
+// artist and title from the record. The stream must be an audio/webm or
+// audio/mp4 container — if the player response carries no medium format
+// in either, that is an error. When several qualify, the preferred
+// container wins: audio/webm, then audio/mp4. title is the record's
+// filename stem, built by baseName: "author - title", except a YouTube
+// " - Topic" author is stripped, and the title alone is used when it
+// already contains the author.
+func downloadYouTube(r *Record, title, visitorID, outputDir string, threads int, maxETA time.Duration) error {
    videoID, err := videoIDFromURL(r.I)
    if err != nil {
       return err
@@ -130,17 +135,11 @@ func downloadYouTube(r Record, title, visitorID, outputDir string, threads int, 
       return fmt.Errorf("playability: %s — %s", player.PlayabilityStatus.Status, player.PlayabilityStatus.Reason)
    }
 
-   var audioURL, mimeType string
-   for _, f := range player.StreamingData.AdaptiveFormats {
-      if f.AudioQuality == "AUDIO_QUALITY_MEDIUM" {
-         audioURL = f.URL
-         mimeType = f.MimeType
-         break
-      }
+   medium, err := pickMediumFormat(player.StreamingData.AdaptiveFormats)
+   if err != nil {
+      return err
    }
-   if audioURL == "" {
-      return fmt.Errorf("no AUDIO_QUALITY_MEDIUM format found")
-   }
+   audioURL, mimeType := medium.URL, medium.MimeType
 
    outExt := getOutputExt(mimeType)
    name := sanitizeFilename(title, outExt, outputDir)
@@ -271,6 +270,22 @@ func getOutputExt(mimeType string) string {
    }
 }
 
+// mediumMimeRank ranks a stream's container for pickMediumFormat: 0 for
+// audio/webm, 1 for audio/mp4, and ok false for anything else — those are
+// not candidates. Only the MIME part before the semicolon counts; codec
+// parameters such as codecs="opus" are ignored, the same split
+// getOutputExt makes.
+func mediumMimeRank(mimeType string) (rank int, ok bool) {
+   main := strings.TrimSpace(strings.Split(mimeType, ";")[0])
+   switch main {
+   case "audio/webm":
+      return 0, true
+   case "audio/mp4":
+      return 1, true
+   }
+   return 0, false
+}
+
 // signatureTimestamp extracts the signature timestamp (sts) from the player
 // base.js. Current YouTube clients must send it in
 // playbackContext.contentPlaybackContext, or /player returns UNPLAYABLE.
@@ -328,6 +343,34 @@ type AdaptiveFormat struct {
    AudioQuality string `json:"audioQuality"`
    URL          string `json:"url"`
    MimeType     string `json:"mimeType"`
+}
+
+// pickMediumFormat selects the audio stream to download from a player
+// response's adaptive formats. A candidate must be AUDIO_QUALITY_MEDIUM,
+// carry a URL, and use a supported container — audio/webm or audio/mp4;
+// formats in any other container are ignored, and if none remains that
+// is an error. With several candidates the preferred container wins:
+// audio/webm, then audio/mp4. The sort is stable, so equally-ranked
+// streams keep response order and the first one is picked.
+func pickMediumFormat(formats []*AdaptiveFormat) (*AdaptiveFormat, error) {
+   var medium []*AdaptiveFormat
+   for _, f := range formats {
+      if f.AudioQuality != "AUDIO_QUALITY_MEDIUM" || f.URL == "" {
+         continue
+      }
+      if _, ok := mediumMimeRank(f.MimeType); ok {
+         medium = append(medium, f)
+      }
+   }
+   if len(medium) == 0 {
+      return nil, fmt.Errorf("no AUDIO_QUALITY_MEDIUM audio/webm or audio/mp4 format found")
+   }
+   slices.SortStableFunc(medium, func(a, b *AdaptiveFormat) int {
+      ra, _ := mediumMimeRank(a.MimeType)
+      rb, _ := mediumMimeRank(b.MimeType)
+      return cmp.Compare(ra, rb)
+   })
+   return medium[0], nil
 }
 
 type PlaybackContext struct {

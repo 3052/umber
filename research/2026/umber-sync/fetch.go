@@ -22,7 +22,10 @@ var errETASkipped = fmt.Errorf("skipped due to ETA")
 // downloadFile downloads url to filename, using a Range-request probe to
 // split the transfer across threads parallel chunks when the server
 // supports ranges, and falling back to downloadFileSingle otherwise.
-// Items whose estimated time to completion exceeds maxETA are abandoned.
+// Items whose estimated time to completion exceeds maxETA are abandoned;
+// a maxETA of 0 or less disables the check. Only the YouTube path calls
+// this — Bandcamp and SoundCloud always download through
+// downloadFileSingle with no limit.
 func downloadFile(url, filename string, threads int, maxETA time.Duration) error {
    probeReq, err := http.NewRequest("GET", url, nil)
    if err != nil {
@@ -97,7 +100,7 @@ func downloadFile(url, filename string, threads int, maxETA time.Duration) error
       log.Printf("%s  %s / %s  elapsed %s  eta %s",
          filepath.Base(filename), formatBytes(downloaded), formatBytes(total), elapsed.String(), etaStr)
       lastLog = now
-      if etaDuration > maxETA && now.Sub(start) > 2*time.Second {
+      if maxETA > 0 && etaDuration > maxETA && now.Sub(start) > 2*time.Second {
          skipped = true
          cancel()
       }
@@ -177,8 +180,10 @@ func downloadFile(url, filename string, threads int, maxETA time.Duration) error
 }
 
 // downloadFileSingle streams url to filename in one request, the fallback
-// for servers without range support. Items whose estimated time to
-// completion exceeds maxETA are abandoned mid-transfer.
+// for servers without range support. As in downloadFile, items whose
+// estimated time to completion exceeds maxETA are abandoned mid-transfer;
+// a maxETA of 0 or less disables the check — which is how the ETA-free
+// Bandcamp and SoundCloud paths call it.
 func downloadFileSingle(url, filename string, maxETA time.Duration) error {
    resp, err := http.Get(url)
    if err != nil {
@@ -229,7 +234,7 @@ func downloadFileSingle(url, filename string, maxETA time.Duration) error {
             log.Printf("%s  %s / %s  elapsed %s  eta %s",
                strings.TrimSuffix(filepath.Base(filename), ".tmp"), formatBytes(downloaded), formatBytes(total), elapsed.String(), etaStr)
             lastLog = now
-            if etaDuration > maxETA && now.Sub(start) > 2*time.Second {
+            if maxETA > 0 && etaDuration > maxETA && now.Sub(start) > 2*time.Second {
                return fmt.Errorf("%w: ETA %s exceeds max %s", errETASkipped, etaDuration.Round(time.Millisecond), maxETA)
             }
          }
@@ -293,7 +298,7 @@ func recordID(p platform, raw string) (string, error) {
 // output gets ID3 tags; m4a/opus get their native tag formats. The
 // muxer is picked from dst's extension, same contract as the downloaders'
 // remux temps.
-func remuxTagged(src, dst string, r Record) error {
+func remuxTagged(src, dst string, r *Record) error {
    args := []string{"-i", src, "-c", "copy"}
    if r.R != "" {
       args = append(args, "-metadata", "artist="+r.R)

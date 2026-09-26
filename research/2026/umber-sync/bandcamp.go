@@ -12,16 +12,16 @@ import (
    "os"
    "path/filepath"
    "strings"
-   "time"
 )
 
 // downloadBandcamp downloads the mp3-128 stream for a bandcamp.com track URL
-// such as https://intlanthem.bandcamp.com/track/waiting, then remuxes it with
-// ffmpeg to tag artist and title from the record. The track page is fetched
-// once; its data-tralbum attribute embeds the streaming URL, so no separate
+// such as https://intlanthem.bandcamp.com/track/waiting, then remuxes it
+// with ffmpeg to tag artist and title from the record. The track page is
+// fetched once; its data-tralbum attribute embeds the streaming URL, so no separate
 // ID-resolution or mobile-API request is needed. title is the record's
-// filename stem.
-func downloadBandcamp(r Record, title, outputDir string, maxETA time.Duration) error {
+// filename stem. The max-eta limit does not apply here — it is
+// YouTube-only.
+func downloadBandcamp(r *Record, title, outputDir string) error {
    details, err := fetch_tralbum(r.I)
    if err != nil {
       return fmt.Errorf("resolve tralbum from %s: %w", r.I, err)
@@ -42,7 +42,9 @@ func downloadBandcamp(r Record, title, outputDir string, maxETA time.Duration) e
    // Same ".remux." temp marker as YouTube's, so isTempFile covers it.
    ffTmp := filepath.Join(outputDir, name+".remux."+ext)
 
-   if err := downloadFileSingle(audioURL, dlPath, maxETA); err != nil {
+   // maxETA 0 disables the ETA check: Bandcamp items are never skipped
+   // for slow transfers.
+   if err := downloadFileSingle(audioURL, dlPath, 0); err != nil {
       if err := os.Remove(dlPath); err != nil && !os.IsNotExist(err) {
          return fmt.Errorf("remove download tmp: %w", err)
       }

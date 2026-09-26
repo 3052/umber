@@ -10,7 +10,6 @@ import (
    "os"
    "path/filepath"
    "strings"
-   "time"
 )
 
 // clientID identifies us as SoundCloud's public web client — the same
@@ -23,8 +22,9 @@ const clientID = "KKzJxmw11tYpCs6T24P4uUYhqmjalG6M"
 // with ffmpeg to tag artist and title from the record. The resolve
 // endpoint is fetched once; among its transcodings the progressive mp3
 // is a plain signed file downloaded exactly like Bandcamp's stream —
-// no HLS path is needed. Output is always .mp3.
-func downloadSoundCloud(r Record, title, outputDir string, maxETA time.Duration) error {
+// no HLS path is needed. Output is always .mp3. The max-eta limit does
+// not apply here — it is YouTube-only.
+func downloadSoundCloud(r *Record, title, outputDir string) error {
    track, err := fetchResolve(r.I)
    if err != nil {
       return fmt.Errorf("resolve track from %s: %w", r.I, err)
@@ -48,7 +48,7 @@ func downloadSoundCloud(r Record, title, outputDir string, maxETA time.Duration)
       }
       mime := strings.TrimSpace(strings.Split(t.Format.MimeType, ";")[0])
       if mime == "audio/mpeg" && t.Format.Protocol == "progressive" {
-         return downloadSoundCloudFile(t, r, title, outputDir, maxETA)
+         return downloadSoundCloudFile(t, r, title, outputDir)
       }
    }
    return fmt.Errorf("no progressive mp3 stream found for %s", r.I)
@@ -57,7 +57,7 @@ func downloadSoundCloud(r Record, title, outputDir string, maxETA time.Duration)
 // downloadSoundCloudFile downloads the progressive mp3 in one request,
 // then remuxes it with ffmpeg to tag artist and title from the record
 // before the rename.
-func downloadSoundCloudFile(t *soundcloudTranscoding, r Record, title, outputDir string, maxETA time.Duration) error {
+func downloadSoundCloudFile(t *soundcloudTranscoding, r *Record, title, outputDir string) error {
    audioURL, err := fetchStreamURL(t.URL)
    if err != nil {
       return err
@@ -70,7 +70,9 @@ func downloadSoundCloudFile(t *soundcloudTranscoding, r Record, title, outputDir
    // Same ".remux." temp marker as YouTube's, so isTempFile covers it.
    ffTmp := filepath.Join(outputDir, name+".remux."+ext)
 
-   if err := downloadFileSingle(audioURL, dlPath, maxETA); err != nil {
+   // maxETA 0 disables the ETA check: SoundCloud items are never
+   // skipped for slow transfers.
+   if err := downloadFileSingle(audioURL, dlPath, 0); err != nil {
       if err := os.Remove(dlPath); err != nil && !os.IsNotExist(err) {
          return fmt.Errorf("remove download tmp: %w", err)
       }
