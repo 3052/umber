@@ -16,13 +16,15 @@ import (
 )
 
 // downloadBandcamp downloads the mp3-128 stream for a bandcamp.com track URL
-// such as https://intlanthem.bandcamp.com/track/waiting. The track page is
-// fetched once; its data-tralbum attribute embeds the streaming URL, so no
-// separate ID-resolution or mobile-API request is needed.
-func downloadBandcamp(address, title, outputDir string, maxETA time.Duration) error {
-   details, err := fetch_tralbum(address)
+// such as https://intlanthem.bandcamp.com/track/waiting, then remuxes it with
+// ffmpeg to tag artist and title from the record. The track page is fetched
+// once; its data-tralbum attribute embeds the streaming URL, so no separate
+// ID-resolution or mobile-API request is needed. title is the record's
+// filename stem.
+func downloadBandcamp(r Record, title, outputDir string, maxETA time.Duration) error {
+   details, err := fetch_tralbum(r.I)
    if err != nil {
-      return fmt.Errorf("resolve tralbum from %s: %w", address, err)
+      return fmt.Errorf("resolve tralbum from %s: %w", r.I, err)
    }
    if len(details.TrackInfo) == 0 {
       return fmt.Errorf("no tracks in bandcamp response")
@@ -33,9 +35,12 @@ func downloadBandcamp(address, title, outputDir string, maxETA time.Duration) er
       return fmt.Errorf("no mp3-128 stream URL found")
    }
 
-   name := sanitizeFilename(title, ".mp3", outputDir)
-   finalPath := filepath.Join(outputDir, name+".mp3")
+   const ext = ".mp3"
+   name := sanitizeFilename(title, ext, outputDir)
+   finalPath := filepath.Join(outputDir, name+ext)
    dlPath := filepath.Join(outputDir, name+".t")
+   // Same ".remux." temp marker as YouTube's, so isTempFile covers it.
+   ffTmp := filepath.Join(outputDir, name+".remux."+ext)
 
    if err := downloadFileSingle(audioURL, dlPath, maxETA); err != nil {
       if err := os.Remove(dlPath); err != nil && !os.IsNotExist(err) {
@@ -44,9 +49,22 @@ func downloadBandcamp(address, title, outputDir string, maxETA time.Duration) er
       return err
    }
 
-   if err := os.Rename(dlPath, finalPath); err != nil {
+   if err := remuxTagged(dlPath, ffTmp, r); err != nil {
       if err := os.Remove(dlPath); err != nil && !os.IsNotExist(err) {
-         return fmt.Errorf("remove download tmp after rename fail: %w", err)
+         return fmt.Errorf("remove download tmp: %w", err)
+      }
+      if err := os.Remove(ffTmp); err != nil && !os.IsNotExist(err) {
+         return fmt.Errorf("remove ff tmp: %w", err)
+      }
+      return err
+   }
+
+   if err := os.Remove(dlPath); err != nil && !os.IsNotExist(err) {
+      return fmt.Errorf("remove download tmp: %w", err)
+   }
+   if err := os.Rename(ffTmp, finalPath); err != nil {
+      if err := os.Remove(ffTmp); err != nil && !os.IsNotExist(err) {
+         return fmt.Errorf("remove ff tmp after rename fail: %w", err)
       }
       return fmt.Errorf("rename file: %w", err)
    }

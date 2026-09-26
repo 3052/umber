@@ -44,9 +44,8 @@ func do_bandcamp(address, name string) error {
    }
 
    songs = append(songs, &song{
-      // Artwork URL is derived from the art ID; the _2 suffix picks a
-      // standard size.
-      A: fmt.Sprintf("https://f4.bcbits.com/img/a%d_2", details.ArtId),
+      // 700 x 700
+      A: fmt.Sprintf("https://f4.bcbits.com/img/a%d_5", details.ArtId),
       D: time.Now().Unix(),
       I: address,
       R: details.Artist,

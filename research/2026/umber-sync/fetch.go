@@ -1,7 +1,8 @@
-// util.go marker preserve
+// fetch.go marker preserve
 package main
 
 import (
+   "bytes"
    "context"
    "fmt"
    "io"
@@ -9,22 +10,14 @@ import (
    "net/http"
    "net/url"
    "os"
+   "os/exec"
    "path/filepath"
    "strings"
    "sync"
    "time"
-   "unicode/utf8"
 )
 
 var errETASkipped = fmt.Errorf("skipped due to ETA")
-
-// astralRune reports whether r is outside the Basic Multilingual Plane.
-// HiBy players fail to open files whose names contain such runes (emoji,
-// "fancy text" letters), reporting "playback failed file not found".
-// BMP-only names are never rewritten.
-func astralRune(r rune) bool {
-   return r > 0xFFFF
-}
 
 // downloadFile downloads url to filename, using a Range-request probe to
 // split the transfer across threads parallel chunks when the server
@@ -252,29 +245,6 @@ func downloadFileSingle(url, filename string, maxETA time.Duration) error {
    return nil
 }
 
-// fixAstralRunes rewrites s (which must contain astral runes) into a
-// HiBy-safe string: mathematical letters/digits become ASCII, every other
-// astral rune (emoji, flags, ...) is dropped, along with the zero-width
-// emoji joiners they leave dangling. All other runes pass through as-is.
-func fixAstralRunes(s string) string {
-   var b strings.Builder
-   b.Grow(len(s))
-   for _, r := range s {
-      switch {
-      case r <= 0xFFFF:
-         if r == 0x200D || r == 0xFE0F {
-            continue
-         }
-         b.WriteRune(r)
-      default:
-         if a, ok := mathAlnumASCII(r); ok {
-            b.WriteRune(a)
-         }
-      }
-   }
-   return b.String()
-}
-
 func formatBytes(b int64) string {
    if b < 0 {
       return "?"
@@ -291,46 +261,11 @@ func formatBytes(b int64) string {
    return fmt.Sprintf("%.1f %ciB", float64(b)/float64(div), "KMGTPE"[exp])
 }
 
-// isTempFile reports whether name is one of this program's in-flight
-// temp files: <stem>.tmp (raw YouTube stream), <stem>.t (Bandcamp /
-// SoundCloud stream), or <stem>.remux.<ext> (FFmpeg remux output). The
-// remux temp ends in the real extension so FFmpeg picks the muxer from
-// the name; its marker ends in a dot, and since sanitizeFilename
-// strips trailing dots from stems, a final file can never land on a
-// temp name.
-func isTempFile(name string) bool {
-   if strings.HasSuffix(name, ".tmp") || strings.HasSuffix(name, ".t") {
-      return true
-   }
-   if i := strings.LastIndex(name, "."); i >= 0 {
-      return strings.HasSuffix(name[:i], ".remux.")
-   }
-   return false
-}
-
-// mathAlnumASCII maps Mathematical Alphanumeric Symbols (U+1D400–U+1D7FF,
-// the 𝗯𝗼𝗹𝗱 / 𝘀𝗰𝗿𝗶𝗽𝘁 / 𝟭𝟮𝟯 code points emitted by fancy-text generators)
-// to their ASCII equivalents, matching their Unicode NFKC decompositions.
-// ok is false for runes with no ASCII equivalent.
-func mathAlnumASCII(r rune) (ascii rune, ok bool) {
-   if r >= 0x1D400 && r <= 0x1D6A3 { // Latin letter styles, all 26+26 runs
-      off := (r - 0x1D400) % 52
-      if off < 26 {
-         return 'A' + off, true
-      }
-      return 'a' + off - 26, true
-   }
-   if r >= 0x1D7CE && r <= 0x1D7FF { // digit styles
-      return '0' + (r-0x1D7CE)%10, true
-   }
-   return 0, false
-}
-
 // recordID returns the URL-derived identifier used to disambiguate records
 // whose filename stems collide: the YouTube video ID, or the final path
 // segment of a Bandcamp URL (e.g. "waiting" in .../track/waiting) or a
-// SoundCloud URL (e.g. "flickermood" in .../forss/flickermood). p must be
-// the record's platform as classified by platformOf.
+// SoundCloud URL (e.g. "flickermood" in .../forss/flickermood). p must
+// be the record's platform as classified by platformOf.
 func recordID(p platform, raw string) (string, error) {
    switch p {
    case platformYouTube:
@@ -353,45 +288,28 @@ func recordID(p platform, raw string) (string, error) {
    return "", nil
 }
 
-// sanitizeFilename sanitizes a title for use as a filename, then truncates
-// the result so that name+ext fits within both the NTFS component limit
-// (255 chars) and the Windows MAX_PATH limit (259 usable chars). The
-// extension and output directory determine the per-file cap. BMP-only
-// names pass through unchanged; only names containing astral runes are
-// rewritten first.
-func sanitizeFilename(s string, ext string, outputDir string) string {
-   if strings.ContainsFunc(s, astralRune) {
-      s = fixAstralRunes(s)
+// remuxTagged remuxes src to dst with ffmpeg, stream-copying the audio
+// and tagging artist and title from the record's R and T values. mp3
+// output gets ID3 tags; m4a/opus get their native tag formats. The
+// muxer is picked from dst's extension, same contract as the downloaders'
+// remux temps.
+func remuxTagged(src, dst string, r Record) error {
+   args := []string{"-i", src, "-c", "copy"}
+   if r.R != "" {
+      args = append(args, "-metadata", "artist="+r.R)
    }
-   invalid := `\/:*?"<>|`
-   var b strings.Builder
-   for _, c := range s {
-      if strings.ContainsRune(invalid, c) {
-         b.WriteByte('_')
-      } else {
-         b.WriteRune(c)
-      }
+   if r.T != "" {
+      args = append(args, "-metadata", "title="+r.T)
    }
-   result := strings.TrimRight(b.String(), ". ")
+   args = append(args, dst)
 
-   capComponent := 255 - len(ext)
-   capPath := 259 - len(outputDir) - 1 - len(ext)
-   cap := capComponent
-   if capPath < cap {
-      cap = capPath
+   cmd := exec.Command("ffmpeg", args...)
+   var stderr bytes.Buffer
+   cmd.Stderr = &stderr
+   if err := cmd.Run(); err != nil {
+      return fmt.Errorf("ffmpeg tag: %w\n%s", err, stderr.String())
    }
-   if cap < 1 {
-      cap = 1
-   }
-
-   if len(result) > cap {
-      result = result[:cap]
-      for !utf8.ValidString(result) {
-         result = result[:len(result)-1]
-      }
-      result = strings.TrimRight(result, ". ")
-   }
-   return result
+   return nil
 }
 
 // platform identifies which service a record's I URL points at.
@@ -426,4 +344,4 @@ func platformOf(raw string) (platform, error) {
    return platformOther, nil
 }
 
-// util.go marker preserve
+// fetch.go marker preserve

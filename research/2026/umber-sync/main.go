@@ -2,7 +2,6 @@
 package main
 
 import (
-   "cmp"
    "encoding/json"
    "errors"
    "flag"
@@ -10,12 +9,9 @@ import (
    "log"
    "os"
    "path/filepath"
-   "slices"
    "strings"
    "time"
 )
-
-const m3uFileName = "!playlist.m3u"
 
 // validExts are the audio file extensions this program produces.
 var validExts = map[string]bool{
@@ -51,142 +47,6 @@ func cleanupTmpFiles(outputDir string) error {
       }
    }
    return errors.Join(errs...)
-}
-
-// countStems counts, for every supported record, how many records sanitize
-// to the same filename stem. Stems are compared lowercased (so names
-// differing only in case collide, as they do on case-insensitive
-// filesystems) and keyed with the expected extension (so a Bandcamp or
-// SoundCloud .mp3 and a YouTube .opus sharing a title are not duplicates
-// of each other). A record whose URL does not parse is an error: it would
-// otherwise silently vanish from the stem map.
-func countStems(records []Record, outputDir string) (map[string]int, error) {
-   counts := make(map[string]int)
-   for _, r := range records {
-      if r.I == "" || r.T == "" {
-         continue
-      }
-      p, err := platformOf(r.I)
-      if err != nil {
-         return nil, fmt.Errorf("record %q: %w", r.T, err)
-      }
-      ext, ok := stemExt(p)
-      if !ok {
-         continue
-      }
-      stem := sanitizeFilename(r.baseName(), ext, outputDir)
-      counts[strings.ToLower(stem)+ext]++
-   }
-   return counts, nil
-}
-
-// fileStem returns the filename stem for r: the sanitized base name, plus
-// " " + recordID when stemCounts shows another record sharing that stem
-// case-insensitively. The suffix lets distinct items whose names differ
-// only in case coexist on case-insensitive filesystems; non-duplicates keep
-// their exact names. Identical records (same ID) collapse to one stem. A
-// return of "" with a nil error means the record's platform is unsupported
-// and no file is expected for it.
-func fileStem(r *Record, stemCounts map[string]int, outputDir string) (string, error) {
-   p, err := platformOf(r.I)
-   if err != nil {
-      return "", fmt.Errorf("record %q: %w", r.T, err)
-   }
-   ext, ok := stemExt(p)
-   if !ok {
-      return "", nil
-   }
-   stem := sanitizeFilename(r.baseName(), ext, outputDir)
-   if stemCounts[strings.ToLower(stem)+ext] < 2 {
-      return stem, nil
-   }
-   id, err := recordID(p, r.I)
-   if err != nil {
-      return "", fmt.Errorf("record %q: %w", r.T, err)
-   }
-   if id != "" {
-      stem = sanitizeFilename(stem+" "+id, ext, outputDir)
-   }
-   return stem, nil
-}
-
-func generateM3U(outputDir string, records []Record) error {
-   stemCounts, err := countStems(records, outputDir)
-   if err != nil {
-      return err
-   }
-
-   var items []*Record
-   for i, r := range records {
-      if r.I == "" || r.T == "" {
-         continue
-      }
-      p, perr := platformOf(r.I)
-      if perr != nil {
-         return fmt.Errorf("record %q: %w", r.T, perr)
-      }
-      switch p {
-      case platformBandcamp, platformYouTube, platformSoundCloud:
-         items = append(items, &records[i])
-      }
-   }
-
-   slices.SortFunc(items, func(a, b *Record) int {
-      return cmp.Compare(b.D, a.D)
-   })
-
-   entries, err := os.ReadDir(outputDir)
-   if err != nil {
-      return fmt.Errorf("read output dir: %w", err)
-   }
-   titleToFile := make(map[string]string)
-   for _, entry := range entries {
-      if entry.IsDir() {
-         continue
-      }
-      name := entry.Name()
-      if isTempFile(name) || strings.HasSuffix(name, ".m3u") {
-         continue
-      }
-      base := strings.TrimSuffix(name, filepath.Ext(name))
-      titleToFile[base] = name
-   }
-
-   m3uPath := filepath.Join(outputDir, m3uFileName)
-   out, err := os.Create(m3uPath)
-   if err != nil {
-      return fmt.Errorf("create m3u file: %w", err)
-   }
-   defer out.Close()
-
-   if _, werr := fmt.Fprintln(out, "#EXTM3U"); werr != nil {
-      return fmt.Errorf("write m3u header: %w", werr)
-   }
-
-   trackNum := 0
-   for _, item := range items {
-      stem, serr := fileStem(item, stemCounts, outputDir)
-      if serr != nil {
-         return serr
-      }
-      if stem == "" {
-         continue
-      }
-      filename, exists := titleToFile[stem]
-      if !exists {
-         continue
-      }
-      trackNum++
-      if _, werr := fmt.Fprintf(out, "#EXTINF:0,%s\n", item.baseName()); werr != nil {
-         return fmt.Errorf("write m3u entry: %w", werr)
-      }
-      if _, werr := fmt.Fprintf(out, "%s\n", filename); werr != nil {
-         return fmt.Errorf("write m3u entry: %w", werr)
-      }
-   }
-
-   log.Printf("M3U file generated: %s (%d tracks)", m3uPath, trackNum)
-   return nil
 }
 
 func main() {
@@ -347,11 +207,11 @@ func run(inputFile, outputDir string, threads int, maxETA time.Duration) error {
       }
       switch p {
       case platformBandcamp:
-         err = downloadBandcamp(r.I, title, outputDir, maxETA)
+         err = downloadBandcamp(r, title, outputDir, maxETA)
       case platformSoundCloud:
-         err = downloadSoundCloud(r.I, title, outputDir, maxETA)
+         err = downloadSoundCloud(r, title, outputDir, maxETA)
       case platformYouTube:
-         err = downloadYouTube(r.I, title, cfg.VisitorID, outputDir, threads, maxETA)
+         err = downloadYouTube(r, title, cfg.VisitorID, outputDir, threads, maxETA)
       }
       if err != nil {
          if errors.Is(err, errVisitorExpired) {
@@ -381,19 +241,6 @@ func saveConfig(configPath string, cfg *Config) {
    if err := os.WriteFile(configPath, data, 0644); err != nil {
       log.Fatalf("cannot write config: %v", err)
    }
-}
-
-// stemExt returns the extension a record's output file is expected to use,
-// which sizes the filename truncation cap. ok is false for unsupported
-// platforms.
-func stemExt(p platform) (ext string, ok bool) {
-   switch p {
-   case platformBandcamp, platformSoundCloud:
-      return ".mp3", true
-   case platformYouTube:
-      return ".opus", true
-   }
-   return "", false
 }
 
 // Config is persisted to os.UserConfigDir()/umber/umber.json.

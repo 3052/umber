@@ -3,7 +3,6 @@ package main
 
 import (
    "bytes"
-   "cmp"
    "encoding/json"
    "fmt"
    "io"
@@ -11,10 +10,8 @@ import (
    "net/http"
    "net/url"
    "os"
-   "os/exec"
    "path/filepath"
    "regexp"
-   "slices"
    "strconv"
    "strings"
    "sync"
@@ -43,13 +40,14 @@ var (
 
 var errVisitorExpired = fmt.Errorf("visitor ID expired")
 
-// downloadYouTube downloads the AUDIO_QUALITY_MEDIUM audio stream for a
-// YouTube watch URL (youtube.com host) and remuxes it with ffmpeg. title is
-// the record's filename stem, built by baseName: "author - title", except a
-// YouTube " - Topic" author is stripped, and the title alone is used when
-// it already contains the author.
-func downloadYouTube(pageURL, title, visitorID, outputDir string, threads int, maxETA time.Duration) error {
-   videoID, err := videoIDFromURL(pageURL)
+// downloadYouTube downloads the first AUDIO_QUALITY_MEDIUM audio stream for
+// a YouTube watch URL (youtube.com host), remuxes it with ffmpeg, and tags
+// artist and title from the record. title is the record's filename stem,
+// built by baseName: "author - title", except a YouTube " - Topic" author
+// is stripped, and the title alone is used when it already contains the
+// author.
+func downloadYouTube(r Record, title, visitorID, outputDir string, threads int, maxETA time.Duration) error {
+   videoID, err := videoIDFromURL(r.I)
    if err != nil {
       return err
    }
@@ -132,13 +130,8 @@ func downloadYouTube(pageURL, title, visitorID, outputDir string, threads int, m
       return fmt.Errorf("playability: %s — %s", player.PlayabilityStatus.Status, player.PlayabilityStatus.Reason)
    }
 
-   formats := player.StreamingData.AdaptiveFormats
-   slices.SortFunc(formats, func(a, b *AdaptiveFormat) int {
-      return cmp.Compare(b.Bitrate, a.Bitrate)
-   })
-
    var audioURL, mimeType string
-   for _, f := range formats {
+   for _, f := range player.StreamingData.AdaptiveFormats {
       if f.AudioQuality == "AUDIO_QUALITY_MEDIUM" {
          audioURL = f.URL
          mimeType = f.MimeType
@@ -166,17 +159,14 @@ func downloadYouTube(pageURL, title, visitorID, outputDir string, threads int, m
       return err
    }
 
-   cmd := exec.Command("ffmpeg", "-i", dlPath, "-c", "copy", ffTmp)
-   var stderr bytes.Buffer
-   cmd.Stderr = &stderr
-   if err := cmd.Run(); err != nil {
+   if err := remuxTagged(dlPath, ffTmp, r); err != nil {
       if err := os.Remove(dlPath); err != nil && !os.IsNotExist(err) {
          return fmt.Errorf("remove download tmp: %w", err)
       }
       if err := os.Remove(ffTmp); err != nil && !os.IsNotExist(err) {
          return fmt.Errorf("remove ff tmp: %w", err)
       }
-      return fmt.Errorf("ffmpeg remux: %w\n%s", err, stderr.String())
+      return err
    }
    if err := os.Remove(dlPath); err != nil && !os.IsNotExist(err) {
       return fmt.Errorf("remove download tmp: %w", err)

@@ -19,14 +19,15 @@ import (
 const clientID = "KKzJxmw11tYpCs6T24P4uUYhqmjalG6M"
 
 // downloadSoundCloud downloads the mp3 stream for a soundcloud.com track
-// URL such as https://soundcloud.com/forss/flickermood. The resolve
+// URL such as https://soundcloud.com/forss/flickermood, then remuxes it
+// with ffmpeg to tag artist and title from the record. The resolve
 // endpoint is fetched once; among its transcodings the progressive mp3
 // is a plain signed file downloaded exactly like Bandcamp's stream —
 // no HLS path is needed. Output is always .mp3.
-func downloadSoundCloud(address, title, outputDir string, maxETA time.Duration) error {
-   track, err := fetchResolve(address)
+func downloadSoundCloud(r Record, title, outputDir string, maxETA time.Duration) error {
+   track, err := fetchResolve(r.I)
    if err != nil {
-      return fmt.Errorf("resolve track from %s: %w", address, err)
+      return fmt.Errorf("resolve track from %s: %w", r.I, err)
    }
    if track.Kind != "track" {
       return fmt.Errorf("resolve returned %s, want a track URL", track.Kind)
@@ -47,23 +48,27 @@ func downloadSoundCloud(address, title, outputDir string, maxETA time.Duration) 
       }
       mime := strings.TrimSpace(strings.Split(t.Format.MimeType, ";")[0])
       if mime == "audio/mpeg" && t.Format.Protocol == "progressive" {
-         return downloadSoundCloudFile(t, title, outputDir, maxETA)
+         return downloadSoundCloudFile(t, r, title, outputDir, maxETA)
       }
    }
-   return fmt.Errorf("no progressive mp3 stream found for %s", address)
+   return fmt.Errorf("no progressive mp3 stream found for %s", r.I)
 }
 
 // downloadSoundCloudFile downloads the progressive mp3 in one request,
-// the same way Bandcamp tracks are saved.
-func downloadSoundCloudFile(t *soundcloudTranscoding, title, outputDir string, maxETA time.Duration) error {
+// then remuxes it with ffmpeg to tag artist and title from the record
+// before the rename.
+func downloadSoundCloudFile(t *soundcloudTranscoding, r Record, title, outputDir string, maxETA time.Duration) error {
    audioURL, err := fetchStreamURL(t.URL)
    if err != nil {
       return err
    }
 
-   name := sanitizeFilename(title, ".mp3", outputDir)
-   finalPath := filepath.Join(outputDir, name+".mp3")
+   const ext = ".mp3"
+   name := sanitizeFilename(title, ext, outputDir)
+   finalPath := filepath.Join(outputDir, name+ext)
    dlPath := filepath.Join(outputDir, name+".t")
+   // Same ".remux." temp marker as YouTube's, so isTempFile covers it.
+   ffTmp := filepath.Join(outputDir, name+".remux."+ext)
 
    if err := downloadFileSingle(audioURL, dlPath, maxETA); err != nil {
       if err := os.Remove(dlPath); err != nil && !os.IsNotExist(err) {
@@ -72,9 +77,22 @@ func downloadSoundCloudFile(t *soundcloudTranscoding, title, outputDir string, m
       return err
    }
 
-   if err := os.Rename(dlPath, finalPath); err != nil {
+   if err := remuxTagged(dlPath, ffTmp, r); err != nil {
       if err := os.Remove(dlPath); err != nil && !os.IsNotExist(err) {
-         return fmt.Errorf("remove download tmp after rename fail: %w", err)
+         return fmt.Errorf("remove download tmp: %w", err)
+      }
+      if err := os.Remove(ffTmp); err != nil && !os.IsNotExist(err) {
+         return fmt.Errorf("remove ff tmp: %w", err)
+      }
+      return err
+   }
+
+   if err := os.Remove(dlPath); err != nil && !os.IsNotExist(err) {
+      return fmt.Errorf("remove download tmp: %w", err)
+   }
+   if err := os.Rename(ffTmp, finalPath); err != nil {
+      if err := os.Remove(ffTmp); err != nil && !os.IsNotExist(err) {
+         return fmt.Errorf("remove ff tmp after rename fail: %w", err)
       }
       return fmt.Errorf("rename file: %w", err)
    }
