@@ -5,14 +5,55 @@ import (
    "bytes"
    "encoding/json"
    "errors"
+   "flag"
    "fmt"
    "io"
+   "log"
    "net/http"
    "net/url"
+   "os"
    "regexp"
    "strconv"
+   "strings"
 )
 
+type visitorData string
+
+func (v *visitorData) UnmarshalText(data []byte) error {
+   visitor, err := url.PathUnescape(string(data))
+   if err != nil {
+      return err
+   }
+   *v = visitorData(visitor)
+   return nil
+}
+
+type watchConfig struct {
+   PlayerJSURL string `json:"PLAYER_JS_URL"`
+}
+
+type ytCfg struct {
+   InnertubeContext struct {
+      Client struct {
+         VisitorData visitorData
+      }
+   } `json:"INNERTUBE_CONTEXT"`
+}
+
+// playerData pulls just what we need from the /player response.
+// AdaptiveFormats stays a RawMessage so the server's key order and
+// formatting survive untouched.
+type playerData struct {
+   PlayabilityStatus struct {
+      Status string
+      Reason string
+   }
+   StreamingData struct {
+      AdaptiveFormats json.RawMessage `json:"adaptiveFormats"`
+   } `json:"streamingData"`
+}
+
+// main.go marker preserve
 // VISIONOS client constants, matching what current yt-dlp sends (verified
 // against a mitmproxy capture of yt-dlp 2026.08). The user agent is sent both
 // in the client context and as the HTTP User-Agent header.
@@ -41,6 +82,66 @@ var (
 var stsCache int
 
 var stsRe = regexp.MustCompile(`["']?signatureTimestamp["']?\s*[:=]\s*(\d+)`)
+
+func main() {
+   video := flag.String("v", "", "YouTube video ID")
+   flag.Parse()
+   if *video == "" {
+      flag.Usage()
+      os.Exit(2)
+   }
+
+   if err := doDump(*video); err != nil {
+      log.Fatal(err)
+   }
+}
+
+///
+
+// doDump fetches the /player response for videoID and prints its
+// adaptiveFormats array as indented JSON on stdout.
+func doDump(videoID string) error {
+   visitorID, err := fetchVisitorID()
+   if err != nil {
+      return err
+   }
+
+   body, err := playerResponse(videoID, visitorID)
+   if err != nil {
+      return err
+   }
+
+   var pd playerData
+   if err := json.Unmarshal(body, &pd); err != nil {
+      return err
+   }
+
+   switch {
+   case pd.PlayabilityStatus.Status == "LOGIN_REQUIRED" &&
+      strings.Contains(pd.PlayabilityStatus.Reason, "not a bot"):
+      return fmt.Errorf("%v: %s — %s", errVisitorExpired,
+         pd.PlayabilityStatus.Status, pd.PlayabilityStatus.Reason)
+   case pd.PlayabilityStatus.Status == "UNPLAYABLE" &&
+      pd.PlayabilityStatus.Reason == visitorExpiredReason:
+      return fmt.Errorf("%v: %s — %s", errVisitorExpired,
+         pd.PlayabilityStatus.Status, pd.PlayabilityStatus.Reason)
+   }
+
+   af := pd.StreamingData.AdaptiveFormats
+   if len(af) == 0 || string(af) == "null" {
+      return fmt.Errorf("no adaptiveFormats in response (playability %s — %s)",
+         pd.PlayabilityStatus.Status, pd.PlayabilityStatus.Reason)
+   }
+
+   // json.Indent keeps the server's field order; MarshalIndent would
+   // sort keys because the top level is a map.
+   var out bytes.Buffer
+   if err := json.Indent(&out, af, "", "  "); err != nil {
+      return err
+   }
+   fmt.Println(out.String())
+   return nil
+}
 
 // extractJSON isolates the JSON payload by balancing curly braces
 // directly on a byte slice to avoid memory allocations.
@@ -215,21 +316,6 @@ func signatureTimestamp(videoID string) (int, error) {
    return sts, nil
 }
 
-type visitorData string
-
-func (v *visitorData) UnmarshalText(data []byte) error {
-   visitor, err := url.PathUnescape(string(data))
-   if err != nil {
-      return err
-   }
-   *v = visitorData(visitor)
-   return nil
-}
-
-type watchConfig struct {
-   PlayerJSURL string `json:"PLAYER_JS_URL"`
-}
-
 // fetchWatchConfig fetches the regular watch page. Its ytcfg provides
 // PLAYER_JS_URL, which points at the player base.js build used to
 // extract the signature timestamp.
@@ -258,14 +344,6 @@ func fetchWatchConfig(videoID string) (*watchConfig, error) {
       return nil, fmt.Errorf("no PLAYER_JS_URL in watch config")
    }
    return &cfg, nil
-}
-
-type ytCfg struct {
-   InnertubeContext struct {
-      Client struct {
-         VisitorData visitorData
-      }
-   } `json:"INNERTUBE_CONTEXT"`
 }
 
 // youtube.go marker preserve
