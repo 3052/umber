@@ -1,24 +1,21 @@
-// ytdump.go marker preserve
+// youtube.go marker preserve
 package main
 
 import (
    "bytes"
    "encoding/json"
    "errors"
-   "flag"
    "fmt"
    "io"
-   "log"
    "net/http"
    "net/url"
-   "os"
    "regexp"
    "strconv"
-   "strings"
 )
 
-// VISIONOS client constants, identical to youtube.go so this tool sends
-// exactly the same /player request as the checker does.
+// VISIONOS client constants, matching what current yt-dlp sends (verified
+// against a mitmproxy capture of yt-dlp 2026.08). The user agent is sent both
+// in the client context and as the HTTP User-Agent header.
 const (
    visionOSClientName    = "VISIONOS"
    visionOSClientVersion = "1.02"
@@ -39,7 +36,8 @@ var (
    errVisitorExpired = fmt.Errorf("visitor ID expired")
 )
 
-// stsCache holds the signature timestamp once extracted. 0 = not fetched.
+// stsCache holds the signature timestamp once extracted; it only changes
+// when the player build changes. 0 means not fetched yet.
 var stsCache int
 
 var stsRe = regexp.MustCompile(`["']?signatureTimestamp["']?\s*[:=]\s*(\d+)`)
@@ -114,104 +112,9 @@ func fetchVisitorID() (string, error) {
    return string(result.InnertubeContext.Client.VisitorData), nil
 }
 
-func main() {
-   video := flag.String("v", "", "YouTube video ID or watch URL")
-   flag.Parse()
-   if *video == "" {
-      flag.Usage()
-      os.Exit(2)
-   }
-
-   videoID, err := normalizeVideoID(*video)
-   if err != nil {
-      log.Fatal(err)
-   }
-
-   visitorID, err := fetchVisitorID()
-   if err != nil {
-      log.Fatal(err)
-   }
-
-   body, err := playerResponse(videoID, visitorID)
-   if err != nil {
-      log.Fatal(err)
-   }
-
-   // Mirror the playability checks from youtube.go, but only as a warning
-   // on stderr: the full JSON is still dumped on stdout either way.
-   var probe struct {
-      PlayabilityStatus struct {
-         Status string
-         Reason string
-      }
-   }
-   if json.Unmarshal(body, &probe) == nil {
-      switch {
-      case probe.PlayabilityStatus.Status == "LOGIN_REQUIRED" &&
-         strings.Contains(probe.PlayabilityStatus.Reason, "not a bot"):
-         fmt.Fprintf(os.Stderr, "%v: %s — %s\n", errVisitorExpired,
-            probe.PlayabilityStatus.Status, probe.PlayabilityStatus.Reason)
-      case probe.PlayabilityStatus.Status == "UNPLAYABLE" &&
-         probe.PlayabilityStatus.Reason == visitorExpiredReason:
-         fmt.Fprintf(os.Stderr, "%v: %s — %s\n", errVisitorExpired,
-            probe.PlayabilityStatus.Status, probe.PlayabilityStatus.Reason)
-      case probe.PlayabilityStatus.Status != "OK":
-         fmt.Fprintf(os.Stderr, "playability %s — %s\n",
-            probe.PlayabilityStatus.Status, probe.PlayabilityStatus.Reason)
-      }
-   }
-
-   // json.Indent keeps the field order exactly as the server sent it,
-   // unlike unmarshal + MarshalIndent (which sorts map keys).
-   var out bytes.Buffer
-   if err := json.Indent(&out, body, "", "  "); err != nil {
-      // Not valid JSON (shouldn't happen); fall back to the raw body.
-      os.Stdout.Write(body)
-      fmt.Println()
-      return
-   }
-   fmt.Println(out.String())
-}
-
-// normalizeVideoID accepts a bare video ID or a youtube.com / youtu.be
-// watch URL and returns the bare ID.
-func normalizeVideoID(arg string) (string, error) {
-   arg = strings.TrimSpace(arg)
-   if arg == "" {
-      return "", errors.New("empty video ID")
-   }
-   if strings.HasPrefix(arg, "http://") || strings.HasPrefix(arg, "https://") {
-      u, err := url.Parse(arg)
-      if err != nil {
-         return "", fmt.Errorf("parse %q: %w", arg, err)
-      }
-      switch u.Hostname() {
-      case "youtube.com", "www.youtube.com", "m.youtube.com", "music.youtube.com":
-         if id := u.Query().Get("v"); id != "" {
-            return id, nil
-         }
-         for _, p := range []string{"/shorts/", "/live/", "/embed/"} {
-            if strings.HasPrefix(u.Path, p) {
-               if id := strings.Trim(strings.TrimPrefix(u.Path, p), "/"); id != "" {
-                  return id, nil
-               }
-            }
-         }
-      case "youtu.be":
-         if id := strings.Trim(u.Path, "/"); id != "" {
-            return id, nil
-         }
-      }
-      return "", fmt.Errorf("no video ID in %q", arg)
-   }
-   if strings.ContainsAny(arg, "/?&# ") {
-      return "", fmt.Errorf("%q does not look like a video ID or watch URL", arg)
-   }
-   return arg, nil
-}
-
-// playerResponse performs the same innertube /player request as
-// fetch_player in youtube.go, but returns the raw response body.
+// playerResponse performs the same innertube /player request the checker
+// sends, but returns the raw response body instead of decoding it into
+// a fixed struct.
 func playerResponse(videoID, visitorID string) ([]byte, error) {
    sts, err := signatureTimestamp(videoID)
    if err != nil {
@@ -268,18 +171,15 @@ func playerResponse(videoID, visitorID string) ([]byte, error) {
    if resp.StatusCode != http.StatusOK {
       return nil, errors.New(resp.Status)
    }
-   body, err := io.ReadAll(resp.Body)
-   if err != nil {
-      return nil, err
-   }
-   if len(body) == 0 {
-      return nil, fmt.Errorf("empty response body from /player")
-   }
-   return body, nil
+   return io.ReadAll(resp.Body)
 }
 
-// signatureTimestamp extracts the signature timestamp (sts) from the
-// player base.js; the result is cached for the rest of the run.
+// signatureTimestamp extracts the signature timestamp (sts) from the player
+// base.js. Current YouTube clients must send it in
+// playbackContext.contentPlaybackContext, or /player returns UNPLAYABLE
+// ("Video unavailable" / "The page needs to be reloaded."). The watch page
+// of the video supplies the current base.js path; the result is cached for
+// the rest of the run.
 func signatureTimestamp(videoID string) (int, error) {
    if stsCache != 0 {
       return stsCache, nil
@@ -368,4 +268,4 @@ type ytCfg struct {
    } `json:"INNERTUBE_CONTEXT"`
 }
 
-// ytdump.go marker preserve
+// youtube.go marker preserve
