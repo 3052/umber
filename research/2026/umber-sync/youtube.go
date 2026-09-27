@@ -5,6 +5,7 @@ import (
    "bytes"
    "cmp"
    "encoding/json"
+   "errors"
    "fmt"
    "io"
    "log"
@@ -12,42 +13,43 @@ import (
    "net/url"
    "os"
    "path/filepath"
-   "regexp"
    "slices"
-   "strconv"
    "strings"
-   "sync"
    "time"
 )
 
-// VISIONOS client constants, matching what current yt-tlp sends (verified
-// against a mitmproxy capture of yt-dlp 2026.08). The user agent is sent both
-// in the client context and as the HTTP User-Agent header.
+// VISIONOS client constants, matching what current yt-dlp sends (verified
+// against a mitmproxy capture of yt-dlp 2026.08). The simplified /player
+// request sends only the name and version, in the context; no client-ID
+// header, device fields, or user agent are needed.
 const (
    visionOSClientName    = "VISIONOS"
    visionOSClientVersion = "1.02"
-   visionOSClientID      = "101"
-   visionOSUserAgent     = "Mozilla/5.0 (Macintosh; Intel Mac OS X 15_7_3) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Safari/605.1.15"
 )
 
 const sep = "\nytcfg.set("
 
+// visitorExpiredReason is what YouTube answers when the visitor ID has
+// gone stale but the request itself is fine.
 const visitorExpiredReason = "This content isn't available, try again later."
 
+// errRateLimited is returned when YouTube answers HTTP 429.
+// errVisitorExpired is reported when the visitor ID has expired.
 var (
-   stsCache = map[string]int{}
-   stsMu    sync.Mutex
-   stsRe    = regexp.MustCompile(`["']?signatureTimestamp["']?\s*[:=]\s*(\d+)`)
+   errRateLimited    = fmt.Errorf("rate limited")
+   errVisitorExpired = fmt.Errorf("visitor ID expired")
 )
-
-var errVisitorExpired = fmt.Errorf("visitor ID expired")
 
 // downloadYouTube downloads the AUDIO_QUALITY_MEDIUM audio stream for a
 // YouTube watch URL (youtube.com host), remuxes it with ffmpeg, and tags
 // artist and title from the record. The stream must be an audio/webm or
 // audio/mp4 container — if the player response carries no medium format
 // in either, that is an error. When several qualify, the preferred
-// container wins: audio/webm, then audio/mp4. title is the record's
+// container wins: audio/webm, then audio/mp4. visitorID is the saved
+// visitor ID from the config; the request is the simplified one the
+// checker sends, so no watch page is fetched and no signature timestamp
+// is needed. A stale visitor ID surfaces as errVisitorExpired, which run
+// treats by clearing it and ending the run early. title is the record's
 // filename stem, built by baseName: "author - title", except a YouTube
 // " - Topic" author is stripped, and the title alone is used when it
 // already contains the author.
@@ -57,82 +59,24 @@ func downloadYouTube(r *Record, title, visitorID, outputDir string, threads int,
       return err
    }
 
-   wc, err := fetchWatchConfig(videoID)
+   body, err := playerResponse(videoID, visitorID)
    if err != nil {
-      return fmt.Errorf("watch config: %w", err)
-   }
-   if wc.VisitorData != "" {
-      visitorID = string(wc.VisitorData)
-   }
-
-   sts, err := signatureTimestamp(wc.PlayerJSURL)
-   if err != nil {
-      return fmt.Errorf("signature timestamp: %w", err)
-   }
-
-   pc := PlaybackContext{}
-   pc.ContentPlaybackContext.Html5Preference = "HTML5_PREF_WANTS"
-   pc.ContentPlaybackContext.SignatureTimestamp = sts
-
-   payload := PlayerRequest{
-      VideoId: videoID,
-      Context: PlayerContext{
-         Client: PlayerClient{
-            ClientName:    visionOSClientName,
-            ClientVersion: visionOSClientVersion,
-            DeviceMake:    "Apple",
-            DeviceModel:   "RealityDevice17,1",
-            UserAgent:     visionOSUserAgent,
-            OsName:        "visionOS",
-            OsVersion:     "26.5.23O471",
-            Hl:            "en",
-            TimeZone:      "UTC",
-         },
-      },
-      PlaybackContext: pc,
-      ContentCheckOk:  true,
-      RacyCheckOk:     true,
-   }
-
-   body, err := json.Marshal(payload)
-   if err != nil {
-      return fmt.Errorf("marshal payload: %w", err)
-   }
-
-   req, err := http.NewRequest("POST", "https://www.youtube.com/youtubei/v1/player?prettyPrint=false", bytes.NewReader(body))
-   if err != nil {
-      return fmt.Errorf("create request: %w", err)
-   }
-   req.Header.Set("Content-Type", "application/json")
-   req.Header.Set("X-Goog-Visitor-Id", visitorID)
-   req.Header.Set("X-Youtube-Client-Name", visionOSClientID)
-   req.Header.Set("X-Youtube-Client-Version", visionOSClientVersion)
-   req.Header.Set("User-Agent", visionOSUserAgent)
-   req.Header.Set("Origin", "https://www.youtube.com")
-
-   resp, err := http.DefaultClient.Do(req)
-   if err != nil {
-      return fmt.Errorf("api request: %w", err)
-   }
-   defer resp.Body.Close()
-
-   if resp.StatusCode != http.StatusOK {
-      return fmt.Errorf("api returned status %d", resp.StatusCode)
+      return err
    }
 
    var player PlayerResponse
-   if err := json.NewDecoder(resp.Body).Decode(&player); err != nil {
+   if err := json.Unmarshal(body, &player); err != nil {
       return fmt.Errorf("decode player response: %w", err)
    }
 
-   if player.PlayabilityStatus.Status != "OK" {
-      if player.PlayabilityStatus.Status == "UNPLAYABLE" && player.PlayabilityStatus.Reason == visitorExpiredReason {
-         return fmt.Errorf("%w: %s — %s", errVisitorExpired, player.PlayabilityStatus.Status, player.PlayabilityStatus.Reason)
+   if ps := player.PlayabilityStatus; ps.Status != "OK" {
+      switch {
+      case ps.Status == "LOGIN_REQUIRED" && strings.Contains(ps.Reason, "not a bot"):
+         return fmt.Errorf("%w: %s — %s", errVisitorExpired, ps.Status, ps.Reason)
+      case ps.Status == "UNPLAYABLE" && ps.Reason == visitorExpiredReason:
+         return fmt.Errorf("%w: %s — %s", errVisitorExpired, ps.Status, ps.Reason)
       }
-      if player.PlayabilityStatus.Status == "LOGIN_REQUIRED" {
-         return fmt.Errorf("%w: %s — %s", errVisitorExpired, player.PlayabilityStatus.Status, player.PlayabilityStatus.Reason)
-      }
-      return fmt.Errorf("playability: %s — %s", player.PlayabilityStatus.Status, player.PlayabilityStatus.Reason)
+      return fmt.Errorf("playability: %s — %s", ps.Status, ps.Reason)
    }
 
    medium, err := pickMediumFormat(player.StreamingData.AdaptiveFormats)
@@ -286,43 +230,45 @@ func mediumMimeRank(mimeType string) (rank int, ok bool) {
    return 0, false
 }
 
-// signatureTimestamp extracts the signature timestamp (sts) from the player
-// base.js. Current YouTube clients must send it in
-// playbackContext.contentPlaybackContext, or /player returns UNPLAYABLE.
-// Results are cached: sts only changes when the player build changes.
-func signatureTimestamp(playerJSPath string) (int, error) {
-   stsMu.Lock()
-   defer stsMu.Unlock()
-
-   if sts, ok := stsCache[playerJSPath]; ok {
-      return sts, nil
-   }
-
-   jsURL := playerJSPath
-   if jsURL[0] == '/' {
-      jsURL = "https://www.youtube.com" + jsURL
-   }
-   resp, err := http.Get(jsURL)
+// playerResponse performs the simplified innertube /player request — the
+// same one the checker sends: the context carries just the client name
+// and version, and the only header beyond the defaults is the visitor ID.
+// No signature timestamp, client-ID header, user agent, or content type
+// is sent. It returns the raw response body for the caller to decode;
+// HTTP 429 comes back wrapped in errRateLimited.
+func playerResponse(videoID, visitorID string) ([]byte, error) {
+   data, err := json.Marshal(map[string]any{
+      "context": map[string]any{
+         "client": map[string]any{
+            "clientName":    visionOSClientName,
+            "clientVersion": visionOSClientVersion,
+         },
+      },
+      "videoId": videoID,
+   })
    if err != nil {
-      return 0, err
+      return nil, err
+   }
+   req, err := http.NewRequest(
+      "POST", "https://www.youtube.com/youtubei/v1/player?prettyPrint=false",
+      bytes.NewReader(data),
+   )
+   if err != nil {
+      return nil, err
+   }
+   req.Header.Set("X-Goog-Visitor-Id", visitorID)
+   resp, err := http.DefaultClient.Do(req)
+   if err != nil {
+      return nil, err
    }
    defer resp.Body.Close()
-
-   data, err := io.ReadAll(resp.Body)
-   if err != nil {
-      return 0, err
+   if resp.StatusCode == http.StatusTooManyRequests {
+      return nil, fmt.Errorf("%w: HTTP 429", errRateLimited)
    }
-
-   m := stsRe.FindSubmatch(data)
-   if m == nil {
-      return 0, fmt.Errorf("signatureTimestamp not found in %s", playerJSPath)
+   if resp.StatusCode != http.StatusOK {
+      return nil, errors.New(resp.Status)
    }
-   sts, err := strconv.Atoi(string(m[1]))
-   if err != nil {
-      return 0, fmt.Errorf("parse signatureTimestamp: %w", err)
-   }
-   stsCache[playerJSPath] = sts
-   return sts, nil
+   return io.ReadAll(resp.Body)
 }
 
 // videoIDFromURL extracts the video ID from a YouTube watch URL such as
@@ -373,38 +319,6 @@ func pickMediumFormat(formats []*AdaptiveFormat) (*AdaptiveFormat, error) {
    return medium[0], nil
 }
 
-type PlaybackContext struct {
-   ContentPlaybackContext struct {
-      Html5Preference    string `json:"html5Preference,omitempty"`
-      SignatureTimestamp int    `json:"signatureTimestamp,omitempty"`
-   } `json:"contentPlaybackContext"`
-}
-
-type PlayerClient struct {
-   ClientName       string `json:"clientName"`
-   ClientVersion    string `json:"clientVersion"`
-   DeviceMake       string `json:"deviceMake,omitempty"`
-   DeviceModel      string `json:"deviceModel,omitempty"`
-   UserAgent        string `json:"userAgent,omitempty"`
-   OsName           string `json:"osName,omitempty"`
-   OsVersion        string `json:"osVersion,omitempty"`
-   Hl               string `json:"hl,omitempty"`
-   TimeZone         string `json:"timeZone,omitempty"`
-   UtcOffsetMinutes int    `json:"utcOffsetMinutes"`
-}
-
-type PlayerContext struct {
-   Client PlayerClient `json:"client"`
-}
-
-type PlayerRequest struct {
-   VideoId         string          `json:"videoId"`
-   Context         PlayerContext   `json:"context"`
-   PlaybackContext PlaybackContext `json:"playbackContext"`
-   ContentCheckOk  bool            `json:"contentCheckOk"`
-   RacyCheckOk     bool            `json:"racyCheckOk"`
-}
-
 type PlayerResponse struct {
    VideoDetails struct {
       Author string `json:"author"`
@@ -431,51 +345,12 @@ func (v *visitorData) UnmarshalText(data []byte) error {
    return nil
 }
 
-type watchConfig struct {
-   PlayerJSURL string      `json:"PLAYER_JS_URL"`
-   VisitorData visitorData `json:"VISITOR_DATA"`
-}
-
-// fetchWatchConfig fetches the regular watch page. Its ytcfg provides a fresh
-// visitor ID and PLAYER_JS_URL, which points at the player base.js build used
-// to extract the signature timestamp.
-func fetchWatchConfig(videoID string) (*watchConfig, error) {
-   resp, err := http.Get("https://www.youtube.com/watch?v=" + videoID)
-   if err != nil {
-      return nil, err
-   }
-   defer resp.Body.Close()
-
-   data, err := io.ReadAll(resp.Body)
-   if err != nil {
-      return nil, err
-   }
-
-   data, err = extractJSON(data, []byte(sep))
-   if err != nil {
-      return nil, err
-   }
-
-   var cfg watchConfig
-   if err := json.Unmarshal(data, &cfg); err != nil {
-      return nil, err
-   }
-   if cfg.PlayerJSURL == "" {
-      return nil, fmt.Errorf("no PLAYER_JS_URL in watch config")
-   }
-   return &cfg, nil
-}
-
 type ytCfg struct {
-   InnertubeClientName    string `json:"INNERTUBE_CLIENT_NAME"`
-   InnertubeClientVersion string `json:"INNERTUBE_CLIENT_VERSION"`
-   InnertubeContext       struct {
+   InnertubeContext struct {
       Client struct {
          VisitorData visitorData
       }
    } `json:"INNERTUBE_CONTEXT"`
-   InnertubeContextClientName    int    `json:"INNERTUBE_CONTEXT_CLIENT_NAME"`
-   InnertubeContextClientVersion string `json:"INNERTUBE_CONTEXT_CLIENT_VERSION"`
 }
 
 // youtube.go marker preserve
