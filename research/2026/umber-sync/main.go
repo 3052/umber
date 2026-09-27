@@ -121,19 +121,13 @@ func run(inputFile, outputDir string, threads int, maxETA time.Duration) error {
       return fmt.Errorf("cannot parse input JSON: %w", err)
    }
 
+   stemCounts := countStems(records, outputDir)
+
    // A record whose URL does not parse is fatal: it would silently drop
    // out of titleToRecord below and the sweep would then delete its
-   // existing file as unreferenced.
-   stemCounts, err := countStems(records, outputDir)
-   if err != nil {
-      return err
-   }
-
+   // existing file as unreferenced. fileStem returns that error.
    titleToRecord := make(map[string]Record)
    for _, r := range records {
-      if r.I == "" || r.T == "" {
-         continue
-      }
       stem, serr := fileStem(&r, stemCounts, outputDir)
       if serr != nil {
          return serr

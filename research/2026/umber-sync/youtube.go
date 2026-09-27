@@ -142,7 +142,7 @@ func downloadYouTube(r *Record, title, visitorID, outputDir string, threads int,
    audioURL, mimeType := medium.URL, medium.MimeType
 
    outExt := getOutputExt(mimeType)
-   name := sanitizeFilename(title, outExt, outputDir)
+   name := sanitizeFilename(title, outputDir)
    finalPath := filepath.Join(outputDir, name+outExt)
    dlPath := filepath.Join(outputDir, name+".tmp")
    // The remux temp keeps the real extension so ffmpeg picks the muxer

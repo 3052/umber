@@ -64,7 +64,7 @@ func downloadSoundCloudFile(t *soundcloudTranscoding, r *Record, title, outputDi
    }
 
    const ext = ".mp3"
-   name := sanitizeFilename(title, ext, outputDir)
+   name := sanitizeFilename(title, outputDir)
    finalPath := filepath.Join(outputDir, name+ext)
    dlPath := filepath.Join(outputDir, name+".t")
    // Same ".remux." temp marker as YouTube's, so isTempFile covers it.

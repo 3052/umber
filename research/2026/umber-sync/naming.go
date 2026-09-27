@@ -14,6 +14,12 @@ import (
 
 const m3uFileName = "!playlist.m3u"
 
+// maxExtLen is the longest extension this program produces (".opus").
+// sanitizeFilename reserves it for every caller, so stems truncate
+// identically no matter which platform's file they end up naming —
+// callers never need to know the output format.
+const maxExtLen = len(".opus")
+
 // astralRune reports whether r is outside the Basic Multilingual Plane.
 // HiBy players fail to open files whose names contain such runes (emoji,
 // "fancy text" letters), reporting "playback failed file not found".
@@ -22,51 +28,44 @@ func astralRune(r rune) bool {
    return r > 0xFFFF
 }
 
-// countStems counts, for every supported record, how many records sanitize
-// to the same filename stem. Stems are compared lowercased (so names
-// differing only in case collide, as they do on case-insensitive
-// filesystems) and keyed with the expected extension (so a Bandcamp or
-// SoundCloud .mp3 and a YouTube .opus sharing a title are not duplicates
-// of each other). A record whose URL does not parse is an error: it would
-// otherwise silently vanish from the stem map.
-func countStems(records []Record, outputDir string) (map[string]int, error) {
+// countStems counts, for every record, how many records sanitize to the
+// same filename stem. Stems are compared lowercased, so names differing
+// only in case collide, as they do on case-insensitive filesystems.
+// Extensions play no part — sanitizeFilename reserves a fixed maximum
+// extension length, so a Bandcamp or SoundCloud .mp3 and a YouTube .opus
+// sharing a stem count as duplicates of each other. Records on
+// unsupported platforms are counted too: that can only inflate a count
+// and hand a record a harmless ID suffix, never mask a collision.
+func countStems(records []Record, outputDir string) map[string]int {
    counts := make(map[string]int)
    for _, r := range records {
-      if r.I == "" || r.T == "" {
-         continue
-      }
-      p, err := platformOf(r.I)
-      if err != nil {
-         return nil, fmt.Errorf("record %q: %w", r.T, err)
-      }
-      ext, ok := stemExt(p)
-      if !ok {
-         continue
-      }
-      stem := sanitizeFilename(r.baseName(), ext, outputDir)
-      counts[strings.ToLower(stem)+ext]++
+      counts[strings.ToLower(sanitizeFilename(r.baseName(), outputDir))]++
    }
-   return counts, nil
+   return counts
 }
 
 // fileStem returns the filename stem for r: the sanitized base name, plus
 // " " + recordID when stemCounts shows another record sharing that stem
-// case-insensitively. The suffix lets distinct items whose names differ
-// only in case coexist on case-insensitive filesystems; non-duplicates keep
-// their exact names. Identical records (same ID) collapse to one stem. A
-// return of "" with a nil error means the record's platform is unsupported
-// and no file is expected for it.
+// case-insensitively — the count ignores extensions, so a cross-platform
+// pair with the same stem disambiguates too. The suffix lets distinct
+// items whose names differ only in case coexist on case-insensitive
+// filesystems; non-duplicates keep their exact names. Identical records
+// (same ID) collapse to one stem. A return of "" with a nil error means
+// the record's platform is unsupported and no file is expected for it.
+// A record whose URL does not parse is an error: it would otherwise
+// silently vanish from the callers' stem maps.
 func fileStem(r *Record, stemCounts map[string]int, outputDir string) (string, error) {
    p, err := platformOf(r.I)
    if err != nil {
       return "", fmt.Errorf("record %q: %w", r.T, err)
    }
-   ext, ok := stemExt(p)
-   if !ok {
+   switch p {
+   case platformBandcamp, platformYouTube, platformSoundCloud:
+   default:
       return "", nil
    }
-   stem := sanitizeFilename(r.baseName(), ext, outputDir)
-   if stemCounts[strings.ToLower(stem)+ext] < 2 {
+   stem := sanitizeFilename(r.baseName(), outputDir)
+   if stemCounts[strings.ToLower(stem)] < 2 {
       return stem, nil
    }
    id, err := recordID(p, r.I)
@@ -74,7 +73,7 @@ func fileStem(r *Record, stemCounts map[string]int, outputDir string) (string, e
       return "", fmt.Errorf("record %q: %w", r.T, err)
    }
    if id != "" {
-      stem = sanitizeFilename(stem+" "+id, ext, outputDir)
+      stem = sanitizeFilename(stem+" "+id, outputDir)
    }
    return stem, nil
 }
@@ -103,16 +102,10 @@ func fixAstralRunes(s string) string {
 }
 
 func generateM3U(outputDir string, records []Record) error {
-   stemCounts, err := countStems(records, outputDir)
-   if err != nil {
-      return err
-   }
+   stemCounts := countStems(records, outputDir)
 
    var items []*Record
    for i, r := range records {
-      if r.I == "" || r.T == "" {
-         continue
-      }
       p, perr := platformOf(r.I)
       if perr != nil {
          return fmt.Errorf("record %q: %w", r.T, perr)
@@ -218,11 +211,11 @@ func mathAlnumASCII(r rune) (ascii rune, ok bool) {
 
 // sanitizeFilename sanitizes a title for use as a filename, then truncates
 // the result so that name+ext fits within both the NTFS component limit
-// (255 chars) and the Windows MAX_PATH limit (259 usable chars). The
-// extension and output directory determine the per-file cap. BMP-only
-// names pass through unchanged; only names containing astral runes are
-// rewritten first.
-func sanitizeFilename(s string, ext string, outputDir string) string {
+// (255 chars) and the Windows MAX_PATH limit (259 usable chars), with
+// maxExtLen reserved for the extension. The output directory determines
+// the per-file path cap. BMP-only names pass through unchanged; only
+// names containing astral runes are rewritten first.
+func sanitizeFilename(s string, outputDir string) string {
    if strings.ContainsFunc(s, astralRune) {
       s = fixAstralRunes(s)
    }
@@ -237,8 +230,8 @@ func sanitizeFilename(s string, ext string, outputDir string) string {
    }
    result := strings.TrimRight(b.String(), ". ")
 
-   capComponent := 255 - len(ext)
-   capPath := 259 - len(outputDir) - 1 - len(ext)
+   capComponent := 255 - maxExtLen
+   capPath := 259 - len(outputDir) - 1 - maxExtLen
    cap := capComponent
    if capPath < cap {
       cap = capPath
@@ -255,19 +248,6 @@ func sanitizeFilename(s string, ext string, outputDir string) string {
       result = strings.TrimRight(result, ". ")
    }
    return result
-}
-
-// stemExt returns the extension a record's output file is expected to use,
-// which sizes the filename truncation cap. ok is false for unsupported
-// platforms.
-func stemExt(p platform) (ext string, ok bool) {
-   switch p {
-   case platformBandcamp, platformSoundCloud:
-      return ".mp3", true
-   case platformYouTube:
-      return ".opus", true
-   }
-   return "", false
 }
 
 // naming.go marker preserve
