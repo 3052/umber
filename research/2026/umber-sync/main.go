@@ -75,7 +75,10 @@ func main() {
 // that abort the run are returned as errors for main to report; per-item
 // failures (file removals, stats, downloads) are logged and skipped so
 // one bad item does not abort the run. The visitor-expired return ends
-// the run early so the next invocation refetches the visitor ID.
+// the run early so the next invocation refetches the visitor ID. Each
+// download is announced with a log line counting the items still queued
+// after it; the line carries only the count, since the item's filename
+// follows immediately in the download's own progress lines.
 func run(inputFile, outputDir string, threads int, maxETA time.Duration) error {
    if err := os.MkdirAll(outputDir, 0755); err != nil {
       return fmt.Errorf("cannot create output dir: %w", err)
@@ -189,10 +192,23 @@ func run(inputFile, outputDir string, threads int, maxETA time.Duration) error {
 
    // ── Download missing / empty files ────────────────────────────────
 
+   // remaining is the number of items this run still has to fetch. It
+   // counts only missing or empty files — up-to-date items never
+   // download — and is logged as each download starts, so progress
+   // through the queue stays visible during long transfers.
+   remaining := 0
+   for title := range titleToRecord {
+      if !nonEmpty[title] {
+         remaining++
+      }
+   }
+
    for title, r := range titleToRecord {
       if nonEmpty[title] {
          continue
       }
+      remaining--
+      log.Printf("downloading (%d remaining)", remaining)
       var err error
       p, perr := platformOf(r.I)
       if perr != nil {
@@ -253,16 +269,28 @@ type Record struct {
    Y int    `json:"Y"`
 }
 
+// author returns the record's R with a YouTube topic-channel " - Topic"
+// suffix stripped — the artist the auto-generated channel stands for.
+// It is the single source of the strip: baseName's filename stem and
+// remuxTagged's artist metadata both draw from it, so a topic-channel
+// record is named and tagged with the same artist. The URL prefix check
+// matches baseName's exactly; non-YouTube authors, even ones ending in
+// " - Topic", pass through untouched.
+func (r *Record) author() string {
+   if strings.HasPrefix(r.I, "https://youtube.com/") && strings.HasSuffix(r.R, " - Topic") {
+      return strings.TrimSuffix(r.R, " - Topic")
+   }
+   return r.R
+}
+
 // baseName returns the filename stem for the record, translating the
 // adder's label() function: a YouTube "... - Topic" author (an auto-
-// generated topic channel) has that suffix stripped, and the title alone
-// is used when it already contains the author (case-insensitive substring
-// match); otherwise the stem is "author - title".
+// generated topic channel) has that suffix stripped via author, and the
+// title alone is used when it already contains the author
+// (case-insensitive substring match); otherwise the stem is
+// "author - title".
 func (r *Record) baseName() string {
-   author := r.R
-   if strings.HasPrefix(r.I, "https://youtube.com/") && strings.HasSuffix(author, " - Topic") {
-      author = strings.TrimSuffix(author, " - Topic")
-   }
+   author := r.author()
    if strings.Contains(strings.ToLower(r.T), strings.ToLower(author)) {
       return r.T
    }

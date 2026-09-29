@@ -294,19 +294,21 @@ func recordID(p platform, raw string) (string, error) {
 }
 
 // remuxTagged remuxes src to dst with ffmpeg, stream-copying the audio
-// and tagging artist and title from the record's R and T values. mp3
-// output gets ID3 tags; m4a/opus get their native tag formats. The
-// muxer is picked from dst's extension, same contract as the downloaders'
-// remux temps.
+// and tagging artist and title from the record's R and T values — both
+// are never empty, so both tags are always written. The artist tag goes
+// through the record's author(), so a YouTube topic channel's
+// " - Topic" suffix is stripped from the metadata exactly as it is from
+// the filename stem. mp3 output gets ID3 tags; m4a/opus get their native
+// tag formats. The muxer is picked from dst's extension, same contract
+// as the downloaders' remux temps.
 func remuxTagged(src, dst string, r *Record) error {
-   args := []string{"-i", src, "-c", "copy"}
-   if r.R != "" {
-      args = append(args, "-metadata", "artist="+r.R)
+   args := []string{
+      "-i", src,
+      "-c", "copy",
+      "-metadata", "artist=" + r.author(),
+      "-metadata", "title=" + r.T,
+      dst,
    }
-   if r.T != "" {
-      args = append(args, "-metadata", "title="+r.T)
-   }
-   args = append(args, dst)
 
    cmd := exec.Command("ffmpeg", args...)
    var stderr bytes.Buffer
