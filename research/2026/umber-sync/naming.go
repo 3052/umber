@@ -101,6 +101,13 @@ func fixAstralRunes(s string) string {
    return b.String()
 }
 
+// generateM3U writes the playlist: one file name per line, ordered by D
+// descending. No #EXTINF entries are written — the display info they
+// carry (author - title) is already in the file name and the tag
+// metadata, so every player reads it from the file itself. The
+// #EXTM3U header stays: it is the standard marker identifying the
+// file as a playlist. Only records on supported platforms with an
+// existing non-empty-name output file are listed.
 func generateM3U(outputDir string, records []Record) error {
    stemCounts := countStems(records, outputDir)
 
@@ -162,9 +169,6 @@ func generateM3U(outputDir string, records []Record) error {
          continue
       }
       trackNum++
-      if _, werr := fmt.Fprintf(out, "#EXTINF:0,%s\n", item.baseName()); werr != nil {
-         return fmt.Errorf("write m3u entry: %w", werr)
-      }
       if _, werr := fmt.Fprintf(out, "%s\n", filename); werr != nil {
          return fmt.Errorf("write m3u entry: %w", werr)
       }

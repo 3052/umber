@@ -297,4 +297,43 @@ func (r *Record) baseName() string {
    return author + " - " + r.T
 }
 
+// metaTitle returns the record's title tag: T with a leading or trailing
+// author credit removed, as channel-named titles carry. The author is
+// raw R, and the match is case-insensitive ("MAJID JORDAN" credits
+// "Majid Jordan", "RITA PAYÉS" credits "Rita Payés") — the comparison
+// folds, the cut is by offset in the original, so the remainder keeps
+// its casing. A credit counts only at the very start or end of T and
+// only against a separator pattern seen in real titles: " - ", " | ",
+// or ": " on either side of the credit; the separator goes with the
+// author, so the remainder is returned as-is. Anything else — author
+// elsewhere, different spacing, no separator, or T being the author
+// alone — leaves T untouched. The filename stem (baseName) and M3U
+// entries are not affected; they keep the full title.
+func (r *Record) metaTitle() string {
+   author, title := r.R, r.T
+   n := len(author)
+   if n >= len(title) {
+      return title
+   }
+   if strings.EqualFold(title[:n], author) {
+      rest := title[n:]
+      switch {
+      case strings.HasPrefix(rest, " - "), strings.HasPrefix(rest, " | "):
+         return rest[3:]
+      case strings.HasPrefix(rest, ": "):
+         return rest[2:]
+      }
+   }
+   if strings.EqualFold(title[len(title)-n:], author) {
+      head := title[:len(title)-n]
+      switch {
+      case strings.HasSuffix(head, " - "), strings.HasSuffix(head, " | "):
+         return head[:len(head)-3]
+      case strings.HasSuffix(head, ": "):
+         return head[:len(head)-2]
+      }
+   }
+   return title
+}
+
 // main.go marker preserve

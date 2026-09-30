@@ -298,15 +298,18 @@ func recordID(p platform, raw string) (string, error) {
 // are never empty, so both tags are always written. The artist tag goes
 // through the record's author(), so a YouTube topic channel's
 // " - Topic" suffix is stripped from the metadata exactly as it is from
-// the filename stem. mp3 output gets ID3 tags; m4a/opus get their native
-// tag formats. The muxer is picked from dst's extension, same contract
-// as the downloaders' remux temps.
+// the filename stem. The title tag goes through the record's metaTitle(),
+// which drops a leading or trailing author credit ("Daft Punk - Face to
+// Face" tags "Face to Face"); a title without such a credit is tagged
+// unchanged. mp3 output gets ID3 tags; m4a/opus get their native tag
+// formats. The muxer is picked from dst's extension, same contract as
+// the downloaders' remux temps.
 func remuxTagged(src, dst string, r *Record) error {
    args := []string{
       "-i", src,
       "-c", "copy",
       "-metadata", "artist=" + r.author(),
-      "-metadata", "title=" + r.T,
+      "-metadata", "title=" + r.metaTitle(),
       dst,
    }
 

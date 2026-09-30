@@ -87,11 +87,8 @@ async function main() {
    let records = await response.json();
 
    if (query.has('t')) {
-      const searchParam = query.get('t');
-      if (searchParam !== null) {
-         const pattern = new RegExp(searchParam, 'i');
-         records = records.filter(row => pattern.test(label(row)));
-      }
+      const needle = query.get('t').toLowerCase();
+      records = records.filter(row => label(row).toLowerCase().includes(needle));
    }
 
    records.sort((x, y) => y.D - x.D);
