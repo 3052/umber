@@ -283,18 +283,17 @@ func (r *Record) author() string {
    return r.R
 }
 
-// baseName returns the filename stem for the record, translating the
-// adder's label() function: a YouTube "... - Topic" author (an auto-
-// generated topic channel) has that suffix stripped via author, and the
-// title alone is used when it already contains the author
-// (case-insensitive substring match); otherwise the stem is
-// "author - title".
+// baseName returns the filename stem for the record: the title alone when
+// it already contains the raw author R (case-insensitive substring match),
+// otherwise "author - title", where author is r.author(), so a YouTube
+// topic channel's " - Topic" suffix is stripped from the stem. The match
+// is against raw R on purpose — an R ending in " - Topic" can never occur
+// in T, so a topic channel always takes the "author - title" path.
 func (r *Record) baseName() string {
-   author := r.author()
-   if strings.Contains(strings.ToLower(r.T), strings.ToLower(author)) {
+   if strings.Contains(strings.ToLower(r.T), strings.ToLower(r.R)) {
       return r.T
    }
-   return author + " - " + r.T
+   return r.author() + " - " + r.T
 }
 
 // metaTitle returns the record's title tag: T with a leading or trailing

@@ -87,7 +87,7 @@ async function main() {
    let records = await response.json();
 
    if (query.has('t')) {
-      const needle = query.get('t').toLowerCase();
+      const needle = query.get('t');
       records = records.filter(row => label(row).toLowerCase().includes(needle));
    }
 
